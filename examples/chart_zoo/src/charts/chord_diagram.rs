@@ -145,8 +145,16 @@ pub struct ChordDiagramWidget {
     arc_gradient_enabled: bool,
 
     /// Show tick labels around perimeter (phone brand style)
-    #[rust(false)]
+    #[live(false)]
     show_tick_labels: bool,
+
+    /// Use absolute values for tick labels instead of percentages
+    #[rust(false)]
+    use_absolute_labels: bool,
+
+    /// Custom tick step (0.0 means auto-calculate)
+    #[rust(0.0)]
+    tick_step: f64,
 
     /// Computed layout
     #[rust]
@@ -211,17 +219,9 @@ impl Widget for ChordDiagramWidget {
 
 impl ChordDiagramWidget {
     fn initialize_data(&mut self) {
-        // Default sample data if not set
+        // Default to phone brand data (matches first chart in detail page)
         if self.chord_data.matrix.is_empty() {
-            self.chord_data = ChordData::new()
-                .with_labels(vec!["A", "B", "C", "D", "E"])
-                .with_matrix(vec![
-                    vec![0.0, 50.0, 30.0, 20.0, 10.0],
-                    vec![40.0, 0.0, 40.0, 20.0, 15.0],
-                    vec![25.0, 35.0, 0.0, 45.0, 25.0],
-                    vec![15.0, 25.0, 40.0, 0.0, 50.0],
-                    vec![20.0, 10.0, 30.0, 45.0, 0.0],
-                ]);
+            self.initialize_phone_data();
         }
     }
 
@@ -528,21 +528,33 @@ impl ChordDiagramWidget {
         }).collect();
 
         if self.show_tick_labels {
-            // Phone brand style: tick marks with percentage labels
-            let tick_outer = outer_radius + 6.0;
-            let tick_label_radius = outer_radius + 10.0;
+            // Tick marks with labels (percentage or absolute values)
+            let tick_outer = outer_radius + 8.0;
+            let tick_label_radius = outer_radius + 18.0;
 
-            // Calculate total value for percentage
+            // Calculate total value for percentage mode
             let total_value: f64 = self.groups.iter().map(|g| g.value).sum();
 
-            // Draw tick marks and percentage labels for each group
+            // Determine tick step
+            let tick_step_value = if self.tick_step > 0.0 {
+                self.tick_step
+            } else {
+                // Default: 1% of total for percentage mode
+                total_value * 0.01
+            };
+
+            // Major tick interval for labels (show every Nth tick)
+            let major_tick_interval = if self.use_absolute_labels {
+                tick_step_value  // Show label at every tick for absolute mode
+            } else {
+                total_value * 0.01  // 1% intervals for percentage mode
+            };
+
+            // Draw tick marks and labels for each group
             for (start_angle, end_angle, group_name, value) in &groups {
                 if *value <= 0.0 {
                     continue;
                 }
-
-                // Determine tick step (1% of total)
-                let tick_step_value = total_value * 0.01;
 
                 // k converts value to angle within this group's arc
                 let k = (end_angle - start_angle) / value;
@@ -553,13 +565,6 @@ impl ChordDiagramWidget {
                 let mut is_first_tick = true;
                 while tick_value <= *value + 0.0001 {
                     let angle = start_angle + tick_value * k;
-
-                    // Calculate percentage for this tick
-                    let tick_pct = if total_value > 0.0 {
-                        (tick_value / total_value) * 100.0
-                    } else {
-                        0.0
-                    };
 
                     // Draw tick line
                     let inner_x = self.center.x + outer_radius * angle.cos();
@@ -577,9 +582,20 @@ impl ChordDiagramWidget {
                         dvec2(outer_x, outer_y),
                     );
 
-                    // Show label: vendor name at first tick, percentage at 1% intervals
-                    let rounded_pct = (tick_pct * 10.0).round() / 10.0;
-                    let show_label = is_first_tick || (rounded_pct % 1.0).abs() < 0.1;
+                    // Determine if we should show a label at this tick
+                    let show_label = if self.use_absolute_labels {
+                        // Show label at major tick intervals
+                        is_first_tick || (tick_value % major_tick_interval).abs() < 0.1
+                    } else {
+                        // Percentage mode: show at 1% intervals
+                        let tick_pct = if total_value > 0.0 {
+                            (tick_value / total_value) * 100.0
+                        } else {
+                            0.0
+                        };
+                        let rounded_pct = (tick_pct * 10.0).round() / 10.0;
+                        is_first_tick || (rounded_pct % 1.0).abs() < 0.1
+                    };
 
                     if show_label {
                         let lx = self.center.x + tick_label_radius * angle.cos();
@@ -587,19 +603,28 @@ impl ChordDiagramWidget {
 
                         let label_text = if is_first_tick {
                             group_name.clone()
+                        } else if self.use_absolute_labels {
+                            // Format as "5K", "10K", etc.
+                            if tick_value >= 1000.0 {
+                                format!("{}K", (tick_value / 1000.0) as i64)
+                            } else {
+                                format!("{}", tick_value as i64)
+                            }
                         } else {
-                            format!("{:.0}%", rounded_pct)
+                            // Percentage format
+                            let tick_pct = (tick_value / total_value) * 100.0;
+                            format!("{:.0}%", tick_pct)
                         };
-                        // Smaller text width for tick labels
-                        let text_width = label_text.len() as f64 * 3.5;
+                        let text_width = label_text.len() as f64 * 5.0;
 
                         let (final_x, final_y) = if angle > -PI / 2.0 && angle < PI / 2.0 {
-                            (lx + 2.0, ly - 3.0)
+                            (lx + 3.0, ly - 4.0)
                         } else {
-                            (lx - text_width - 2.0, ly - 3.0)
+                            (lx - text_width - 3.0, ly - 4.0)
                         };
 
-                        self.draw_label.color = vec4(0.3, 0.3, 0.3, label_alpha);
+                        // Dark text for visibility
+                        self.draw_label.color = vec4(0.1, 0.1, 0.1, label_alpha);
                         self.draw_label.draw_abs(cx, dvec2(final_x, final_y), &label_text);
                     }
 
@@ -930,7 +955,7 @@ impl ChordDiagramWidget {
 
         self.directed_mode = false;
         self.gradient_enabled = true;
-        self.show_tick_labels = true;  // Phone brand style with tick marks
+        // Note: show_tick_labels is controlled by live property, not set here
         self.initialized = true;
     }
 
@@ -1045,6 +1070,36 @@ impl ChordDiagramWidget {
         self.initialized = true;
     }
 
+    /// Initialize with hair color data (D3 Chord Diagram II example)
+    /// Shows relationships between hair colors from Circos
+    pub fn initialize_hair_color_data(&mut self) {
+        // Hair color data from D3 Chord Diagram II
+        // https://observablehq.com/@d3/chord-diagram/2
+        self.chord_data = ChordData::new()
+            .with_labels(vec!["black", "blond", "brown", "red"])
+            .with_matrix(vec![
+                vec![11975.0,  5871.0, 8916.0, 2868.0],
+                vec![ 1951.0, 10048.0, 2060.0, 6171.0],
+                vec![ 8010.0, 16145.0, 8090.0, 8045.0],
+                vec![ 1013.0,   990.0,  940.0, 6907.0],
+            ]);
+
+        // Use the exact colors from the D3 example
+        self.custom_colors = Some(vec![
+            vec4(0.0, 0.0, 0.0, 1.0),        // black - #000000
+            vec4(1.0, 0.867, 0.537, 1.0),    // blond - #ffdd89
+            vec4(0.584, 0.447, 0.267, 1.0),  // brown - #957244
+            vec4(0.949, 0.384, 0.137, 1.0),  // red - #f26223
+        ]);
+
+        self.directed_mode = false;
+        self.gradient_enabled = false;
+        // Note: show_tick_labels is controlled by live property/WidgetRef
+        self.use_absolute_labels = true;  // Use absolute values like "5K", "10K"
+        self.tick_step = 5000.0;          // 5K intervals
+        self.initialized = true;
+    }
+
     /// Initialize with dependency data (D3 chord dependency example)
     pub fn initialize_dependency_data(&mut self) {
         // Software package dependency data (simplified from D3 example)
@@ -1099,6 +1154,7 @@ impl ChordDiagramWidgetRef {
     pub fn initialize_phone_data(&self, cx: &mut Cx) {
         if let Some(mut inner) = self.borrow_mut() {
             inner.initialize_phone_data();
+            inner.show_tick_labels = true;  // Enable labels for detail page
             inner.compute_chord_layout();
             inner.start_animation(cx);
         }
@@ -1107,6 +1163,7 @@ impl ChordDiagramWidgetRef {
     pub fn initialize_debt_data(&self, cx: &mut Cx) {
         if let Some(mut inner) = self.borrow_mut() {
             inner.initialize_debt_data();
+            inner.show_tick_labels = true;  // Enable labels for detail page
             inner.compute_chord_layout();
             inner.start_animation(cx);
         }
@@ -1115,6 +1172,16 @@ impl ChordDiagramWidgetRef {
     pub fn initialize_dependency_data(&self, cx: &mut Cx) {
         if let Some(mut inner) = self.borrow_mut() {
             inner.initialize_dependency_data();
+            inner.show_tick_labels = true;  // Enable labels for detail page
+            inner.compute_chord_layout();
+            inner.start_animation(cx);
+        }
+    }
+
+    pub fn initialize_hair_color_data(&self, cx: &mut Cx) {
+        if let Some(mut inner) = self.borrow_mut() {
+            inner.initialize_hair_color_data();
+            inner.show_tick_labels = true;  // Enable labels for detail page
             inner.compute_chord_layout();
             inner.start_animation(cx);
         }

@@ -106,6 +106,33 @@ live_design! {
         text: "< Back to Charts"
     }
 
+    // Floating back button (stays fixed at top-left corner)
+    FloatingBackButton = <Button> {
+        width: Fit,
+        height: Fit,
+        abs_pos: vec2(20.0, 20.0),
+        padding: {left: 16, right: 16, top: 10, bottom: 10},
+
+        draw_bg: {
+            instance color: #555555,
+            instance color_hover: #4A90D9,
+            instance border_radius: 8.0,
+
+            fn pixel(self) -> vec4 {
+                let sdf = Sdf2d::viewport(self.pos * self.rect_size);
+                let color = mix(self.color, self.color_hover, self.hover);
+                sdf.box(0., 0., self.rect_size.x, self.rect_size.y, self.border_radius);
+                sdf.fill(color);
+                return sdf.result;
+            }
+        }
+        draw_text: {
+            color: #ffffff,
+            text_style: <FONT_DATA> { font_size: 14.0 }
+        }
+        text: "< Back"
+    }
+
     // Section header
     SectionHeader = <Label> {
         width: Fit,
@@ -461,7 +488,11 @@ live_design! {
                             <ChartTitle> { label = { label = { text: "Word Cloud" } } }
                         }
 
-                        <View> { width: Fill, height: 280 }
+                        edge_bundling_card = <ChartCard> {
+                            edge_bundling = <EdgeBundlingWidget> { width: Fill, height: Fill }
+                            <ChartTitle> { label = { label = { text: "Edge Bundling" } } }
+                        }
+
                         <View> { width: Fill, height: 280 }
                     }
 
@@ -487,7 +518,7 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill,
@@ -497,7 +528,6 @@ live_design! {
                         margin: {bottom: 20},
                         align: {y: 0.5},
 
-                        back_button_line = <BackButton> {}
                         <Label> {
                             text: "Line Chart Variations"
                             draw_text: {
@@ -564,7 +594,7 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill,
@@ -574,7 +604,6 @@ live_design! {
                         margin: {bottom: 20},
                         align: {y: 0.5},
 
-                        back_button_bar = <BackButton> {}
                         <Label> {
                             text: "Bar Chart Variations"
                             draw_text: {
@@ -639,7 +668,7 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill,
@@ -649,7 +678,6 @@ live_design! {
                         margin: {bottom: 20},
                         align: {y: 0.5},
 
-                        back_button_pie = <BackButton> {}
                         <Label> {
                             text: "Pie Chart Variations"
                             draw_text: {
@@ -714,7 +742,7 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill,
@@ -724,7 +752,6 @@ live_design! {
                         margin: {bottom: 20},
                         align: {y: 0.5},
 
-                        back_button_scatter = <BackButton> {}
                         <Label> {
                             text: "Scatter Chart Variations"
                             draw_text: {
@@ -791,7 +818,7 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill,
@@ -801,7 +828,6 @@ live_design! {
                         margin: {bottom: 20},
                         align: {y: 0.5},
 
-                        back_button_area = <BackButton> {}
                         <Label> {
                             text: "Area Chart Variations"
                             draw_text: {
@@ -868,7 +894,7 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill,
@@ -878,7 +904,6 @@ live_design! {
                         margin: {bottom: 20},
                         align: {y: 0.5},
 
-                        back_button_force = <BackButton> {}
                         <Label> {
                             text: "Force-Directed Graph - Interactive Network Visualization"
                             draw_text: {
@@ -913,11 +938,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_treemap = <BackButton> {}
                         <Label> {
                             text: "Treemap - D3 Style Hierarchical Visualization"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -956,11 +980,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_circle_pack = <BackButton> {}
                         <Label> {
                             text: "Circle Packing - Nested Circle Layout"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -987,11 +1010,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_sunburst = <BackButton> {}
                         <Label> {
                             text: "Sunburst - D3 Style Radial Partition Layout"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1000,7 +1022,7 @@ live_design! {
 
                     <SectionHeader> { text: "Programming Languages by Paradigm" }
                     <DetailChartCard> {
-                        height: 500,
+                        height: 1000,
                         <SunburstWidget> { width: Fill, height: Fill }
                     }
                     <View> {
@@ -1013,7 +1035,7 @@ live_design! {
 
                     <SectionHeader> { text: "D3 Flare Package Hierarchy (Rainbow Colors)" }
                     <DetailChartCard> {
-                        height: 500,
+                        height: 1000,
                         sunburst_flare = <SunburstWidget> { width: Fill, height: Fill }
                     }
                     <View> {
@@ -1030,11 +1052,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_globe = <BackButton> {}
                         <Label> {
                             text: "Orthographic Globe - Geographic Projection"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1061,11 +1082,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_histogram = <BackButton> {}
                         <Label> {
                             text: "Histogram - Distribution Visualization"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1092,11 +1112,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_box_plot = <BackButton> {}
                         <Label> {
                             text: "Box Plot - Statistical Summary"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1123,11 +1142,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_heatmap = <BackButton> {}
                         <Label> {
                             text: "Heatmap - Matrix Visualization"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1154,11 +1172,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_candlestick = <BackButton> {}
                         <Label> {
                             text: "Candlestick - Financial Chart"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1185,11 +1202,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_radial_bar = <BackButton> {}
                         <Label> {
                             text: "Radial Bar Chart - Circular Layout"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1216,11 +1232,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_donut = <BackButton> {}
                         <Label> {
                             text: "Donut Chart - Ring Visualization"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1259,11 +1274,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_multi_line = <BackButton> {}
                         <Label> {
                             text: "Multi-Series Line Chart"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1302,11 +1316,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_horizontal_bar = <BackButton> {}
                         <Label> {
                             text: "Horizontal Bar Chart"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1345,11 +1358,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_stacked_bar = <BackButton> {}
                         <Label> {
                             text: "Stacked Bar Chart"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1388,11 +1400,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_stacked_area = <BackButton> {}
                         <Label> {
                             text: "Stacked Area Chart"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1431,11 +1442,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_chord = <BackButton> {}
                         <Label> {
                             text: "Chord Diagrams - D3 Style Relationship Visualization"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1474,9 +1484,22 @@ live_design! {
                         chord_dependency = <ChordDiagramWidget> { width: Fill, height: Fill }
                     }
                     <View> {
-                        width: Fill, height: Fit, margin: {top: 10},
+                        width: Fill, height: Fit, margin: {top: 10, bottom: 25},
                         <Label> {
                             text: "Shows dependencies among software packages in a class hierarchy.\nRainbow color scheme (d3.interpolateRainbow) distinguishes packages.\nDirected ribbons show import direction between packages."
+                            draw_text: { color: #555555, text_style: <FONT_DATA> { font_size: 13.0 } }
+                        }
+                    }
+
+                    <SectionHeader> { text: "Hair Color Relationships (D3 Chord Diagram II)" }
+                    <DetailChartCard> {
+                        height: 900,
+                        chord_hair = <ChordDiagramWidget> { width: Fill, height: Fill }
+                    }
+                    <View> {
+                        width: Fill, height: Fit, margin: {top: 10},
+                        <Label> {
+                            text: "Shows relationships between hair colors adapted from Circos.\nData represents co-occurrences of hair colors in a population study.\nRibbons colored by target index show the strength of each relationship."
                             draw_text: { color: #555555, text_style: <FONT_DATA> { font_size: 13.0 } }
                         }
                     }
@@ -1487,11 +1510,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_sankey = <BackButton> {}
                         <Label> {
                             text: "Sankey Diagrams - D3 Style Flow Visualization"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1543,11 +1565,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_radar = <BackButton> {}
                         <Label> {
                             text: "Radar/Spider Chart - Multi-Axis Comparison"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1580,11 +1601,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_tree = <BackButton> {}
                         <Label> {
                             text: "Tree/Dendrogram - D3 Style Hierarchical Layouts"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1617,15 +1637,15 @@ live_design! {
                         }
                     }
 
-                    <SectionHeader> { text: "D3 Cluster Dendrogram" }
+                    <SectionHeader> { text: "D3 Random Tree (Growing Animation)" }
                     <DetailChartCard> {
-                        height: 400,
+                        height: 600,
                         tree_cluster = <TreeChartWidget> { width: Fill, height: Fill }
                     }
                     <View> {
                         width: Fill, height: Fit, margin: {top: 10},
                         <Label> {
-                            text: "Cluster layout places all leaf nodes at the same depth level.\nUseful for phylogenetic trees or showing terminal node relationships."
+                            text: "Random tree that grows by periodically adding a child to a random node.\nNodes and links animate smoothly from old positions to new positions.\nStops at 500 nodes."
                             draw_text: { color: #555555, text_style: <FONT_DATA> { font_size: 13.0 } }
                         }
                     }
@@ -1636,11 +1656,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_parallel = <BackButton> {}
                         <Label> {
                             text: "Parallel Coordinates - Multi-Dimensional Data"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1673,11 +1692,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_contour = <BackButton> {}
                         <Label> {
                             text: "Contour Plot - Density & Topographic Visualization"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1729,11 +1747,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_quiver = <BackButton> {}
                         <Label> {
                             text: "Vector Field - Flow & Direction Visualization"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1760,11 +1777,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_surface = <BackButton> {}
                         <Label> {
                             text: "3D Surface Plot - Mathematical Surface Visualization"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1791,11 +1807,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_beeswarm = <BackButton> {}
                         <Label> {
                             text: "Beeswarm Chart - Distribution Visualization"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1822,11 +1837,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_bubble = <BackButton> {}
                         <Label> {
                             text: "Bubble Chart - Multi-dimensional Scatter"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1853,11 +1867,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_hexbin = <BackButton> {}
                         <Label> {
                             text: "Hexbin Chart - Density Binning"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1884,11 +1897,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_calendar = <BackButton> {}
                         <Label> {
                             text: "Calendar Heatmap - Daily Activity"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1915,11 +1927,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_streamgraph = <BackButton> {}
                         <Label> {
                             text: "Streamgraph - Flowing Time Series"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1946,11 +1957,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_ridgeline = <BackButton> {}
                         <Label> {
                             text: "Ridgeline Plot - Distribution Comparison"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -1977,11 +1987,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_horizon = <BackButton> {}
                         <Label> {
                             text: "Horizon Chart - Compact Time Series"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -2008,11 +2017,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_slope = <BackButton> {}
                         <Label> {
                             text: "Slope Chart - Before/After Comparison"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -2039,11 +2047,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_arc_diagram = <BackButton> {}
                         <Label> {
                             text: "Arc Diagram - Network Connections"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -2070,11 +2077,10 @@ live_design! {
                     visible: false,
                     flow: Down,
                     spacing: 0,
-                    padding: 20,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
 
                     <View> {
                         width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
-                        back_button_word_cloud = <BackButton> {}
                         <Label> {
                             text: "Word Cloud - Text Frequency"
                             draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
@@ -2094,6 +2100,41 @@ live_design! {
                             draw_text: { color: #555555, text_style: <FONT_DATA> { font_size: 13.0 } }
                         }
                     }
+                }
+
+                // ============ Edge Bundling Detail Page ============
+                edge_bundling_detail_page = <ScrollXYView> {
+                    visible: false,
+                    flow: Down,
+                    spacing: 0,
+                    padding: {left: 20, right: 20, top: 60, bottom: 20},
+
+                    <View> {
+                        width: Fill, height: Fit, flow: Right, spacing: 20, margin: {bottom: 20}, align: {y: 0.5},
+                        <Label> {
+                            text: "Edge Bundling - Network Relationships"
+                            draw_text: { color: #333333, text_style: <FONT_DATA> { font_size: 24.0 } }
+                        }
+                    }
+
+                    <SectionHeader> { text: "Hierarchical Edge Bundling" }
+                    <DetailChartCard> {
+                        height: 1200,
+                        <EdgeBundlingWidget> { width: Fill, height: Fill }
+                    }
+
+                    <View> {
+                        width: Fill, height: Fit, margin: {top: 15},
+                        <Label> {
+                            text: "Edge bundling visualizes connections in networks by routing edges through a hierarchy.\nNodes are arranged in a circle grouped by category. Edges are bundled using Bezier curves.\nHover over nodes to highlight incoming (blue) and outgoing (red) connections."
+                            draw_text: { color: #555555, text_style: <FONT_DATA> { font_size: 13.0 } }
+                        }
+                    }
+                }
+
+                // ============ Floating Back Button (stays on top) ============
+                floating_back_button = <FloatingBackButton> {
+                    visible: false,
                 }
             }
         }
@@ -2143,6 +2184,7 @@ pub enum CurrentPage {
     SlopeDetail,
     ArcDiagramDetail,
     WordCloudDetail,
+    EdgeBundlingDetail,
 }
 
 #[derive(Live, LiveHook)]
@@ -2305,47 +2347,12 @@ impl MatchEvent for App {
         if self.ui.view(id!(word_cloud_card)).finger_up(actions).is_some() {
             self.navigate_to(cx, CurrentPage::WordCloudDetail);
         }
+        if self.ui.view(id!(edge_bundling_card)).finger_up(actions).is_some() {
+            self.navigate_to(cx, CurrentPage::EdgeBundlingDetail);
+        }
 
-        // Handle back buttons
-        if self.ui.button(id!(back_button_line)).clicked(actions)
-            || self.ui.button(id!(back_button_bar)).clicked(actions)
-            || self.ui.button(id!(back_button_pie)).clicked(actions)
-            || self.ui.button(id!(back_button_scatter)).clicked(actions)
-            || self.ui.button(id!(back_button_area)).clicked(actions)
-            || self.ui.button(id!(back_button_force)).clicked(actions)
-            || self.ui.button(id!(back_button_treemap)).clicked(actions)
-            || self.ui.button(id!(back_button_circle_pack)).clicked(actions)
-            || self.ui.button(id!(back_button_sunburst)).clicked(actions)
-            || self.ui.button(id!(back_button_globe)).clicked(actions)
-            || self.ui.button(id!(back_button_histogram)).clicked(actions)
-            || self.ui.button(id!(back_button_box_plot)).clicked(actions)
-            || self.ui.button(id!(back_button_heatmap)).clicked(actions)
-            || self.ui.button(id!(back_button_candlestick)).clicked(actions)
-            || self.ui.button(id!(back_button_radial_bar)).clicked(actions)
-            || self.ui.button(id!(back_button_donut)).clicked(actions)
-            || self.ui.button(id!(back_button_multi_line)).clicked(actions)
-            || self.ui.button(id!(back_button_horizontal_bar)).clicked(actions)
-            || self.ui.button(id!(back_button_stacked_bar)).clicked(actions)
-            || self.ui.button(id!(back_button_stacked_area)).clicked(actions)
-            || self.ui.button(id!(back_button_chord)).clicked(actions)
-            || self.ui.button(id!(back_button_sankey)).clicked(actions)
-            || self.ui.button(id!(back_button_radar)).clicked(actions)
-            || self.ui.button(id!(back_button_tree)).clicked(actions)
-            || self.ui.button(id!(back_button_parallel)).clicked(actions)
-            || self.ui.button(id!(back_button_contour)).clicked(actions)
-            || self.ui.button(id!(back_button_quiver)).clicked(actions)
-            || self.ui.button(id!(back_button_surface)).clicked(actions)
-            || self.ui.button(id!(back_button_beeswarm)).clicked(actions)
-            || self.ui.button(id!(back_button_bubble)).clicked(actions)
-            || self.ui.button(id!(back_button_hexbin)).clicked(actions)
-            || self.ui.button(id!(back_button_calendar)).clicked(actions)
-            || self.ui.button(id!(back_button_streamgraph)).clicked(actions)
-            || self.ui.button(id!(back_button_ridgeline)).clicked(actions)
-            || self.ui.button(id!(back_button_horizon)).clicked(actions)
-            || self.ui.button(id!(back_button_slope)).clicked(actions)
-            || self.ui.button(id!(back_button_arc_diagram)).clicked(actions)
-            || self.ui.button(id!(back_button_word_cloud)).clicked(actions)
-        {
+        // Handle floating back button
+        if self.ui.button(id!(floating_back_button)).clicked(actions) {
             self.navigate_to(cx, CurrentPage::Main);
         }
     }
@@ -2395,6 +2402,11 @@ impl App {
         self.ui.view(id!(slope_detail_page)).set_visible(cx, false);
         self.ui.view(id!(arc_diagram_detail_page)).set_visible(cx, false);
         self.ui.view(id!(word_cloud_detail_page)).set_visible(cx, false);
+        self.ui.view(id!(edge_bundling_detail_page)).set_visible(cx, false);
+
+        // Show/hide floating back button (visible on detail pages, hidden on main)
+        let show_floating_back = page != CurrentPage::Main;
+        self.ui.button(id!(floating_back_button)).set_visible(cx, show_floating_back);
 
         // Show the target page
         match page {
@@ -2427,7 +2439,8 @@ impl App {
             CurrentPage::StackedAreaDetail => self.ui.view(id!(stacked_area_detail_page)).set_visible(cx, true),
             CurrentPage::ChordDetail => {
                 self.ui.view(id!(chord_detail_page)).set_visible(cx, true);
-                // Initialize the three chord diagram variants
+                // Initialize the four chord diagram variants
+                self.ui.chord_diagram_widget(id!(chord_hair)).initialize_hair_color_data(cx);
                 self.ui.chord_diagram_widget(id!(chord_phone)).initialize_phone_data(cx);
                 self.ui.chord_diagram_widget(id!(chord_debt)).initialize_debt_data(cx);
                 self.ui.chord_diagram_widget(id!(chord_dependency)).initialize_dependency_data(cx);
@@ -2443,7 +2456,7 @@ impl App {
             CurrentPage::TreeDetail => {
                 self.ui.view(id!(tree_detail_page)).set_visible(cx, true);
                 self.ui.tree_chart_widget(id!(tree_flare)).initialize_flare_data(cx);
-                self.ui.tree_chart_widget(id!(tree_cluster)).initialize_cluster_data(cx);
+                self.ui.tree_chart_widget(id!(tree_cluster)).initialize_random_data(cx);
             }
             CurrentPage::ParallelDetail => self.ui.view(id!(parallel_detail_page)).set_visible(cx, true),
             CurrentPage::ContourDetail => {
@@ -2465,6 +2478,7 @@ impl App {
             CurrentPage::SlopeDetail => self.ui.view(id!(slope_detail_page)).set_visible(cx, true),
             CurrentPage::ArcDiagramDetail => self.ui.view(id!(arc_diagram_detail_page)).set_visible(cx, true),
             CurrentPage::WordCloudDetail => self.ui.view(id!(word_cloud_detail_page)).set_visible(cx, true),
+            CurrentPage::EdgeBundlingDetail => self.ui.view(id!(edge_bundling_detail_page)).set_visible(cx, true),
         }
 
         self.ui.redraw(cx);

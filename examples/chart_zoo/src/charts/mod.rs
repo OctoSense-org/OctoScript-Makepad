@@ -34,6 +34,7 @@ pub mod sunburst;
 pub mod chord_diagram;
 pub mod sankey;
 pub mod arc_diagram;
+pub mod edge_bundling;
 
 // Statistical charts
 pub mod histogram;
@@ -88,6 +89,7 @@ pub use sunburst::*;
 pub use chord_diagram::*;
 pub use sankey::*;
 pub use arc_diagram::*;
+pub use edge_bundling::*;
 pub use histogram::*;
 pub use box_plot::*;
 pub use heatmap::*;
@@ -132,6 +134,7 @@ pub fn live_design(cx: &mut Cx) {
     chord_diagram::live_design(cx);
     sankey::live_design(cx);
     arc_diagram::live_design(cx);
+    edge_bundling::live_design(cx);
     histogram::live_design(cx);
     box_plot::live_design(cx);
     heatmap::live_design(cx);

@@ -376,6 +376,11 @@ impl DrawArc {
     pub fn disable_gradient(&mut self) {
         self.gradient_enabled = 0.0;
     }
+
+    pub fn set_solid_color(&mut self, color: Vec4) {
+        self.color = color;
+        self.gradient_enabled = 0.0;
+    }
 }
 
 #[derive(Live, LiveHook, LiveRegister)]
