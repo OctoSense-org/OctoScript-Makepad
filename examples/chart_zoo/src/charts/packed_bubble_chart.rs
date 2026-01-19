@@ -98,24 +98,54 @@ pub struct PackedBubbleChart {
 
     #[rust]
     offset_y: f64,
+
+    // Ripple animation state
+    #[rust]
+    ripple_progress: f64,  // 0.0 = no ripple, 1.0 = full ripple
+
+    #[rust]
+    ripple_target: f64,    // Target ripple state (0.0 or 1.0)
+
+    #[rust]
+    ripple_center: Option<(f64, f64, f64)>,  // (x, y, radius) of hovered bubble for ripple
 }
+
+// Ripple effect constants
+const RIPPLE_STRENGTH: f64 = 0.025;  // How much bubbles are pushed (as fraction of chart size)
+const RIPPLE_RADIUS: f64 = 0.3;      // How far the ripple extends (as fraction of chart size)
+const RIPPLE_SPEED: f64 = 4.0;       // How fast ripple animates (higher = faster)
 
 impl Widget for PackedBubbleChart {
     fn handle_event(&mut self, cx: &mut Cx, event: &Event, _scope: &mut Scope) {
         match event {
             Event::NextFrame(nf) => {
-                // Start animation if not yet started
+                let mut needs_redraw = false;
+
+                // Start entry animation if not yet started
                 if self.initialized && !self.animation_started {
                     self.animator = ChartAnimator::new(1200.0)
                         .with_easing(EasingType::EaseOutElastic);
                     self.animator.start(nf.time);
                     self.animation_started = true;
-                    self.redraw(cx);
-                    cx.new_next_frame();
+                    needs_redraw = true;
                 }
 
-                // Continue animation if running
+                // Continue entry animation if running
                 if self.animation_started && self.animator.update(nf.time) {
+                    needs_redraw = true;
+                }
+
+                // Animate ripple progress towards target
+                let ripple_diff = self.ripple_target - self.ripple_progress;
+                if ripple_diff.abs() > 0.001 {
+                    // Smooth interpolation towards target
+                    let delta = ripple_diff * RIPPLE_SPEED * 0.016; // ~60fps frame time
+                    self.ripple_progress += delta;
+                    self.ripple_progress = self.ripple_progress.clamp(0.0, 1.0);
+                    needs_redraw = true;
+                }
+
+                if needs_redraw {
                     self.redraw(cx);
                     cx.new_next_frame();
                 }
@@ -125,13 +155,25 @@ impl Widget for PackedBubbleChart {
                 self.hovered_index = self.find_bubble_at(e.abs);
 
                 if old_hovered != self.hovered_index {
+                    // Update ripple target and center
+                    if let Some(idx) = self.hovered_index {
+                        let hb = &self.bubbles[idx];
+                        self.ripple_center = Some((hb.x, hb.y, hb.radius));
+                        self.ripple_target = 1.0;
+                    } else {
+                        self.ripple_target = 0.0;
+                        // Keep ripple_center so it animates out from the last position
+                    }
                     self.redraw(cx);
+                    cx.new_next_frame();
                 }
             }
             Event::MouseLeave(_) => {
                 if self.hovered_index.is_some() {
                     self.hovered_index = None;
+                    self.ripple_target = 0.0;
                     self.redraw(cx);
+                    cx.new_next_frame();
                 }
             }
             _ => {}
@@ -153,6 +195,9 @@ impl Widget for PackedBubbleChart {
             // Reset animation to replay
             self.animation_started = false;
             self.animator.reset();
+            self.ripple_progress = 0.0;
+            self.ripple_target = 0.0;
+            self.ripple_center = None;
         }
         self.was_visible = is_visible;
 
@@ -174,6 +219,13 @@ impl Widget for PackedBubbleChart {
         // Get animation progress
         let base_progress = self.animator.get_progress();
 
+        // Get ripple center for effect (use stored center for smooth animation)
+        let ripple_center = self.ripple_center;
+        let ripple_amount = self.ripple_progress;
+
+        // Apply easing to ripple for smoother feel
+        let eased_ripple = ease_out_cubic(ripple_amount);
+
         // Draw all bubbles with staggered animation
         let bubble_count = self.bubbles.len();
         for (i, bubble) in self.bubbles.iter().enumerate() {
@@ -182,24 +234,53 @@ impl Widget for PackedBubbleChart {
             let bubble_progress = ((base_progress - stagger_delay) / (1.0 - stagger_delay * 0.5))
                 .clamp(0.0, 1.0);
 
-            let center_x = self.offset_x + bubble.x * self.chart_size;
-            let center_y = self.offset_y + bubble.y * self.chart_size;
+            // Base position (normalized 0-1)
+            let mut bx = bubble.x;
+            let mut by = bubble.y;
+
+            // Check if this bubble is hovered
+            let is_hovered = self.hovered_index == Some(i);
+
+            // Apply ripple effect: push non-hovered bubbles away from ripple center
+            if !is_hovered && eased_ripple > 0.001 {
+                if let Some((hx, hy, hr)) = ripple_center {
+                    let dx = bx - hx;
+                    let dy = by - hy;
+                    let dist = (dx * dx + dy * dy).sqrt();
+
+                    if dist > 0.001 && dist < RIPPLE_RADIUS {
+                        // Calculate push strength (stronger when closer)
+                        let falloff = 1.0 - (dist / RIPPLE_RADIUS);
+                        let falloff = falloff * falloff; // Quadratic falloff for smoother effect
+                        let push = RIPPLE_STRENGTH * falloff * (1.0 + hr * 3.0) * eased_ripple;
+
+                        // Normalize direction and apply push
+                        let nx = dx / dist;
+                        let ny = dy / dist;
+                        bx += nx * push;
+                        by += ny * push;
+                    }
+                }
+            }
+
+            // Convert to screen coordinates
+            let center_x = self.offset_x + bx * self.chart_size;
+            let center_y = self.offset_y + by * self.chart_size;
             let target_radius = bubble.radius * self.chart_size;
 
             // Animate radius from 0 to target
             let mut radius = target_radius * bubble_progress;
 
-            // Check if this bubble is hovered
-            let is_hovered = self.hovered_index == Some(i);
-
-            // Apply hover effect: scale up and brighten
+            // Apply hover effect: scale up and brighten (also animated)
             let mut color = bubble.color;
             if is_hovered && bubble_progress > 0.5 {
-                radius *= 1.08; // Scale up 8%
+                let hover_scale = 1.0 + 0.08 * eased_ripple; // Animate scale
+                radius *= hover_scale;
+                let brighten = 0.15 * eased_ripple as f32;
                 color = vec4(
-                    (color.x + 0.15).min(1.0),
-                    (color.y + 0.15).min(1.0),
-                    (color.z + 0.15).min(1.0),
+                    (color.x + brighten).min(1.0),
+                    (color.y + brighten).min(1.0),
+                    (color.z + brighten).min(1.0),
                     color.w,
                 );
             }
@@ -220,46 +301,58 @@ impl Widget for PackedBubbleChart {
             );
 
             // Draw label (name split by CamelCase) - only when animation mostly complete
-            if radius > 15.0 && bubble_progress > 0.7 {
+            // Use stricter radius check to ensure text fits inside circle
+            if radius > 25.0 && bubble_progress > 0.7 {
                 let text_alpha = ((bubble_progress - 0.7) / 0.3).clamp(0.0, 1.0);
                 let name = bubble.id.split('.').last().unwrap_or(&bubble.id);
                 let words = split_camel_case(name);
 
                 let line_height = 12.0;
                 let total_height = words.len() as f64 * line_height;
-                let mut y_offset = center_y - total_height / 2.0;
 
-                // Set text color with fade-in alpha (darker on hover)
-                let text_brightness = if is_hovered { 0.0 } else { 0.0 };
-                self.draw_text.color = vec4(text_brightness, text_brightness, text_brightness, text_alpha as f32);
+                // Only draw text if it fits vertically within the circle
+                if total_height < radius * 1.6 {
+                    let mut y_offset = center_y - total_height / 2.0;
 
-                for word in &words {
-                    let text_width = word.len() as f64 * 6.0; // Rough estimate
-                    if text_width < radius * 2.0 {
-                        self.draw_text.draw_abs(
-                            cx,
-                            dvec2(center_x - text_width / 2.0, y_offset),
-                            word,
-                        );
+                    // Set text color with fade-in alpha
+                    self.draw_text.color = vec4(0.0, 0.0, 0.0, text_alpha as f32);
+
+                    for word in &words {
+                        let text_width = word.len() as f64 * 6.5; // Slightly more conservative estimate
+                        // Check text fits horizontally with some margin
+                        if text_width < radius * 1.8 {
+                            self.draw_text.draw_abs(
+                                cx,
+                                dvec2(center_x - text_width / 2.0, y_offset),
+                                word,
+                            );
+                        }
+                        y_offset += line_height;
                     }
-                    y_offset += line_height;
-                }
 
-                // Draw value below name
-                if radius > 25.0 {
-                    let value_str = format!("{}", bubble.value as i64);
-                    let value_width = value_str.len() as f64 * 6.0;
-                    self.draw_text.draw_abs(
-                        cx,
-                        dvec2(center_x - value_width / 2.0, y_offset),
-                        &value_str,
-                    );
+                    // Draw value below name (only if there's room)
+                    if radius > 35.0 && y_offset < center_y + radius - 10.0 {
+                        let value_str = format!("{}", bubble.value as i64);
+                        let value_width = value_str.len() as f64 * 6.5;
+                        if value_width < radius * 1.8 {
+                            self.draw_text.draw_abs(
+                                cx,
+                                dvec2(center_x - value_width / 2.0, y_offset),
+                                &value_str,
+                            );
+                        }
+                    }
                 }
             }
         }
 
         DrawStep::done()
     }
+}
+
+// Easing function for smooth ripple
+fn ease_out_cubic(t: f64) -> f64 {
+    1.0 - (1.0 - t).powi(3)
 }
 
 impl PackedBubbleChart {
