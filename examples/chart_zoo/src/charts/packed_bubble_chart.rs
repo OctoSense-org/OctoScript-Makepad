@@ -99,21 +99,42 @@ pub struct PackedBubbleChart {
     #[rust]
     offset_y: f64,
 
-    // Ripple animation state
+    // Ripple animation state (spring physics)
     #[rust]
     ripple_progress: f64,  // 0.0 = no ripple, 1.0 = full ripple
+
+    #[rust]
+    ripple_velocity: f64,  // Current velocity for spring physics
 
     #[rust]
     ripple_target: f64,    // Target ripple state (0.0 or 1.0)
 
     #[rust]
     ripple_center: Option<(f64, f64, f64)>,  // (x, y, radius) of hovered bubble for ripple
+
+    // Drag state
+    #[rust]
+    dragging_index: Option<usize>,  // Which bubble is being dragged
+
+    #[rust]
+    drag_offset: DVec2,  // Offset from mouse to bubble center when drag started
+
+    #[rust]
+    bubble_velocities: Vec<DVec2>,  // Velocities for collision physics
 }
 
 // Ripple effect constants
-const RIPPLE_STRENGTH: f64 = 0.025;  // How much bubbles are pushed (as fraction of chart size)
+const RIPPLE_STRENGTH: f64 = 0.03;   // How much bubbles are pushed (as fraction of chart size)
 const RIPPLE_RADIUS: f64 = 0.3;      // How far the ripple extends (as fraction of chart size)
-const RIPPLE_SPEED: f64 = 4.0;       // How fast ripple animates (higher = faster)
+
+// Spring physics constants
+const SPRING_STIFFNESS: f64 = 180.0; // How snappy the spring is (higher = faster response)
+const SPRING_DAMPING: f64 = 12.0;    // How much the spring oscillates (lower = more bouncy)
+
+// Drag physics constants
+const COLLISION_STRENGTH: f64 = 0.8;  // How strongly bubbles push each other apart
+const VELOCITY_DAMPING: f64 = 0.85;   // How quickly bubbles slow down (lower = more damping)
+const BOUNDARY_PADDING: f64 = 0.05;   // Padding from edge of chart area
 
 impl Widget for PackedBubbleChart {
     fn handle_event(&mut self, cx: &mut Cx, event: &Event, _scope: &mut Scope) {
@@ -135,13 +156,31 @@ impl Widget for PackedBubbleChart {
                     needs_redraw = true;
                 }
 
-                // Animate ripple progress towards target
-                let ripple_diff = self.ripple_target - self.ripple_progress;
-                if ripple_diff.abs() > 0.001 {
-                    // Smooth interpolation towards target
-                    let delta = ripple_diff * RIPPLE_SPEED * 0.016; // ~60fps frame time
-                    self.ripple_progress += delta;
-                    self.ripple_progress = self.ripple_progress.clamp(0.0, 1.0);
+                // Animate ripple using spring physics
+                let dt = 0.016; // ~60fps frame time
+                let displacement = self.ripple_target - self.ripple_progress;
+
+                // Spring physics: F = -kx - cv (spring force - damping force)
+                let spring_force = SPRING_STIFFNESS * displacement;
+                let damping_force = SPRING_DAMPING * self.ripple_velocity;
+                let acceleration = spring_force - damping_force;
+
+                self.ripple_velocity += acceleration * dt;
+                self.ripple_progress += self.ripple_velocity * dt;
+
+                // Check if spring has settled (both position and velocity are small)
+                let is_settled = displacement.abs() < 0.001 && self.ripple_velocity.abs() < 0.01;
+
+                if !is_settled {
+                    needs_redraw = true;
+                } else {
+                    // Snap to target when settled
+                    self.ripple_progress = self.ripple_target;
+                    self.ripple_velocity = 0.0;
+                }
+
+                // Run collision physics for all bubbles
+                if self.run_collision_physics() {
                     needs_redraw = true;
                 }
 
@@ -150,25 +189,79 @@ impl Widget for PackedBubbleChart {
                     cx.new_next_frame();
                 }
             }
-            Event::MouseMove(e) => {
-                let old_hovered = self.hovered_index;
-                self.hovered_index = self.find_bubble_at(e.abs);
+            Event::MouseDown(e) => {
+                if let Some(idx) = self.find_bubble_at(e.abs) {
+                    // Start dragging this bubble
+                    self.dragging_index = Some(idx);
 
-                if old_hovered != self.hovered_index {
-                    // Update ripple target and center
-                    if let Some(idx) = self.hovered_index {
-                        let hb = &self.bubbles[idx];
-                        self.ripple_center = Some((hb.x, hb.y, hb.radius));
-                        self.ripple_target = 1.0;
-                    } else {
-                        self.ripple_target = 0.0;
-                        // Keep ripple_center so it animates out from the last position
+                    // Calculate offset from mouse to bubble center
+                    let bubble = &self.bubbles[idx];
+                    let center_x = self.offset_x + bubble.x * self.chart_size;
+                    let center_y = self.offset_y + bubble.y * self.chart_size;
+                    self.drag_offset = dvec2(center_x - e.abs.x, center_y - e.abs.y);
+
+                    // Initialize velocities if needed
+                    if self.bubble_velocities.len() != self.bubbles.len() {
+                        self.bubble_velocities = vec![dvec2(0.0, 0.0); self.bubbles.len()];
                     }
+
+                    // Reset velocity for dragged bubble
+                    self.bubble_velocities[idx] = dvec2(0.0, 0.0);
+
+                    self.redraw(cx);
+                    cx.new_next_frame();
+                }
+            }
+            Event::MouseMove(e) => {
+                // Handle dragging
+                if let Some(drag_idx) = self.dragging_index {
+                    // Move the dragged bubble to follow the mouse
+                    let new_center_x = e.abs.x + self.drag_offset.x;
+                    let new_center_y = e.abs.y + self.drag_offset.y;
+
+                    // Convert to normalized coordinates
+                    if self.chart_size > 0.0 {
+                        let new_x = (new_center_x - self.offset_x) / self.chart_size;
+                        let new_y = (new_center_y - self.offset_y) / self.chart_size;
+
+                        // Clamp to boundaries
+                        let r = self.bubbles[drag_idx].radius;
+                        self.bubbles[drag_idx].x = new_x.clamp(r + BOUNDARY_PADDING, 1.0 - r - BOUNDARY_PADDING);
+                        self.bubbles[drag_idx].y = new_y.clamp(r + BOUNDARY_PADDING, 1.0 - r - BOUNDARY_PADDING);
+                    }
+
+                    self.redraw(cx);
+                    cx.new_next_frame();
+                } else {
+                    // Normal hover behavior
+                    let old_hovered = self.hovered_index;
+                    self.hovered_index = self.find_bubble_at(e.abs);
+
+                    if old_hovered != self.hovered_index {
+                        // Update ripple target and center
+                        if let Some(idx) = self.hovered_index {
+                            let hb = &self.bubbles[idx];
+                            self.ripple_center = Some((hb.x, hb.y, hb.radius));
+                            self.ripple_target = 1.0;
+                        } else {
+                            self.ripple_target = 0.0;
+                            // Keep ripple_center so it animates out from the last position
+                        }
+                        self.redraw(cx);
+                        cx.new_next_frame();
+                    }
+                }
+            }
+            Event::MouseUp(_) => {
+                if self.dragging_index.is_some() {
+                    self.dragging_index = None;
                     self.redraw(cx);
                     cx.new_next_frame();
                 }
             }
             Event::MouseLeave(_) => {
+                // Stop dragging and clear hover
+                self.dragging_index = None;
                 if self.hovered_index.is_some() {
                     self.hovered_index = None;
                     self.ripple_target = 0.0;
@@ -196,6 +289,7 @@ impl Widget for PackedBubbleChart {
             self.animation_started = false;
             self.animator.reset();
             self.ripple_progress = 0.0;
+            self.ripple_velocity = 0.0;
             self.ripple_target = 0.0;
             self.ripple_center = None;
         }
@@ -221,10 +315,8 @@ impl Widget for PackedBubbleChart {
 
         // Get ripple center for effect (use stored center for smooth animation)
         let ripple_center = self.ripple_center;
-        let ripple_amount = self.ripple_progress;
-
-        // Apply easing to ripple for smoother feel
-        let eased_ripple = ease_out_cubic(ripple_amount);
+        // Spring physics naturally handles easing, can overshoot > 1.0 for bounce effect
+        let ripple_amount = self.ripple_progress.max(0.0);
 
         // Draw all bubbles with staggered animation
         let bubble_count = self.bubbles.len();
@@ -238,11 +330,12 @@ impl Widget for PackedBubbleChart {
             let mut bx = bubble.x;
             let mut by = bubble.y;
 
-            // Check if this bubble is hovered
+            // Check if this bubble is hovered or dragged
             let is_hovered = self.hovered_index == Some(i);
+            let is_dragged = self.dragging_index == Some(i);
 
             // Apply ripple effect: push non-hovered bubbles away from ripple center
-            if !is_hovered && eased_ripple > 0.001 {
+            if !is_hovered && ripple_amount > 0.001 {
                 if let Some((hx, hy, hr)) = ripple_center {
                     let dx = bx - hx;
                     let dy = by - hy;
@@ -252,7 +345,7 @@ impl Widget for PackedBubbleChart {
                         // Calculate push strength (stronger when closer)
                         let falloff = 1.0 - (dist / RIPPLE_RADIUS);
                         let falloff = falloff * falloff; // Quadratic falloff for smoother effect
-                        let push = RIPPLE_STRENGTH * falloff * (1.0 + hr * 3.0) * eased_ripple;
+                        let push = RIPPLE_STRENGTH * falloff * (1.0 + hr * 3.0) * ripple_amount;
 
                         // Normalize direction and apply push
                         let nx = dx / dist;
@@ -271,12 +364,22 @@ impl Widget for PackedBubbleChart {
             // Animate radius from 0 to target
             let mut radius = target_radius * bubble_progress;
 
-            // Apply hover effect: scale up and brighten (also animated)
+            // Apply hover/drag effects
             let mut color = bubble.color;
-            if is_hovered && bubble_progress > 0.5 {
-                let hover_scale = 1.0 + 0.08 * eased_ripple; // Animate scale
+            if is_dragged {
+                // Dragged bubble: larger scale, slightly transparent, brighter
+                radius *= 1.12;
+                color = vec4(
+                    (color.x + 0.2).min(1.0),
+                    (color.y + 0.2).min(1.0),
+                    (color.z + 0.2).min(1.0),
+                    0.9,
+                );
+            } else if is_hovered && bubble_progress > 0.5 {
+                // Hover effect: scale up and brighten (also animated)
+                let hover_scale = 1.0 + 0.08 * ripple_amount; // Animate scale
                 radius *= hover_scale;
-                let brighten = 0.15 * eased_ripple as f32;
+                let brighten = 0.15 * ripple_amount as f32;
                 color = vec4(
                     (color.x + brighten).min(1.0),
                     (color.y + brighten).min(1.0),
@@ -348,11 +451,6 @@ impl Widget for PackedBubbleChart {
 
         DrawStep::done()
     }
-}
-
-// Easing function for smooth ripple
-fn ease_out_cubic(t: f64) -> f64 {
-    1.0 - (1.0 - t).powi(3)
 }
 
 impl PackedBubbleChart {
@@ -491,6 +589,82 @@ impl PackedBubbleChart {
         }
 
         None
+    }
+
+    /// Run collision physics to push overlapping bubbles apart
+    /// Returns true if any bubble moved significantly
+    fn run_collision_physics(&mut self) -> bool {
+        if self.bubbles.is_empty() {
+            return false;
+        }
+
+        // Initialize velocities if needed
+        if self.bubble_velocities.len() != self.bubbles.len() {
+            self.bubble_velocities = vec![dvec2(0.0, 0.0); self.bubbles.len()];
+        }
+
+        let n = self.bubbles.len();
+        let mut has_motion = false;
+
+        // Calculate collision forces between all pairs
+        for i in 0..n {
+            for j in (i + 1)..n {
+                let dx = self.bubbles[j].x - self.bubbles[i].x;
+                let dy = self.bubbles[j].y - self.bubbles[i].y;
+                let dist = (dx * dx + dy * dy).sqrt();
+                let min_dist = self.bubbles[i].radius + self.bubbles[j].radius;
+
+                // Check for overlap
+                if dist < min_dist && dist > 0.0001 {
+                    let overlap = min_dist - dist;
+                    let nx = dx / dist;
+                    let ny = dy / dist;
+
+                    // Push strength based on overlap
+                    let push = overlap * COLLISION_STRENGTH * 0.5;
+
+                    // Skip the dragged bubble - don't apply forces to it
+                    if self.dragging_index != Some(i) {
+                        self.bubble_velocities[i].x -= nx * push;
+                        self.bubble_velocities[i].y -= ny * push;
+                    }
+                    if self.dragging_index != Some(j) {
+                        self.bubble_velocities[j].x += nx * push;
+                        self.bubble_velocities[j].y += ny * push;
+                    }
+                }
+            }
+        }
+
+        // Apply velocities and damping
+        for i in 0..n {
+            // Skip dragged bubble
+            if self.dragging_index == Some(i) {
+                continue;
+            }
+
+            let v = &self.bubble_velocities[i];
+            let speed = (v.x * v.x + v.y * v.y).sqrt();
+
+            if speed > 0.0001 {
+                // Apply velocity to position
+                self.bubbles[i].x += v.x;
+                self.bubbles[i].y += v.y;
+
+                // Clamp to boundaries
+                let r = self.bubbles[i].radius;
+                self.bubbles[i].x = self.bubbles[i].x.clamp(r + BOUNDARY_PADDING, 1.0 - r - BOUNDARY_PADDING);
+                self.bubbles[i].y = self.bubbles[i].y.clamp(r + BOUNDARY_PADDING, 1.0 - r - BOUNDARY_PADDING);
+
+                // Apply damping
+                self.bubble_velocities[i].x *= VELOCITY_DAMPING;
+                self.bubble_velocities[i].y *= VELOCITY_DAMPING;
+
+                has_motion = true;
+            }
+        }
+
+        has_motion
     }
 }
 
