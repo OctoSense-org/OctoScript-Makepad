@@ -1,0 +1,15 @@
+[package]
+name = "makepad-plot"
+version = "0.1.0"
+edition = "2021"
+description = "Matplotlib-style plotting library for Makepad"
+license = "MIT"
+autoexamples = false
+
+[dependencies]
+makepad-widgets = { git = "https://github.com/wyeworks/makepad", rev = "53b2e5c84" }
+math_widget = { git = "https://github.com/wyeworks/makepad", rev = "53b2e5c84" }
+
+[[bin]]
+name = "plot_demo"
+path = "examples/plot_demo.rs"
