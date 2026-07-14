@@ -1,14 +1,13 @@
 [package]
 name = "makepad-plot"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "Matplotlib-style plotting library for Makepad"
+description = "Matplotlib-style plotting library for Makepad 2.0 (Splash)"
 license = "MIT"
 autoexamples = false
 
 [dependencies]
-makepad-widgets = { git = "https://github.com/wyeworks/makepad", rev = "53b2e5c84" }
-math_widget = { git = "https://github.com/wyeworks/makepad", rev = "53b2e5c84" }
+makepad-widgets = { path = "../makepad/widgets" }
 
 [[bin]]
 name = "plot_demo"
