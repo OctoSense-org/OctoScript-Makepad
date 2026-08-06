@@ -334,6 +334,21 @@ fn l0_field(text, placeholder, target) {
             size: 15, color: l0_text}
 }
 
+// A text node that carries its own LIVE CALL, so the renderer can refresh it in
+// place instead of rebuilding the card around it.
+//
+// The kit evaluates a `sys.*` call to a string, and that string is all the renderer
+// would otherwise see — so refreshing it meant re-resolving the ledger and re-parsing
+// the whole document. On a driving screen that lands inside a frame: measured on a
+// OnePlus 6, frame hitches and card re-resolves correlate 1:1, up to 327 ms of frozen
+// map. The app this replaces never paid that: its card named its widgets and set
+// their text from `fn tick()`. `action` carries the call so the renderer can emit
+// the same thing.
+fn l0_live(node, call) {
+    node.action = call
+    return node
+}
+
 fn l0_tap(target, node) {
     return {t: "column", fillw: 1, tapto: target, c: [node]}
 }
