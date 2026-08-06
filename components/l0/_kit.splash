@@ -366,7 +366,23 @@ fn l0_tap_fit(target, node) {
 // hide the map". 452 is that card's panel size, for a screen with content above
 // the map; 812 is its full-bleed size. The first version here asked for 240 and
 // drew a correct map in a letterbox.
-fn l0_map(mode, zoom, lat, lon, poly) {
+// `gpsfollow` is 1 when the centre is the DEVICE'S OWN FIX.
+//
+// A kit value is evaluated when the ledger resolves, so a baked centre only moves
+// when the whole card re-resolves — realize, lower, evaluate, rebuild the widget
+// tree — and at a fix a second that is the entire card every second. The app this
+// replaces avoided exactly that: its drive screen is a no-rebuild `fn tick()` and
+// its contract says never to introduce anything that forces a rebuild while
+// driving. Measured against it on a OnePlus 6: 10-68% CPU with the fix moving.
+//
+// So the renderer is told, and emits the live call for the centre instead of the
+// number — the camera then follows per frame with no rebuild at all. `action`
+// carries it because it is a string slot the map does not otherwise use.
+fn l0_map(mode, zoom, lat, lon, poly, gpsfollow) {
+    if gpsfollow == 1 {
+        return {t: "navmap", fillw: 1, h: 812, action: "gpsfollow",
+                variant: mode, zoom: zoom, lat: lat, lon: lon, polyline: poly}
+    }
     return {t: "navmap", fillw: 1, h: 812,
             variant: mode, zoom: zoom, lat: lat, lon: lon, polyline: poly}
 }
