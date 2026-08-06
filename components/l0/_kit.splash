@@ -43,7 +43,18 @@ let l0_scrim    = argb(102,   0,   0,   0)   // #00000066 over a photo
 // over a map the road labels read straight through whatever the card put there.
 // The colour is the shipping nav card's own sheet.
 let l0_sheet    = argb(255,  15,  22,  32)   // #0f1620 over a map
-let l0_panel    = argb( 18, 255, 255, 255)   // #ffffff12 panel fill
+// NOT `l0_panel`, and the name is the whole point.
+//
+// `fn l0_panel(kids)` is a ROLE in this file, so a palette entry of the same name
+// is shadowed by it from the function's declaration onward — and a function
+// coerced to a colour is 0. Every use after `fn l0_panel` silently became fully
+// transparent: `l0_chip` and `l0_field` both asked for this fill and both got
+// nothing. Uses INSIDE `l0_panel`'s own body still resolved to the colour, which
+// is why panels looked right and chips did not, and why it read as a chip bug.
+//
+// Found by live-testing a nav card on a phone: Go and End rendered as bare text
+// with no button under them. No unit test could see it — zero is a valid colour.
+let l0_fill     = argb( 18, 255, 255, 255)   // #ffffff12 panel fill
 let l0_active   = argb( 56, 255, 255, 255)   // #ffffff38 selected chip
 let l0_hairline = argb( 26, 255, 255, 255)   // #ffffff1a divider
 let l0_text     = argb(255, 255, 255, 255)   // #ffffff   primary
@@ -240,7 +251,7 @@ fn l0_grid(kids)     { return {t: "grid", fillw: 1, spacing: 10, c: kids} }
 
 // A raised surface holding related content.
 fn l0_panel(kids) {
-    return {t: "card", fillw: 1, bg: l0_panel, radius: 14,
+    return {t: "card", fillw: 1, bg: l0_fill, radius: 14,
             padx: 14, pady: 12, margintop: 16, c: kids}
 }
 
@@ -248,25 +259,40 @@ fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
 
 // A labelled value — the unit a detail grid is made of.
 fn l0_tile(label, value) {
-    return {t: "card", fillw: 1, bg: l0_panel, radius: 12, padx: 12, pady: 10,
+    return {t: "card", fillw: 1, bg: l0_fill, radius: 12, padx: 12, pady: 10,
             c: [ l0_caption(label), l0_gap(4), l0_value(value) ]}
 }
 
 // A selectable token. `on` is the card's own notion of selected — without it
 // every chip in a range picker rendered identically and the card could not show
 // which was chosen.
+// A chip, selected or not.
+//
+// BRANCH AND RETURN rather than assign-then-patch. This was
+//
+//     let fill = l0_panel
+//     if on == 1 { fill = l0_active }
+//
+// and the reassignment does not take in this VM: `fill` arrived at the node as 0,
+// so every UNSELECTED chip was fully transparent. On a dark page that is a label
+// with no button under it, which is what it looked like — the stock card's four
+// unselected range chips, and a nav card's Go and End, all rendered as bare text.
+// Nothing was missing and nothing was wrong except that none of them looked
+// tappable. Found by live-testing on a phone, invisible to every unit test,
+// because a colour of zero is a perfectly valid colour.
+//
+// A chip is INTRINSIC — as wide as its label plus its padding. Saying so matters
+// because a tappable chip is wrapped in a fit-width hit target, and a fit wrapper
+// around a child that never stated a width collapsed to nothing: all five range
+// chips vanished from the stock detail, leaving a chart with no way to change its
+// range and no sign that anything was gone.
 fn l0_chip(s, on) {
-    let fill = l0_panel
-    let ink  = l0_dim
-    if on == 1 { fill = l0_active }
-    if on == 1 { ink = l0_text }
-    // A chip is INTRINSIC — as wide as its label plus its padding. Saying so
-    // matters because a tappable chip is wrapped in a fit-width hit target, and
-    // a fit wrapper around a child that never stated a width collapsed to
-    // nothing: all five range chips vanished from the stock detail, leaving a
-    // chart with no way to change its range and no sign that anything was gone.
-    return {t: "chip", bg: fill, radius: 12, padx: 10, pady: 5, selected: on,
-            fitw: 1, fith: 1, c: [ l0_txt(s, 14, 500, ink) ]}
+    if on == 1 {
+        return {t: "chip", bg: l0_active, radius: 12, padx: 10, pady: 5, selected: 1,
+                fitw: 1, fith: 1, c: [ l0_txt(s, 14, 500, l0_text) ]}
+    }
+    return {t: "chip", bg: l0_fill, radius: 12, padx: 10, pady: 5, selected: 0,
+            fitw: 1, fith: 1, c: [ l0_txt(s, 14, 500, l0_dim) ]}
 }
 
 fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
@@ -300,8 +326,12 @@ fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
 // on text that has not been typed yet.
 fn l0_field(text, placeholder, target) {
     return {t: "input", fillw: 1, h: 48, text: text, placeholder: placeholder,
-            tapto: target, bg: l0_panel, radius: 12, padx: 14,
-            size: 17, color: l0_text}
+            tapto: target, bg: l0_fill, radius: 12, padx: 14,
+            // 15, not 17. A place name is the longest string a card puts in a
+            // fixed-width box, and at 17 "Saratoga High School" rendered as
+            // "Saratoga High Schoc" — clipped inside its own field, with no
+            // ellipsis to say so. The shipping nav card's search input is 15.
+            size: 15, color: l0_text}
 }
 
 fn l0_tap(target, node) {
@@ -396,6 +426,6 @@ fn l0_stockplot(symbol, range) {
 }
 
 fn l0_unsupported(role) {
-    return {t: "card", fillw: 1, bg: l0_panel, radius: 8, padx: 10, pady: 8,
+    return {t: "card", fillw: 1, bg: l0_fill, radius: 8, padx: 10, pady: 8,
             c: [ l0_caption("[" + role + " has no kind in this renderer]") ]}
 }
