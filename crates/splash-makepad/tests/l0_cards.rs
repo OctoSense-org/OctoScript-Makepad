@@ -126,7 +126,14 @@ fn a_card_carries_its_text_through_the_kit() {
     let mut out = Vec::new();
     words(&build(NEWS, news_data()), &mut out);
     let text = out.join(" | ");
-    for expected in ["HACKER NEWS", "Top Stories", "Rust 1.95"] {
+    // The card's OWN words, from its `copy` declarations. A seeded headline used
+    // to be checked here too and is not any more: `sys.news` is answered live, so
+    // a story title lowers to the CALL rather than to the blob this test hands in,
+    // and a bare VM has no `sys` to run it. What this test guards is that words
+    // survive the kit at all — a right-sized tree of empty nodes would pass the
+    // count check beside it — and the card's own copy proves that without
+    // depending on a value the backend now fetches.
+    for expected in ["HACKER NEWS", "Top Stories"] {
         assert!(text.contains(expected), "{expected:?} missing from: {text}");
     }
 }
