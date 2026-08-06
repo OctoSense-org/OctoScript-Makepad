@@ -38,6 +38,11 @@ fn argb(a, r, g, b) { return ((a * 256 + r) * 256 + g) * 256 + b }
 // not a near-white fill.
 let l0_base     = argb(255,  10,  14,  20)   // #0a0e14  page
 let l0_scrim    = argb(102,   0,   0,   0)   // #00000066 over a photo
+// A sheet floating over a MAP, and the one fill in this palette that must be
+// fully opaque. `l0_panel` is 7% white, which is a window rather than a surface:
+// over a map the road labels read straight through whatever the card put there.
+// The colour is the shipping nav card's own sheet.
+let l0_sheet    = argb(255,  15,  22,  32)   // #0f1620 over a map
 let l0_panel    = argb( 18, 255, 255, 255)   // #ffffff12 panel fill
 let l0_active   = argb( 56, 255, 255, 255)   // #ffffff38 selected chip
 let l0_hairline = argb( 26, 255, 255, 255)   // #ffffff1a divider
@@ -184,6 +189,36 @@ fn l0_surface_photo(src, kids) {
         {t: "image", src: src, fit: 2, fillw: 1, fillh: 1},
         {t: "column", fillw: 1, fillh: 1, bg: l0_scrim},
         {t: "column", fillw: 1, fillh: 1, padx: 20, padtop: 54, padbottom: 24, c: kids}
+    ]}
+}
+
+// A page whose background is a MAP, with the card's own content floating over it
+// as an opaque sheet.
+//
+// Every number here came off `a2app/apps/nav`, which has four maps and puts none
+// of them in a column. A `MapView` is a fixed-pixel full-bleed surface that paints
+// its route through the GPU nav projection rather than inside a laid-out rect, so
+// stacked in a column beneath the card's content it draws straight over it —
+// measured, the trip's FROM/TO fields, duration and Go button were invisible under
+// the map, and in the driving view the route ribbon cut the turn banner in half.
+//
+// FIXED 812, not `fillh`: `Fill` inside a `Fit` parent resolves to 0 and a card is
+// an item in a chat list, so filling rendered an entirely empty screen.
+//
+// The sheet is OPAQUE because the ordinary panel is 7% white, which over a map is
+// a window — the map's own road labels read straight through the trip. And it sits
+// at the BOTTOM because `update_plan_preview_camera` fits the route into the band
+// ABOVE the summary sheet, so a sheet at the top lands exactly on the route it was
+// making room for. 76 rather than the shipping card's 30 at the bottom: that card
+// is full-screen, and an L0 card sits under the app's composer bar.
+fn l0_surface_map(map, kids) {
+    return {t: "stack", fillw: 1, h: 812, bg: l0_base, c: [
+        map,
+        {t: "column", fillw: 1, fillh: 1, aligny: 1.0, c: [
+            {t: "column", fillw: 1, fith: 1, bg: l0_sheet, radius: 22,
+             marginx: 8, marginbottom: 76,
+             padx: 14, padtop: 12, padbottom: 14, c: kids}
+        ]}
     ]}
 }
 
