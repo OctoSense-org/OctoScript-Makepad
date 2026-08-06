@@ -28,4 +28,11 @@
 #   card     nodes
 news         27
 stock        12
-weather      60
+weather      66
+
+# CHANGING A NUMBER HERE. weather went 60 → 66 when the card gained a `Satellite`
+# cloud pane and a `Row` that stops filling, and swapped its visibility tile for
+# precipitation. Six nodes is the honest cost of those. The number was raised only
+# after BOTH evaluators independently reported 66 — they agreed with each other and
+# disagreed with this file, which is the one direction that means the fixture moved
+# rather than a walk drifting. Never raise it to whatever one evaluator says.
