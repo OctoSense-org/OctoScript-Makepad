@@ -362,6 +362,14 @@ pub struct Attrs {
     pub zoom: Option<f64>,
     pub tilt: Option<f64>,
     pub rotation: Option<f64>,
+    /// The route a map draws, as an encoded polyline5.
+    ///
+    /// Geometry rather than a query, because the tree carries values and not
+    /// requests: whoever built this node already resolved the route, and a
+    /// backend that re-fetched from an origin and destination would fetch again
+    /// on every rebuild. Which member of the map family this is — route preview,
+    /// chase camera, flat — travels in `variant`, like every other family.
+    pub polyline: Option<String>,
     /// Absolute position for a surface the host composites (a web slot). The
     /// tree does not know where a node lands, so a screen that wants one says.
     pub x: Option<f64>,
