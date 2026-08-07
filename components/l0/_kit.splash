@@ -252,10 +252,12 @@ fn l0_surface_map(map, topkids, kids) {
     // bar and 10 at the sides are copied; 76 at the bottom replaces their 10, because
     // their card is full-screen and an L0 card is an item in a chat list with the
     // app's composer bar over it. Measured with 10: the sheet rendered below the
-    // visible area, cut off behind "Reconnecting…".
+    // visible area, cut off behind "Reconnecting…". Measured with 76: it cleared the
+    // bar by ~70 logical units and floated in the middle of the map. 52 is the bar's
+    // own height plus a hair, which is what "at the bottom" means here.
     return {t: "stack", fillw: 1, h: 812, bg: l0_base, c: [
         map,
-        {t: "column", fillw: 1, fillh: 1, padx: 10, padtop: 44, padbottom: 76, c: [
+        {t: "column", fillw: 1, fillh: 1, padx: 10, padtop: 44, padbottom: 52, c: [
             {t: "column", fillw: 1, fith: 1, bg: l0_sheet, radius: 18,
              padx: 14, padtop: 10, padbottom: 10, c: topkids},
             // The spacer. This is what puts the sheet at the bottom.
