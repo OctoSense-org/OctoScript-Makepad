@@ -383,6 +383,14 @@ pub struct Attrs {
     /// resolved to draw the route, so a backend that re-derived them would resolve
     /// the same places twice and could disagree with the line on screen.
     pub markers: Option<String>,
+    /// What the drawn route COSTS, labelled on the path: two lines separated by a
+    /// pipe, in practice a duration over a distance. On the route rather than in a
+    /// sheet, because that is where it answers the question being asked of it.
+    ///
+    /// `route_badge`, not `badge`: this struct already has one, for the count on a
+    /// component, and a route's cost is not that. Two meanings under one name is how
+    /// a field ends up carrying whichever the last writer meant.
+    pub route_badge: Option<String>,
     /// Absolute position for a surface the host composites (a web slot). The
     /// tree does not know where a node lands, so a screen that wants one says.
     pub x: Option<f64>,
