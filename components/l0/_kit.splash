@@ -249,7 +249,16 @@ fn l0_reveal(kids) {
     return {t: "column", fillw: 1, action: "reveal", c: kids}
 }
 
-fn l0_surface_map(map, topkids, kids) {
+// The top band, or nothing at all when nothing is docked there. `has` comes from
+// the LOWERING because that is what knows whether the card docked anything; the kit
+// has no way to ask a list its length.
+fn l0_band(kids, has) {
+    if has == 0 { return {t: "column", fillw: 1, h: 0} }
+    return {t: "column", fillw: 1, fith: 1, bg: l0_sheet, radius: 18,
+            padx: 14, padtop: 10, padbottom: 10, c: kids}
+}
+
+fn l0_surface_map(map, topkids, kids, hastop) {
     // TWO LAYERS, not four — the shape `a2app/apps/nav` uses for its driving screen.
     //
     // An earlier version stacked the map, a top-aligned layer and a bottom-aligned
@@ -275,8 +284,11 @@ fn l0_surface_map(map, topkids, kids) {
     return {t: "stack", fillw: 1, h: 812, bg: l0_base, c: [
         map,
         {t: "column", fillw: 1, fillh: 1, padx: 10, padtop: 44, padbottom: 40, c: [
-            {t: "column", fillw: 1, fith: 1, bg: l0_sheet, radius: 18,
-             padx: 14, padtop: 10, padbottom: 10, c: topkids},
+            // EMPTY MEANS ABSENT. A screen that docks nothing at the top still had
+            // the band drawn for it — a dark pill floating over the map saying
+            // nothing, on every planning screen. A container with no children is not
+            // a container.
+            l0_band(topkids, hastop),
             // The spacer. This is what puts the sheet at the bottom.
             {t: "column", fillw: 1, fillh: 1},
             // CENTRED, like theirs: `remmin`/`remrest` are `align: Align{x: 0.5}`
@@ -352,6 +364,14 @@ fn l0_chip_danger(s) {
     return {t: "chip", bg: l0_danger, radius: 12, padx: 10, pady: 12,
             fillw: 1, alignx: 0.5, aligny: 0.5,
             c: [ l0_txt(s, 11, 500, l0_danger_i) ]}
+}
+
+// The action a screen is FOR. `tone` says what an action means and the theme says
+// how loud that is — a primary one is twice the type and a full round target, which
+// is what an icon needs to be tappable at arm's length in a car.
+fn l0_chip_primary(s) {
+    return {t: "chip", bg: l0_active, radius: 26, padx: 18, pady: 10, selected: 0,
+            fitw: 1, fith: 1, c: [ l0_txt(s, 20, 600, l0_text) ]}
 }
 
 fn l0_chip(s, on) {
