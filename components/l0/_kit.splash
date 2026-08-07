@@ -253,11 +253,14 @@ fn l0_surface_map(map, topkids, kids) {
     // their card is full-screen and an L0 card is an item in a chat list with the
     // app's composer bar over it. Measured with 10: the sheet rendered below the
     // visible area, cut off behind "Reconnecting…". Measured with 76: it cleared the
-    // bar by ~70 logical units and floated in the middle of the map. 52 is the bar's
-    // own height plus a hair, which is what "at the bottom" means here.
+    // bar by ~70 logical units and floated in the middle of the map. 52 still left
+    // 258px — 11% of the screen — of empty map between the sheet and the edge, which
+    // reads as the sheet hovering rather than resting. 14 put it UNDER the chrome — the copy/share row and the gesture bar overlay the
+    // bottom ~110px, and the sheet disappeared behind them. 40 rests it just clear:
+    // 52 left 258px of empty map below the sheet, 30 and 14 put it under the chrome.
     return {t: "stack", fillw: 1, h: 812, bg: l0_base, c: [
         map,
-        {t: "column", fillw: 1, fillh: 1, padx: 10, padtop: 44, padbottom: 52, c: [
+        {t: "column", fillw: 1, fillh: 1, padx: 10, padtop: 44, padbottom: 40, c: [
             {t: "column", fillw: 1, fith: 1, bg: l0_sheet, radius: 18,
              padx: 14, padtop: 10, padbottom: 10, c: topkids},
             // The spacer. This is what puts the sheet at the bottom.
@@ -266,7 +269,10 @@ fn l0_surface_map(map, topkids, kids) {
             // and the End bar spans the sheet. A driving summary is read at a
             // glance, and a glance goes to the middle.
             {t: "column", fillw: 1, fith: 1, bg: l0_sheet, radius: 22,
-             padx: 14, padtop: 8, padbottom: 12, alignx: 0.5,
+             // Tight. The sheet sits over the map a driver is reading, so every
+             // unit of its height is map they cannot see: it covered 22% of the
+             // screen expanded.
+             padx: 14, padtop: 4, padbottom: 8, alignx: 0.5,
              action: "sheet", c: kids}
         ]}
     ]}
