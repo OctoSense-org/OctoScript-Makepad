@@ -43,6 +43,9 @@ let l0_scrim    = argb(102,   0,   0,   0)   // #00000066 over a photo
 // over a map the road labels read straight through whatever the card put there.
 // The colour is the shipping nav card's own sheet.
 let l0_sheet    = argb(255,  15,  22,  32)   // #0f1620 over a map
+// The one action that ENDS something. Values from the shipping nav card's `endrow`.
+let l0_danger   = argb(255, 122,  31,  31)   // #7a1f1f destructive fill
+let l0_danger_i = argb(255, 255, 217, 217)   // #ffd9d9 its ink
 // NOT `l0_panel`, and the name is the whole point.
 //
 // `fn l0_panel(kids)` is a ROLE in this file, so a palette entry of the same name
@@ -257,8 +260,12 @@ fn l0_surface_map(map, topkids, kids) {
              padx: 14, padtop: 10, padbottom: 10, c: topkids},
             // The spacer. This is what puts the sheet at the bottom.
             {t: "column", fillw: 1, fillh: 1},
+            // CENTRED, like theirs: `remmin`/`remrest` are `align: Align{x: 0.5}`
+            // and the End bar spans the sheet. A driving summary is read at a
+            // glance, and a glance goes to the middle.
             {t: "column", fillw: 1, fith: 1, bg: l0_sheet, radius: 22,
-             padx: 14, padtop: 8, padbottom: 12, action: "sheet", c: kids}
+             padx: 14, padtop: 8, padbottom: 12, alignx: 0.5,
+             action: "sheet", c: kids}
         ]}
     ]}
 }
@@ -316,6 +323,15 @@ fn l0_tile(label, value) {
 // around a child that never stated a width collapsed to nothing: all five range
 // chips vanished from the stock detail, leaving a chart with no way to change its
 // range and no sign that anything was gone.
+// The action that ENDS something: full width, red, centred — the shipping nav card's
+// `endrow`. A card says `tone: .danger`; which colour that is, and that it spans the
+// sheet rather than hugging its label, is the theme's to decide.
+fn l0_chip_danger(s) {
+    return {t: "chip", bg: l0_danger, radius: 12, padx: 10, pady: 12,
+            fillw: 1, alignx: 0.5, aligny: 0.5,
+            c: [ l0_txt(s, 15, 500, l0_danger_i) ]}
+}
+
 fn l0_chip(s, on) {
     if on == 1 {
         return {t: "chip", bg: l0_active, radius: 12, padx: 10, pady: 5, selected: 1,
