@@ -300,7 +300,10 @@ fn l0_surface_map(map, topkids, kids, hastop) {
              // Tight. The sheet sits over the map a driver is reading, so every
              // unit of its height is map they cannot see: it covered 22% of the
              // screen expanded.
-             padx: 14, padtop: 4, padbottom: 8, alignx: 0.5,
+             // 4/8 was tuned for the DRIVE sheet, which is a handle over two lines
+             // of text. A planning sheet ends in a button, and 8 left it 7px off the
+             // sheet's own edge — reading as clipped whether or not it was.
+             padx: 14, padtop: 10, padbottom: 18, alignx: 0.5,
              action: "sheet", c: kids}
         ]}
     ]}
@@ -375,8 +378,12 @@ fn l0_chip_primary(s) {
     // GREEN, and the card does not say so. `tone: .primary` says "this is the action
     // the screen is for"; that it reads as go — the same green iOS Maps uses, the
     // same green this palette already spends on a rise — is the theme's answer.
-    return {t: "chip", bg: l0_go, radius: 14, padx: 22, pady: 14, selected: 0,
-            fitw: 1, fith: 1, c: [ l0_txt(s, 20, 700, l0_ondark) ]}
+    // Sized like a button, not like a banner. At 20pt with 22/14 of padding this
+    // came out roughly 250x110 on a 1080-wide screen — a quarter of the sheet for one
+    // word. iOS Maps' GO is about 90x60 on a wider screen; 15pt with 24/9 lands in
+    // proportion and still gives a thumb somewhere generous to land.
+    return {t: "chip", bg: l0_go, radius: 14, padx: 24, pady: 9, selected: 0,
+            fitw: 1, fith: 1, c: [ l0_txt(s, 15, 700, l0_ondark) ]}
 }
 
 fn l0_chip(s, on) {
@@ -498,13 +505,13 @@ fn l0_mapbtn(glyph, act) {
             c: [l0_title(glyph)]}
 }
 
-fn l0_map(mode, zoom, lat, lon, poly, pins, controls) {
+fn l0_map(mode, zoom, lat, lon, poly, pins, controls, badge) {
     // `pins` stands the trip's own endpoints on the route: green origin, blue
     // stops, red destination. Derived from the SAME coordinates as `poly`, so a
     // pin cannot mark a place the drawn line does not pass.
     let m = {t: "navmap", fillw: 1, h: 812,
              variant: mode, zoom: zoom, lat: lat, lon: lon, polyline: poly,
-             markers: pins}
+             markers: pins, route_badge: badge}
     if controls == "none" { return m }
     // TOP-RIGHT, clear of the status bar and of the sheet at the bottom — where the
     // card being replaced puts them, and where a right thumb reaches without
