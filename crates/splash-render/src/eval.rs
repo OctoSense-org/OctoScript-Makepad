@@ -58,6 +58,7 @@ fn walk(vm: &mut ScriptVm, value: ScriptValue, depth: usize) -> Option<UiNode> {
         id: string_prop(vm, value, id!(id)),
         tapto: string_prop(vm, value, id!(tapto)),
         src: string_prop(vm, value, id!(src)),
+        changeto: string_prop(vm, value, id!(changeto)),
         polyline: string_prop(vm, value, id!(polyline)),
         markers: string_prop(vm, value, id!(markers)),
         fit: int_prop(vm, value, id!(fit)),

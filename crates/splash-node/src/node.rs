@@ -369,6 +369,12 @@ pub struct Attrs {
     /// backend that re-fetched from an origin and destination would fetch again
     /// on every rebuild. Which member of the map family this is — route preview,
     /// chase camera, flat — travels in `variant`, like every other family.
+    /// Where a field sends what has been typed SO FAR, per keystroke.
+    ///
+    /// Separate from `tapto`, which a field uses for its commit: the two carry
+    /// different events and fire at different moments. A search box wants both —
+    /// results while you type, a destination when you press return.
+    pub changeto: Option<String>,
     pub polyline: Option<String>,
     /// The pins a map stands on its route: `"lat,lon,kind;…"`, kind 0 origin,
     /// 1 an intermediate stop, 2 the destination.

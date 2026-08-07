@@ -378,7 +378,7 @@ fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
 // rather than a box around its current contents, and every working input in
 // this app states one — a fitted height also leaves the row's height dependent
 // on text that has not been typed yet.
-fn l0_field(text, placeholder, target) {
+fn l0_field(text, placeholder, target, changing) {
     // PADDED, not fixed-height. `h: 48` put the text at the top of a 48px box and
     // every place name floated above the pill it was supposed to sit inside. Neither
     // the container's `align` nor the input's `label_align` moved it — the run is laid
@@ -388,7 +388,7 @@ fn l0_field(text, placeholder, target) {
     // construction: 14 above and below a 15pt run lands at the same 48 the fixed
     // height was asking for, and it stays centred if the size ever changes.
     return {t: "input", fillw: 1, text: text, placeholder: placeholder,
-            tapto: target, bg: l0_fill, radius: 12, padx: 14,
+            tapto: target, changeto: changing, bg: l0_fill, radius: 12, padx: 14,
             padtop: 14, padbottom: 14,
             // 15, not 17. A place name is the longest string a card puts in a
             // fixed-width box, and at 17 "Saratoga High School" rendered as
