@@ -452,13 +452,58 @@ fn l0_tap_fit(target, node) {
 // a property, and routing it through one froze the camera. The centre here is the
 // trip's, which is what a preview needs and what a follow camera falls back to for
 // the frame before the first fix lands.
-fn l0_map(mode, zoom, lat, lon, poly, pins) {
+// One control on a map: a fixed square that carries a glyph and an ACTION the
+// backend turns into a call on the map. The card never names the call.
+fn l0_mapbtn(glyph, act) {
+    return {t: "column", w: 38, h: 38, alignx: 0.5, aligny: 0.5, action: act,
+            c: [l0_title(glyph)]}
+}
+
+fn l0_map(mode, zoom, lat, lon, poly, pins, controls) {
     // `pins` stands the trip's own endpoints on the route: green origin, blue
     // stops, red destination. Derived from the SAME coordinates as `poly`, so a
     // pin cannot mark a place the drawn line does not pass.
-    return {t: "navmap", fillw: 1, h: 812,
-            variant: mode, zoom: zoom, lat: lat, lon: lon, polyline: poly,
-            markers: pins}
+    let m = {t: "navmap", fillw: 1, h: 812,
+             variant: mode, zoom: zoom, lat: lat, lon: lon, polyline: poly,
+             markers: pins}
+    if controls == "none" { return m }
+    // TOP-RIGHT, clear of the status bar and of the sheet at the bottom — where the
+    // card being replaced puts them, and where a right thumb reaches without
+    // covering the route.
+    let pill = {t: "column", fitw: 1, fith: 1, bg: l0_sheet, radius: 14, c: [
+        l0_mapbtn("+", "zoomin"),
+        l0_rule(),
+        l0_mapbtn("\u{2212}", "zoomout")
+    ]}
+    if controls == "zoom" {
+        return {t: "stack", fillw: 1, h: 812, c: [
+            m,
+            {t: "column", fillw: 1, fillh: 1, padx: 10, padtop: 56,
+             alignx: 1.0, aligny: 0.0, c: [pill]}
+        ]}
+    }
+    return {t: "stack", fillw: 1, h: 812, c: [
+        m,
+        {t: "column", fillw: 1, fillh: 1, padx: 10, padtop: 56,
+         alignx: 1.0, aligny: 0.0, c: [
+            pill,
+            l0_gap(10),
+            {t: "column", fitw: 1, fith: 1, bg: l0_sheet, radius: 19,
+             c: [
+                // DRAWN, not typed. "◎" is U+25CE and the bundled Roboto has no
+                // glyph for it, so the button rendered a tofu box — the L2 card gets
+                // away with the character because it never names a font. A ring is
+                // two circles and needs no font at all.
+                {t: "column", w: 38, h: 38, alignx: 0.5, aligny: 0.5,
+                 action: "recenter", c: [
+                    {t: "column", w: 18, h: 18, radius: 9, bg: l0_text,
+                     alignx: 0.5, aligny: 0.5, c: [
+                        {t: "column", w: 8, h: 8, radius: 4, bg: l0_sheet}
+                     ]}
+                 ]}
+             ]}
+        ]}
+    ]}
 }
 
 // A condition, drawn. `cond` is a NUMBER — the WMO code the forecast returns —
