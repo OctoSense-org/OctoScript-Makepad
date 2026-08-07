@@ -105,11 +105,11 @@ fn l0_hero(s, pt) { return l0_txt(s, pt, 700, l0_text) }
 // them. Moving the layer and restyling at once would make a golden failure
 // ambiguous between "the theme moved" and "the theme is wrong" — so the theme
 // does not move yet. Restyling comes after, against green goldens.
-fn l0_title(s)    { return l0_txt(s, 26, 700, l0_text) }
-fn l0_body(s)     { return l0_para(s, 17, 400, l0_text) }
-fn l0_row_text(s) { return l0_txt(s, 14, 400, l0_soft) }
-fn l0_caption(s)  { return l0_txt(s, 11, 400, l0_dim) }
-fn l0_value(s)    { return l0_txt(s, 20, 600, l0_text) }
+fn l0_title(s)    { return l0_txt(s, 18, 700, l0_text) }
+fn l0_body(s)     { return l0_para(s, 12, 400, l0_text) }
+fn l0_row_text(s) { return l0_txt(s, 10, 400, l0_soft) }
+fn l0_caption(s)  { return l0_txt(s, 8, 400, l0_dim) }
+fn l0_value(s)    { return l0_txt(s, 14, 600, l0_text) }
 
 // A statistic, tinted by direction. `dir` is -1, 0 or 1 — the SIGN, decided by
 // the card, not the colour: red-versus-green is presentation, but "this value
@@ -119,7 +119,7 @@ fn l0_tint(dir) {
     if dir < 0 { return l0_down }
     return l0_text
 }
-fn l0_stat(s, dir) { return l0_txt(s, 14, 600, l0_tint(dir)) }
+fn l0_stat(s, dir) { return l0_txt(s, 10, 600, l0_tint(dir)) }
 
 // Recolour any text by DIRECTION, composed around the role rather than folded
 // into it.
@@ -337,16 +337,16 @@ fn l0_tile(label, value) {
 fn l0_chip_danger(s) {
     return {t: "chip", bg: l0_danger, radius: 12, padx: 10, pady: 12,
             fillw: 1, alignx: 0.5, aligny: 0.5,
-            c: [ l0_txt(s, 15, 500, l0_danger_i) ]}
+            c: [ l0_txt(s, 11, 500, l0_danger_i) ]}
 }
 
 fn l0_chip(s, on) {
     if on == 1 {
         return {t: "chip", bg: l0_active, radius: 12, padx: 10, pady: 5, selected: 1,
-                fitw: 1, fith: 1, c: [ l0_txt(s, 14, 500, l0_text) ]}
+                fitw: 1, fith: 1, c: [ l0_txt(s, 10, 500, l0_text) ]}
     }
     return {t: "chip", bg: l0_fill, radius: 12, padx: 10, pady: 5, selected: 0,
-            fitw: 1, fith: 1, c: [ l0_txt(s, 14, 500, l0_dim) ]}
+            fitw: 1, fith: 1, c: [ l0_txt(s, 10, 500, l0_dim) ]}
 }
 
 fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
@@ -394,7 +394,7 @@ fn l0_field(text, placeholder, target) {
             // fixed-width box, and at 17 "Saratoga High School" rendered as
             // "Saratoga High Schoc" — clipped inside its own field, with no
             // ellipsis to say so. The shipping nav card's search input is 15.
-            size: 15, color: l0_text}
+            size: 11, color: l0_text}
 }
 
 // A text node that carries its own LIVE CALL, so the renderer can refresh it in
