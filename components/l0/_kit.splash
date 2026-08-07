@@ -163,6 +163,20 @@ fn l0_colw(node, col) {
     if col == "rank" { node.w = 28 }
     if col == "day"  { node.w = 44 }
     if col == "temp" { node.w = 52 }
+    // A FORM LABEL: a fixed-width column that RIGHT-aligns what is in it, so the
+    // labels end where the fields begin instead of each one starting its field at
+    // its own x. "FROM" is wider than "TO", so fitting each to its text ragged the
+    // column exactly the way the rank numbers above ragged theirs.
+    //
+    // A WRAPPER, not `alignx` on the text. Alignment positions a widget inside its
+    // parent; it does not move the run inside the widget — the same thing the
+    // backend already learned about `TextInput`, where the container's `align` did
+    // nothing and `label_align` was the property that moved the text. Setting both a
+    // width and an alignment on the label itself left the run starting at the box's
+    // left edge and clipping off its right.
+    if col == "label" {
+        return {t: "column", w: 64, fith: 1, alignx: 1.0, c: [node]}
+    }
     return node
 }
 
