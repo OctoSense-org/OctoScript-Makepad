@@ -452,9 +452,13 @@ fn l0_tap_fit(target, node) {
 // a property, and routing it through one froze the camera. The centre here is the
 // trip's, which is what a preview needs and what a follow camera falls back to for
 // the frame before the first fix lands.
-fn l0_map(mode, zoom, lat, lon, poly) {
+fn l0_map(mode, zoom, lat, lon, poly, pins) {
+    // `pins` stands the trip's own endpoints on the route: green origin, blue
+    // stops, red destination. Derived from the SAME coordinates as `poly`, so a
+    // pin cannot mark a place the drawn line does not pass.
     return {t: "navmap", fillw: 1, h: 812,
-            variant: mode, zoom: zoom, lat: lat, lon: lon, polyline: poly}
+            variant: mode, zoom: zoom, lat: lat, lon: lon, polyline: poly,
+            markers: pins}
 }
 
 // A condition, drawn. `cond` is a NUMBER — the WMO code the forecast returns —

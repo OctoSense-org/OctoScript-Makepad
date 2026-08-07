@@ -370,6 +370,13 @@ pub struct Attrs {
     /// on every rebuild. Which member of the map family this is — route preview,
     /// chase camera, flat — travels in `variant`, like every other family.
     pub polyline: Option<String>,
+    /// The pins a map stands on its route: `"lat,lon,kind;…"`, kind 0 origin,
+    /// 1 an intermediate stop, 2 the destination.
+    ///
+    /// A VALUE for the same reason `polyline` is one. The endpoints were already
+    /// resolved to draw the route, so a backend that re-derived them would resolve
+    /// the same places twice and could disagree with the line on screen.
+    pub markers: Option<String>,
     /// Absolute position for a surface the host composites (a web slot). The
     /// tree does not know where a node lands, so a screen that wants one says.
     pub x: Option<f64>,
