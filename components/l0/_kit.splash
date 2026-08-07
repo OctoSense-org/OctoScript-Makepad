@@ -222,13 +222,43 @@ fn l0_surface_photo(src, kids) {
 // ABOVE the summary sheet, so a sheet at the top lands exactly on the route it was
 // making room for. 76 rather than the shipping card's 30 at the bottom: that card
 // is full-screen, and an L0 card sits under the app's composer bar.
-fn l0_surface_map(map, kids) {
+// Content a swipe reveals. Hidden until then; the renderer wires the toggle.
+//
+// NOT card state. A state change re-resolves the card, re-parses the document and
+// rebuilds the `MapView` inside it — measured at up to 327 ms of frozen map. The
+// shipping nav card toggles `ui.endrow.set_visible` directly for exactly this reason,
+// and `action` is how the renderer is told which view to do that to.
+fn l0_reveal(kids) {
+    return {t: "column", fillw: 1, action: "reveal", c: kids}
+}
+
+fn l0_surface_map(map, topkids, kids) {
+    // TWO LAYERS, not four — the shape `a2app/apps/nav` uses for its driving screen.
+    //
+    // An earlier version stacked the map, a top-aligned layer and a bottom-aligned
+    // layer as three siblings, each `fillh` with its own alignment. It rendered, but
+    // it is not how the card being replaced does it, and every layer that fills the
+    // screen is another surface competing for the same hit tests.
+    //
+    // Theirs is one UI layer over the map, in a single `Down` flow: the top pane is
+    // simply the FIRST child, a `fillh` spacer eats the slack, and the sheet is LAST.
+    // No alignment tricks, one thing on top of the map, and the panes cannot overlap
+    // because a column cannot overlap itself.
+    //
+    // The paddings are theirs, except the bottom. 44 at the top clears the status
+    // bar and 10 at the sides are copied; 76 at the bottom replaces their 10, because
+    // their card is full-screen and an L0 card is an item in a chat list with the
+    // app's composer bar over it. Measured with 10: the sheet rendered below the
+    // visible area, cut off behind "Reconnecting…".
     return {t: "stack", fillw: 1, h: 812, bg: l0_base, c: [
         map,
-        {t: "column", fillw: 1, fillh: 1, aligny: 1.0, c: [
+        {t: "column", fillw: 1, fillh: 1, padx: 10, padtop: 44, padbottom: 76, c: [
+            {t: "column", fillw: 1, fith: 1, bg: l0_sheet, radius: 18,
+             padx: 14, padtop: 10, padbottom: 10, c: topkids},
+            // The spacer. This is what puts the sheet at the bottom.
+            {t: "column", fillw: 1, fillh: 1},
             {t: "column", fillw: 1, fith: 1, bg: l0_sheet, radius: 22,
-             marginx: 8, marginbottom: 76,
-             padx: 14, padtop: 12, padbottom: 14, c: kids}
+             padx: 14, padtop: 8, padbottom: 12, action: "sheet", c: kids}
         ]}
     ]}
 }
@@ -325,8 +355,17 @@ fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
 // this app states one — a fitted height also leaves the row's height dependent
 // on text that has not been typed yet.
 fn l0_field(text, placeholder, target) {
-    return {t: "input", fillw: 1, h: 48, text: text, placeholder: placeholder,
+    // PADDED, not fixed-height. `h: 48` put the text at the top of a 48px box and
+    // every place name floated above the pill it was supposed to sit inside. Neither
+    // the container's `align` nor the input's `label_align` moved it — the run is laid
+    // out at the top of the turtle and the background is simply taller.
+    //
+    // Padding makes the pill grow around the text instead, so it is centred by
+    // construction: 14 above and below a 15pt run lands at the same 48 the fixed
+    // height was asking for, and it stays centred if the size ever changes.
+    return {t: "input", fillw: 1, text: text, placeholder: placeholder,
             tapto: target, bg: l0_fill, radius: 12, padx: 14,
+            padtop: 14, padbottom: 14,
             // 15, not 17. A place name is the longest string a card puts in a
             // fixed-width box, and at 17 "Saratoga High School" rendered as
             // "Saratoga High Schoc" — clipped inside its own field, with no
