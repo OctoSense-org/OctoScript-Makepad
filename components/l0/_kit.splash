@@ -64,6 +64,8 @@ let l0_text     = argb(255, 255, 255, 255)   // #ffffff   primary
 let l0_soft     = argb(230, 255, 255, 255)   // #ffffffe6 secondary
 let l0_dim      = argb(153, 255, 255, 255)   // #ffffff99 captions and labels
 let l0_up       = argb(255,  50, 215,  75)   // #32d74b   a rise
+let l0_go       = argb(255,  52, 199,  89)   // #34c759   the action a screen is for
+let l0_ondark   = argb(255,  14,  22,  32)   // #0e1620   text on a lit fill
 let l0_down     = argb(255, 255,  69,  58)   // #ff453a   a fall
 
 // ---- primitives ------------------------------------------------------------
@@ -370,8 +372,11 @@ fn l0_chip_danger(s) {
 // how loud that is — a primary one is twice the type and a full round target, which
 // is what an icon needs to be tappable at arm's length in a car.
 fn l0_chip_primary(s) {
-    return {t: "chip", bg: l0_active, radius: 26, padx: 18, pady: 10, selected: 0,
-            fitw: 1, fith: 1, c: [ l0_txt(s, 20, 600, l0_text) ]}
+    // GREEN, and the card does not say so. `tone: .primary` says "this is the action
+    // the screen is for"; that it reads as go — the same green iOS Maps uses, the
+    // same green this palette already spends on a rise — is the theme's answer.
+    return {t: "chip", bg: l0_go, radius: 14, padx: 22, pady: 14, selected: 0,
+            fitw: 1, fith: 1, c: [ l0_txt(s, 20, 700, l0_ondark) ]}
 }
 
 fn l0_chip(s, on) {
