@@ -27,7 +27,7 @@
 #
 #   card     nodes
 news         27
-stock        12
+stock        16
 weather      72
 
 # CHANGING A NUMBER HERE. weather went 60 → 66 when the card gained a `Satellite`
@@ -41,3 +41,15 @@ weather      72
 # strip's panel and its tappable "add a city" row evaluate even in the test data's
 # empty state — nothing saved, editor closed. Same workflow as the line above:
 # both evaluators reported 72 independently, then this line moved.
+#
+# stock went 12 → 15 when the card gained its §5.12 personal layer: a ☆ chip on
+# each of the three test-data mover rows saves the ticker (the watchlist strip
+# itself and the news card's reading list evaluate to nothing in the test data —
+# empty store, feed screen — so they cost no nodes here). Both evaluators
+# reported 15 independently before this line moved.
+#
+# stock 15 → 16: the mover row's ☆ chip moved OUT of the tappable row to sit
+# beside a filling inner tap row — a row's transparent hit target covers its
+# whole content, so a chip inside one fires the row's event (measured on the
+# 6T with weather's × chip; same class, same fix). One wrapper node per test
+# mover. Both evaluators reported 16 independently before this line moved.
