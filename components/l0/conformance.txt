@@ -28,7 +28,7 @@
 #   card     nodes
 news         27
 stock        12
-weather      66
+weather      72
 
 # CHANGING A NUMBER HERE. weather went 60 → 66 when the card gained a `Satellite`
 # cloud pane and a `Row` that stops filling, and swapped its visibility tile for
@@ -36,3 +36,8 @@ weather      66
 # after BOTH evaluators independently reported 66 — they agreed with each other and
 # disagreed with this file, which is the one direction that means the fixture moved
 # rather than a walk drifting. Never raise it to whatever one evaluator says.
+#
+# weather went 66 → 72 when the card gained the saved-cities strip (§5.12): the
+# strip's panel and its tappable "add a city" row evaluate even in the test data's
+# empty state — nothing saved, editor closed. Same workflow as the line above:
+# both evaluators reported 72 independently, then this line moved.
