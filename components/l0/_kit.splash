@@ -271,8 +271,19 @@ fn l0_band(kids, has) {
 // the same corner.
 fn l0_mapside(sidekids, hasside) {
     if hasside == 0 { return {t: "column", h: 0} }
-    return {t: "column", fitw: 1, fith: 1, bg: l0_sheet, radius: 14,
-            padx: 5, pady: 5, alignx: 1.0, c: sidekids}
+    // No box of its own: each side control is a 38x38 circle (`l0_mapchip`),
+    // the same size as the recenter ring above it — the eye-test asked for the
+    // 2D/3D switch and the location button to match, and a text pill in a
+    // rounded panel could not.
+    return {t: "column", fitw: 1, fith: 1, alignx: 1.0, c: sidekids}
+}
+
+// A side-docked map control: the card's own chip, drawn to the ring's spec.
+// 38x38, the sheet's dark fill, the label centred — over pale tiles the
+// generic sheet chip (`l0_fill` behind `l0_dim`) read as a grey smudge.
+fn l0_mapchip(s) {
+    return {t: "column", w: 38, h: 38, radius: 19, bg: l0_sheet,
+            alignx: 0.5, aligny: 0.5, c: [l0_txt(s, 11, 600, l0_text)]}
 }
 
 fn l0_mapcontrols(which, sidekids, hasside) {
@@ -335,7 +346,13 @@ fn l0_surface_map(map, topkids, sidekids, kids, hastop, controls, hasside) {
     // 52 left 258px of empty map below the sheet, 30 and 14 put it under the chrome.
     return {t: "stack", fillw: 1, h: 812, bg: l0_base, c: [
         map,
-        {t: "column", fillw: 1, fillh: 1, padx: 10, padtop: 44, padbottom: 40, c: [
+        // 56, raised from 40, and measured rather than tasted: with 40 the sheet's
+        // bottom sat within ~14dp of the clip line, and WHERE that line falls moves
+        // with the window's inset history — the same build rendered the bottom
+        // padding after a keyboard cycle and clipped it flat on a fresh boot, GO's
+        // rounding cut mid-pill. 56 keeps the sheet's padbottom and radius clear of
+        // the boundary wherever it lands.
+        {t: "column", fillw: 1, fillh: 1, padx: 10, padtop: 44, padbottom: 56, c: [
             // EMPTY MEANS ABSENT. A screen that docks nothing at the top still had
             // the band drawn for it — a dark pill floating over the map saying
             // nothing, on every planning screen. A container with no children is not
