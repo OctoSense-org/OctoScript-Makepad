@@ -33,7 +33,8 @@
 //! # Streaming Data Example
 //!
 //! ```
-//! use makepad_d3::data::{StreamingDataSource, StreamMessage, DataPoint};
+//! // `poll` is DataSource's — without the trait in scope the call does not resolve.
+//! use makepad_d3::data::{DataSource, DataPoint, StreamMessage, StreamingDataSource};
 //!
 //! let (mut source, tx) = StreamingDataSource::new();
 //!

@@ -6,7 +6,9 @@
 //! # Example
 //!
 //! ```
-//! use makepad_d3::data::{StreamingDataSource, DataPoint};
+//! // `poll` is DataSource's, so the trait has to be in scope; the channel
+//! // carries StreamMessage, not a bare point.
+//! use makepad_d3::data::{DataSource, DataPoint, StreamMessage, StreamingDataSource};
 //! use std::sync::mpsc;
 //!
 //! // Create streaming source with channel
@@ -14,7 +16,7 @@
 //! let mut source = StreamingDataSource::from_receiver(rx);
 //!
 //! // Send data from another thread/task
-//! tx.send(DataPoint::from_y(100.0)).unwrap();
+//! tx.send(StreamMessage::Point(DataPoint::from_y(100.0))).unwrap();
 //!
 //! // Poll for data in render loop
 //! source.poll();

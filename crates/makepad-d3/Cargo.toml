@@ -10,13 +10,13 @@ keywords = ["visualization", "charts", "d3", "makepad", "gpu"]
 categories = ["visualization", "gui", "graphics"]
 
 [dependencies]
-# Makepad 2.0 (Script/Splash system) — requires a sibling checkout of
-# https://github.com/makepad/makepad `dev` branch at ../makepad
-# (tested @ 4f9ce7a8bb3fd19e5c61dcf13edd2e6d4a04cefc). A git dependency is not
-# possible right now: the makepad repo vendors a pre-2.0 copy under old/, so
-# cargo sees two packages named makepad-widgets and refuses the git source.
+# Makepad 2.0 (Script/Splash system). The same checkout splash-widgets builds
+# against — one makepad for the whole workspace, or two copies of
+# makepad-widgets meet in one binary and the VM registers into two heaps.
+# A git dependency is still not possible: the makepad repo vendors a pre-2.0
+# copy under old/, so cargo sees two packages named makepad-widgets.
 # Integration design: docs/SPLASH_INTEGRATION_DESIGN.md
-makepad-widgets = { path = "../makepad/widgets", version = "2.0.0" }
+makepad-widgets = { path = "../../../makepad-splash/widgets", version = "2.0.0" }
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -48,7 +48,3 @@ path = "examples/splash_demo/src/main.rs"
 # [[example]]
 # name = "chart_zoo"
 # path = "examples/chart_zoo/src/main.rs"
-
-[profile.release]
-lto = true
-codegen-units = 1
