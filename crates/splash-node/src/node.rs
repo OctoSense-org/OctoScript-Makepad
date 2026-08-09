@@ -118,6 +118,7 @@ pub enum NodeKind {
     MoonPhase,
     AqiContour,
     StockPlot,
+    IndicatorPlot,
     NavMap,
     GlassPanel,
     /// A web surface positioned into the native tree. The host reserves the
@@ -195,6 +196,7 @@ impl NodeKind {
             "moonphase" => Self::MoonPhase,
             "aqicontour" => Self::AqiContour,
             "stockplot" => Self::StockPlot,
+            "indicatorplot" => Self::IndicatorPlot,
             "navmap" => Self::NavMap,
             "glasspanel" => Self::GlassPanel,
             "web" => Self::Web,
@@ -416,6 +418,11 @@ pub struct Attrs {
     /// StockPlot: which series, and over what window.
     pub symbol: Option<String>,
     pub range: Option<String>,
+    /// IndicatorPlot: which countries (ISO3, comma-separated, in the order the
+    /// card named them), which World Bank indicator, and how many years back.
+    pub countries: Option<String>,
+    pub indicator: Option<String>,
+    pub years: Option<f32>,
 }
 
 /// One node in the backend-agnostic tree.
