@@ -101,6 +101,23 @@ pub enum NodeKind {
     TransitionHost,
     /// octos-one's own widgets, ported to Android views in the reference.
     WeatherIcon,
+    // ---- data visualisations -------------------------------------------------
+    // `ui-profile-l0.md` §1.1: six roles are small data visualisations rather
+    // than compositions of boxes and text. A gradient temperature bar is a
+    // fragment shader parameterised by data, and a DSL node cannot carry shader
+    // SOURCE — MPSL compiles at build time — but it can select a shader that was
+    // compiled.
+    //
+    // Adding kinds obliges every backend at once, which is why §1.1 left this
+    // unsettled for so long. It is settled this way because the alternative —
+    // `Shader` plus a `variant` string — makes the parameters untyped: a
+    // temperature bar and a moon phase would ride the same anonymous fields, and
+    // nothing would catch a card that passed a latitude where a phase belongs.
+    TempBar,
+    SunArc,
+    MoonPhase,
+    AqiContour,
+    StockPlot,
     NavMap,
     GlassPanel,
     /// A web surface positioned into the native tree. The host reserves the
@@ -173,6 +190,11 @@ impl NodeKind {
             "adaptivedemo" => Self::AdaptiveDemo,
             "transitionhost" => Self::TransitionHost,
             "weathericon" => Self::WeatherIcon,
+            "tempbar" => Self::TempBar,
+            "sunarc" => Self::SunArc,
+            "moonphase" => Self::MoonPhase,
+            "aqicontour" => Self::AqiContour,
+            "stockplot" => Self::StockPlot,
             "navmap" => Self::NavMap,
             "glasspanel" => Self::GlassPanel,
             "web" => Self::Web,
@@ -242,6 +264,14 @@ pub struct Attrs {
     /// horizontal / 6dp vertical padding that a uniform `pad` can't express.
     pub padx: Option<f32>,
     pub pady: Option<f32>,
+    /// Asymmetric vertical padding, where `pady` cannot say it.
+    ///
+    /// A page's top padding clears the status bar and its bottom clears the
+    /// gesture bar, and those are different numbers on every device. Expressed
+    /// as one symmetric `pady` the page sat 30px too high, which shifted every
+    /// row below it and read as a layout bug rather than as a missing inset.
+    pub padtop: Option<f32>,
+    pub padbottom: Option<f32>,
     pub spacing: Option<f32>,
     pub margin: Option<f32>,
     /// Per-axis margin, overriding `margin` on its axis. Every section heading in
@@ -249,6 +279,13 @@ pub struct Attrs {
     /// little tighter than the reference and drift further down the page.
     pub marginx: Option<f32>,
     pub marginy: Option<f32>,
+    /// Asymmetric vertical margin, for the same reason as `padtop`.
+    ///
+    /// A panel separates itself from what is ABOVE it; repeating that below
+    /// doubles the gap between two stacked panels and leaves a dead strip under
+    /// the last one.
+    pub margintop: Option<f32>,
+    pub marginbottom: Option<f32>,
     pub border: Option<f32>,
     pub bordercolor: Option<u32>,
     /// Which Material variant this node is — `filled`/`tonal`/`outlined`/`text`/
@@ -325,10 +362,60 @@ pub struct Attrs {
     pub zoom: Option<f64>,
     pub tilt: Option<f64>,
     pub rotation: Option<f64>,
+    /// The route a map draws, as an encoded polyline5.
+    ///
+    /// Geometry rather than a query, because the tree carries values and not
+    /// requests: whoever built this node already resolved the route, and a
+    /// backend that re-fetched from an origin and destination would fetch again
+    /// on every rebuild. Which member of the map family this is — route preview,
+    /// chase camera, flat — travels in `variant`, like every other family.
+    /// Where a field sends what has been typed SO FAR, per keystroke.
+    ///
+    /// Separate from `tapto`, which a field uses for its commit: the two carry
+    /// different events and fire at different moments. A search box wants both —
+    /// results while you type, a destination when you press return.
+    pub changeto: Option<String>,
+    pub polyline: Option<String>,
+    /// The pins a map stands on its route: `"lat,lon,kind;…"`, kind 0 origin,
+    /// 1 an intermediate stop, 2 the destination.
+    ///
+    /// A VALUE for the same reason `polyline` is one. The endpoints were already
+    /// resolved to draw the route, so a backend that re-derived them would resolve
+    /// the same places twice and could disagree with the line on screen.
+    pub markers: Option<String>,
+    /// What the drawn route COSTS, labelled on the path: two lines separated by a
+    /// pipe, in practice a duration over a distance. On the route rather than in a
+    /// sheet, because that is where it answers the question being asked of it.
+    ///
+    /// `route_badge`, not `badge`: this struct already has one, for the count on a
+    /// component, and a route's cost is not that. Two meanings under one name is how
+    /// a field ends up carrying whichever the last writer meant.
+    pub route_badge: Option<String>,
     /// Absolute position for a surface the host composites (a web slot). The
     /// tree does not know where a node lands, so a screen that wants one says.
     pub x: Option<f64>,
     pub y: Option<f64>,
+
+    // ---- data-visualisation parameters ---------------------------------------
+    // Named, not generic. A `Shader` kind with anonymous slots would let a card
+    // pass a latitude where a moon phase belongs and nothing would notice.
+    // `min`/`max` (a bar's range) and `lat`/`lon` (a contour's centre) already
+    // exist above and mean exactly this, so they are reused rather than doubled.
+    /// TempBar: the day's low and high, against `min`/`max` for the week.
+    pub lo: Option<f32>,
+    pub hi: Option<f32>,
+    /// SunArc: sunrise, sunset and now, as fractional hours.
+    pub rise: Option<f32>,
+    pub set: Option<f32>,
+    pub now: Option<f32>,
+    /// MoonPhase: 0..1 through the cycle, and percent illuminated.
+    pub phase: Option<f32>,
+    pub illum: Option<f32>,
+    /// AqiContour: degrees of latitude the field covers, around `lat`/`lon`.
+    pub span: Option<f32>,
+    /// StockPlot: which series, and over what window.
+    pub symbol: Option<String>,
+    pub range: Option<String>,
 }
 
 /// One node in the backend-agnostic tree.
