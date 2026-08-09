@@ -27,7 +27,7 @@
 #
 #   card     nodes
 news         41
-stock        22
+stock        17
 weather      71
 
 # CHANGING A NUMBER HERE. weather went 60 → 66 when the card gained a `Satellite`
@@ -76,3 +76,8 @@ weather      71
 # stock 17 -> 22: the mover rows swipe to reveal Add, so each of the three
 # test movers grows its wrapper and hidden chip alongside the tappable
 # inner row. Both evaluators reported 22 independently before this moved.
+#
+# stock 22 -> 17: the movers' swipe menu went as fast as it came — movers
+# are the market's recommendations, so Add moved to the quote page (behind
+# the fixture's closed selected guard) and the mover rows are single taps
+# again. Both evaluators reported 17 independently before this moved.
