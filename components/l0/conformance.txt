@@ -27,7 +27,7 @@
 #
 #   card     nodes
 news         41
-stock        16
+stock        21
 weather      71
 
 # CHANGING A NUMBER HERE. weather went 60 → 66 when the card gained a `Satellite`
@@ -63,3 +63,8 @@ weather      71
 # under the saved strip into a + chip in the title bar (top-right corner,
 # asked for by hand on device), net one node fewer. Both evaluators
 # reported 71 independently before this line moved.
+#
+# stock 16 -> 21: the add flow's always-present header bar (WATCHLIST caption
+# + the top-right + chip) joins the list view; the editor and the red manage-
+# mode Remove are behind guards the fixture leaves closed. Both evaluators
+# reported 21 independently before this line moved.
