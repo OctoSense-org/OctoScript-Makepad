@@ -475,6 +475,9 @@ fn l0_chip(s, on) {
 
 fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
 
+// A list row's image: fixed 16:9, so the text beside it keeps its baseline.
+fn l0_thumb(src) { return {t: "image", src: src, fit: 2, w: 108, h: 61} }
+
 // ---- interaction -----------------------------------------------------------
 // A tap target, carried as `tapto` — an arbitrary string this renderer does not
 // interpret. Its own `set:…` verbs are handled inside `splash-render`, and
