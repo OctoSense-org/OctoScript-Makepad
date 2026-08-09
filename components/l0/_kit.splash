@@ -647,6 +647,14 @@ fn l0_stockplot(symbol, range) {
     return {t: "stockplot", fillw: 1, h: 180, symbol: symbol, range: range}
 }
 
+// Several countries on one axis. The card names them and the indicator; the
+// widget fetches, scales every series to one viewport, and draws its own
+// legend — so the theme decides only the height it gets.
+fn l0_indicatorplot(countries, indicator, years) {
+    return {t: "indicatorplot", fillw: 1, h: 210,
+            countries: countries, indicator: indicator, years: years}
+}
+
 fn l0_unsupported(role) {
     return {t: "card", fillw: 1, bg: l0_fill, radius: 8, padx: 10, pady: 8,
             c: [ l0_caption("[" + role + " has no kind in this renderer]") ]}
