@@ -27,7 +27,7 @@
 #
 #   card     nodes
 news         41
-stock        21
+stock        17
 weather      71
 
 # CHANGING A NUMBER HERE. weather went 60 → 66 when the card gained a `Satellite`
@@ -68,3 +68,7 @@ weather      71
 # + the top-right + chip) joins the list view; the editor and the red manage-
 # mode Remove are behind guards the fixture leaves closed. Both evaluators
 # reported 21 independently before this line moved.
+#
+# stock 21 -> 17: the per-row star shortcut left the movers (saving is the
+# add flow's explicit Add), taking its chip and sibling wrapper per test
+# mover. Both evaluators reported 17 independently before this line moved.
