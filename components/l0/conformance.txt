@@ -27,7 +27,7 @@
 #
 #   card     nodes
 news         41
-stock        17
+stock        22
 weather      71
 
 # CHANGING A NUMBER HERE. weather went 60 → 66 when the card gained a `Satellite`
@@ -72,3 +72,7 @@ weather      71
 # stock 21 -> 17: the per-row star shortcut left the movers (saving is the
 # add flow's explicit Add), taking its chip and sibling wrapper per test
 # mover. Both evaluators reported 17 independently before this line moved.
+#
+# stock 17 -> 22: the mover rows swipe to reveal Add, so each of the three
+# test movers grows its wrapper and hidden chip alongside the tappable
+# inner row. Both evaluators reported 22 independently before this moved.
