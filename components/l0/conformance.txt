@@ -26,7 +26,7 @@
 # workflow this file exists for.
 #
 #   card     nodes
-news         27
+news         41
 stock        16
 weather      72
 
@@ -53,3 +53,8 @@ weather      72
 # whole content, so a chip inside one fires the row's event (measured on the
 # 6T with weather's × chip; same class, same fix). One wrapper node per test
 # mover. Both evaluators reported 16 independently before this line moved.
+#
+# news 27 -> 41: the TOPICS block — a header, four suggestion chips (each a
+# tap), and per-followed-topic rows in the sibling-chip shape. Store-backed
+# rows are empty in the fixture, so the delta is the static block only. Both
+# evaluators reported 41 independently before this line moved.
