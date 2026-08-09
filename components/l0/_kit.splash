@@ -440,6 +440,15 @@ fn l0_chip_danger(s) {
             c: [ l0_txt(s, 11, 500, l0_danger_i) ]}
 }
 
+// A destructive action scoped to ONE ROW — danger's colours in a chip's
+// geometry. The full-width `l0_chip_danger` is a screen action (nav's Stop);
+// this one sits beside the row it deletes, revealed by the card's own guard.
+fn l0_chip_danger_row(s) {
+    return {t: "chip", bg: l0_danger, radius: 12, padx: 12, pady: 12,
+            aligny: 0.5,
+            c: [ l0_txt(s, 11, 500, l0_danger_i) ]}
+}
+
 // The action a screen is FOR. `tone` says what an action means and the theme says
 // how loud that is — a primary one is twice the type and a full round target, which
 // is what an icon needs to be tappable at arm's length in a car.
