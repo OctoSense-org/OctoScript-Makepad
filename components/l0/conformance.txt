@@ -28,7 +28,7 @@
 #   card     nodes
 news         41
 stock        16
-weather      72
+weather      71
 
 # CHANGING A NUMBER HERE. weather went 60 → 66 when the card gained a `Satellite`
 # cloud pane and a `Row` that stops filling, and swapped its visibility tile for
@@ -58,3 +58,8 @@ weather      72
 # tap), and per-followed-topic rows in the sibling-chip shape. Store-backed
 # rows are empty in the fixture, so the delta is the static block only. Both
 # evaluators reported 41 independently before this line moved.
+#
+# weather 72 -> 71: the add-a-city affordance moved from a full-width row
+# under the saved strip into a + chip in the title bar (top-right corner,
+# asked for by hand on device), net one node fewer. Both evaluators
+# reported 71 independently before this line moved.
