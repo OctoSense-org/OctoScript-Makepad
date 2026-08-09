@@ -17,6 +17,9 @@ Splash DSL  ──►  splash-render  ──►  UiNode tree  ──►  splash-
 - **`crates/splash-render`** — backend-agnostic core: evaluates the Splash DSL in the makepad-script VM and walks it into a `UiNode` tree. Depends only on `makepad-script`. Unit-tested.
 - **`crates/splash-makepad`** — the makepad backend: `to_makepad_ui(&UiNode) -> String` turns the tree into makepad's `View{}/Label{}/…` dialect. Pure, unit-tested — no makepad-platform/draw needed to build or test.
 - **`crates/splash-widgets`** — the **themed native-widget kits** (Material 3 now; iOS / liquid-glass later), as **external `script_mod!` variants of makepad's widgets** (see *Fork-free theming* below).
+- **`crates/makepad-d3`** — the **d3 grammar as native widgets** (scales, shapes, layouts, hierarchies, geo, 3D), registered into the VM under `mod.d3.*`. Grafted in with its history 2026-08-09 (was `mofa-org/makepad-d3`).
+- **`crates/makepad-plot`** — the **matplotlib chart set** (32 widgets: line, bar, scatter, pie, box, violin, heatmap, contour, quiver, 3D surface/scatter/line, gauge, treemap, …) under `mod.plot.*`. Grafted in with its history 2026-08-09 (was `mofa-org/makepad-matplot`).
+  Both build against the SAME makepad checkout as `splash-widgets` — one makepad per workspace, or two copies of `makepad-widgets` meet in one binary and each registers into its own heap. Their namespaces are disjoint, so a card may use either or both.
 - **`components/<theme>/`** — each theme's **component library**, authored as `.splash` (e.g. `components/material/catalog.splash`, ~35 Material components + demo screens). Pure data — hot-reloadable, no rebuild.
 - **`components/flutter/`** — the **flutter/samples port**: one `.splash` per sample directory, 108 routes (see below).
 

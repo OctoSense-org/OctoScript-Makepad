@@ -16,6 +16,9 @@ Makepad 2.0 is consumed as a **sibling path dependency** (its repo vendors a
 pre-2.0 crate copy under `old/`, which makes git dependencies ambiguous):
 
 ```bash
+# NOTE: this crate now lives in the Splash-Makepad workspace, which supplies
+# makepad at ../../../makepad-splash. The standalone instructions below are kept
+# for building it outside that workspace.
 git clone https://github.com/makepad/makepad.git --branch dev   # sibling checkout
 git clone https://github.com/mofa-org/makepad-d3.git
 cd makepad-d3

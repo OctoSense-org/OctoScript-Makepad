@@ -11,7 +11,7 @@
 //!
 //! # Example
 //! ```
-//! use makepad_d3::color::cubehelix::{Cubehelix, cubehelix_default};
+//! use makepad_d3::color::{Cubehelix, cubehelix_default};
 //!
 //! // Get color at position 0.5
 //! let color = cubehelix_default(0.5);

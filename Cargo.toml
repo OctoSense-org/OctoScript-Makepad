@@ -6,6 +6,11 @@ members = [
     "crates/splash-render",
     "crates/splash-makepad",
     "crates/splash-widgets",
+    # The chart libraries, grafted in with their history (git subtree, 2026-08-09):
+    # d3's grammar under `mod.d3.*`, matplotlib's charts under `mod.plot.*`.
+    # Distinct namespaces, so a card may use either or both.
+    "crates/makepad-d3",
+    "crates/makepad-plot",
     "apps/kit-host",
     "apps/flutter-samples",
 ]

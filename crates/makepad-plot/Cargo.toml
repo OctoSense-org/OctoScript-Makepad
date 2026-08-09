@@ -7,7 +7,8 @@ license = "MIT"
 autoexamples = false
 
 [dependencies]
-makepad-widgets = { path = "../makepad/widgets" }
+# The workspace's single makepad checkout (see makepad-d3's note).
+makepad-widgets = { path = "../../../makepad-splash/widgets" }
 
 [[bin]]
 name = "plot_demo"
