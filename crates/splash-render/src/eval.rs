@@ -137,6 +137,9 @@ fn walk(vm: &mut ScriptVm, value: ScriptValue, depth: usize) -> Option<UiNode> {
         span: f32_prop(vm, value, id!(span)),
         symbol: string_prop(vm, value, id!(symbol)),
         range: string_prop(vm, value, id!(range)),
+        countries: string_prop(vm, value, id!(countries)),
+        indicator: string_prop(vm, value, id!(indicator)),
+        years: f32_prop(vm, value, id!(years)),
     };
 
     // `c` is a ScriptArray, NOT an object with a vec — arrays are their own heap

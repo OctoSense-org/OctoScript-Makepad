@@ -387,6 +387,25 @@ script_mod! {
         }
     }
     mod.prelude.widgets.L0StockPlot = mod.widgets.L0StockPlot
+
+    // The multi-series placeholder. This backend cannot fetch, so like
+    // L0StockPlot it draws the hatch that says "a chart belongs here"; the
+    // device renderer answers the real widget.
+    mod.widgets.L0IndicatorPlot = View{
+        width: Fill
+        height: 210
+        show_bg: true
+        draw_bg +: {
+            pixel: fn() {
+                let s = (self.pos.x + self.pos.y) * 22.0
+                let h = abs(fract(s) - 0.5) * 2.0
+                let bg = vec3(1.0, 1.0, 1.0) * 0.05
+                let ln = vec3(1.0, 1.0, 1.0) * 0.11
+                return vec4(mix(ln, bg, smoothstep(0.35, 0.5, h)), 1.0)
+            }
+        }
+    }
+    mod.prelude.widgets.L0IndicatorPlot = mod.widgets.L0IndicatorPlot
 }
 
 // TODO(kits): Button touch-ripple as a `RippleButton` variant (it modifies the
