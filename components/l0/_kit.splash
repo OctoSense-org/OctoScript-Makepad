@@ -475,6 +475,9 @@ fn l0_chip(s, on) {
 
 fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
 
+// A list row's image: fixed 16:9, so the text beside it keeps its baseline.
+fn l0_thumb(src) { return {t: "image", src: src, fit: 2, w: 108, h: 61} }
+
 // ---- interaction -----------------------------------------------------------
 // A tap target, carried as `tapto` — an arbitrary string this renderer does not
 // interpret. Its own `set:…` verbs are handled inside `splash-render`, and
@@ -645,6 +648,14 @@ fn l0_aqicontour(lat, lon, span) {
 // A price series. Likewise: the card names WHICH series and over what window.
 fn l0_stockplot(symbol, range) {
     return {t: "stockplot", fillw: 1, h: 180, symbol: symbol, range: range}
+}
+
+// Several countries on one axis. The card names them and the indicator; the
+// widget fetches, scales every series to one viewport, and draws its own
+// legend — so the theme decides only the height it gets.
+fn l0_indicatorplot(countries, indicator, years) {
+    return {t: "indicatorplot", fillw: 1, h: 210,
+            countries: countries, indicator: indicator, years: years}
 }
 
 fn l0_unsupported(role) {

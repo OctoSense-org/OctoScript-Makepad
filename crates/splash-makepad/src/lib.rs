@@ -101,6 +101,7 @@ fn widget_name(kind: NodeKind) -> &'static str {
         NodeKind::MoonPhase => "L0MoonPhase",
         NodeKind::AqiContour => "L0AqiContour",
         NodeKind::StockPlot => "L0StockPlot",
+        NodeKind::IndicatorPlot => "L0IndicatorPlot",
         NodeKind::Shader => "FlutterShader",
         NodeKind::Sdf => "FlutterSdf",
         // No web surface on this backend; the screen branches on st.backend.

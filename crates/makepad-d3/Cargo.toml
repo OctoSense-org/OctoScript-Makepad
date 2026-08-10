@@ -1,0 +1,50 @@
+[package]
+name = "makepad-d3"
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.75"
+description = "D3.js-compatible data visualization library for Makepad"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/user/makepad-d3"
+keywords = ["visualization", "charts", "d3", "makepad", "gpu"]
+categories = ["visualization", "gui", "graphics"]
+
+[dependencies]
+# Makepad 2.0 (Script/Splash system). The same checkout splash-widgets builds
+# against — one makepad for the whole workspace, or two copies of
+# makepad-widgets meet in one binary and the VM registers into two heaps.
+# A git dependency is still not possible: the makepad repo vendors a pre-2.0
+# copy under old/, so cargo sees two packages named makepad-widgets.
+# Integration design: docs/SPLASH_INTEGRATION_DESIGN.md
+makepad-widgets = { path = "../../../makepad-splash/widgets", version = "2.0.0" }
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.0"
+
+[features]
+default = []
+full = []
+
+[[bench]]
+name = "scale_bench"
+harness = false
+
+[[bench]]
+name = "render3d_bench"
+harness = false
+
+[[example]]
+name = "splash_demo"
+path = "examples/splash_demo/src/main.rs"
+
+# NOTE: chart_zoo predates the makepad 2.0 (Splash) migration and does not
+# compile against it yet — it is the porting backlog for the d3.* namespace
+# (docs/SPLASH_INTEGRATION_DESIGN.md §11 Phase 4).
+# [[example]]
+# name = "chart_zoo"
+# path = "examples/chart_zoo/src/main.rs"
