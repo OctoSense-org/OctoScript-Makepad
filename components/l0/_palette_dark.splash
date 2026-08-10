@@ -1,0 +1,48 @@
+// _palette_dark.splash — the default L0 palette, and the reference for the rest.
+//
+// A THEME IS A PALETTE PREFIX. The DSL has no `import`, so a card is rendered by
+// concatenating <palette> + `_kit.splash` + the lowered card. The palette must
+// come FIRST: a function body resolves a name at its declaration point, so a
+// palette appended after the kit would not reach the roles that read it.
+//
+// EVERY PALETTE MUST DEFINE EVERY NAME BELOW. A missing one is not a default —
+// it coerces to 0, which is transparent, and the role that reads it renders as
+// nothing at all. `l0_palettes_agree` in `tests/l0_kit.rs` pins the set.
+//
+// Hex from the shipped lowering, as ARGB. Note makepad writes #RRGGBBAA, so
+// `#ffffff12` is white at alpha 0x12 — a barely-there panel over a dark page,
+// not a near-white fill.
+
+fn argb(a, r, g, b) { return ((a * 256 + r) * 256 + g) * 256 + b }
+
+let l0_base     = argb(255,  10,  14,  20)   // #0a0e14  page
+let l0_scrim    = argb(102,   0,   0,   0)   // #00000066 over a photo
+// A sheet floating over a MAP, and the one fill in this palette that must be
+// fully opaque. `l0_fill` is 7% white, which is a window rather than a surface:
+// over a map the road labels read straight through whatever the card put there.
+// The colour is the shipping nav card's own sheet.
+let l0_sheet    = argb(255,  15,  22,  32)   // #0f1620 over a map
+// The one action that ENDS something. Values from the shipping nav card's `endrow`.
+let l0_danger   = argb(255, 122,  31,  31)   // #7a1f1f destructive fill
+let l0_danger_i = argb(255, 255, 217, 217)   // #ffd9d9 its ink
+// NOT `l0_panel`, and the name is the whole point.
+//
+// `fn l0_panel(kids)` is a ROLE in the kit, so a palette entry of the same name
+// is shadowed by it from the function's declaration onward — and a function
+// coerced to a colour is 0. Every use after `fn l0_panel` silently became fully
+// transparent: `l0_chip` and `l0_field` both asked for this fill and both got
+// nothing. Uses INSIDE `l0_panel`'s own body still resolved to the colour, which
+// is why panels looked right and chips did not, and why it read as a chip bug.
+//
+// Found by live-testing a nav card on a phone: Go and End rendered as bare text
+// with no button under them. No unit test could see it — zero is a valid colour.
+let l0_fill     = argb( 18, 255, 255, 255)   // #ffffff12 panel fill
+let l0_active   = argb( 56, 255, 255, 255)   // #ffffff38 selected chip
+let l0_hairline = argb( 26, 255, 255, 255)   // #ffffff1a divider
+let l0_text     = argb(255, 255, 255, 255)   // #ffffff   primary
+let l0_soft     = argb(230, 255, 255, 255)   // #ffffffe6 secondary
+let l0_dim      = argb(153, 255, 255, 255)   // #ffffff99 captions and labels
+let l0_up       = argb(255,  50, 215,  75)   // #32d74b   a rise
+let l0_go       = argb(255,  52, 199,  89)   // #34c759   the action a screen is for
+let l0_ondark   = argb(255,  14,  22,  32)   // #0e1620   text on a lit fill
+let l0_down     = argb(255, 255,  69,  58)   // #ff453a   a fall

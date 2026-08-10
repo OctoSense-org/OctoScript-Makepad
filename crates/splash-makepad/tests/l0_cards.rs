@@ -17,7 +17,15 @@
 
 use splash_ui_l0::{kit, realize, RealizeLimits};
 
-const KIT: &str = include_str!("../../../components/l0/_kit.splash");
+/// The kit body plus the default palette. A theme is a palette prefix (see
+/// `_palette_dark.splash`); these tests assert structure, not colour, so they
+/// assemble the default and `l0_kit.rs` covers the moods.
+const KIT_BODY: &str = include_str!("../../../components/l0/_kit.splash");
+const PALETTE: &str = include_str!("../../../components/l0/_palette_dark.splash");
+
+fn kit() -> String {
+    format!("{PALETTE}\n{KIT_BODY}")
+}
 
 const WEATHER: &str = include_str!("../../../../Splash/crates/splash-ui-l0/tests/fixtures/weather.card");
 const NEWS: &str = include_str!("../../../../Splash/crates/splash-ui-l0/tests/fixtures/news.card");
@@ -32,7 +40,7 @@ fn build(card: &str, data: serde_json::Value) -> splash_render::UiNode {
     );
     let root = report.root.expect("a realized tree");
     // The tail is a bare VARIABLE, not a call — `fn f() {…}` then `f()` is nil.
-    let src = format!("{KIT}\n{}", kit::lower(&root));
+    let src = format!("{}\n{}", kit(), kit::lower(&root));
     splash_render::build(&src, |_vm| {})
         .unwrap_or_else(|| panic!("the lowered card evaluated to nil:\n{}", kit::lower(&root)))
 }
@@ -194,10 +202,13 @@ fn the_lowered_card_names_roles_and_no_presentation() {
 /// silently short card.
 #[test]
 fn a_role_with_no_kit_answer_is_visible_rather_than_absent() {
-    let src = format!(r#"{KIT}
+    let kit = kit();
+    let src = format!(
+        r#"{kit}
 let node = l0_unsupported("Hologram")
 node
-"#);
+"#
+    );
     let tree = splash_render::build(&src, |_vm| {}).expect("the marker evaluates");
 
     fn words(n: &splash_render::UiNode, out: &mut String) {
@@ -241,7 +252,7 @@ fn the_data_visualisations_reach_the_tree_as_themselves() {
         Some(&serde_json::Value::String("NVDA".into())));
     let report = splash_ui_l0::realize_with_state(
         STOCK, &stock_data(), &store, RealizeLimits::default());
-    let src = format!("{KIT}\n{}", kit::lower(&report.root.expect("root")));
+    let src = format!("{}\n{}", kit(), kit::lower(&report.root.expect("root")));
     kinds(
         &splash_render::build(&src, |_vm| {}).expect("detail evaluates"),
         &mut out,
