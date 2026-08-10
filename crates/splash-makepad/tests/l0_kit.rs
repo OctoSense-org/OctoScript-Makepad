@@ -7,7 +7,30 @@
 //! not exist. The repository that owns the profile has no dependency on this
 //! one, so nothing there can catch a drift. These tests can.
 
-const KIT: &str = include_str!("../../../components/l0/_kit.splash");
+/// The kit body, which defines no colours — a palette is concatenated before it.
+const KIT_BODY: &str = include_str!("../../../components/l0/_kit.splash");
+
+/// Every mood, in the order a reader should compare them.
+const PALETTES: &[(&str, &str)] = &[
+    ("dark", include_str!("../../../components/l0/_palette_dark.splash")),
+    ("light", include_str!("../../../components/l0/_palette_light.splash")),
+    ("glass", include_str!("../../../components/l0/_palette_glass.splash")),
+    ("photo", include_str!("../../../components/l0/_palette_photo.splash")),
+];
+
+/// The kit as a host assembles it: palette first, always.
+fn kit_with(theme: &str) -> String {
+    let (_, palette) = PALETTES
+        .iter()
+        .find(|(n, _)| *n == theme)
+        .unwrap_or_else(|| panic!("no palette for theme {theme:?}"));
+    format!("{palette}\n{KIT_BODY}")
+}
+
+/// The default assembly, for the role tests below.
+fn kit() -> String {
+    kit_with("dark")
+}
 
 /// Every role, and the call that exercises it.
 ///
@@ -45,7 +68,7 @@ const ROLES: &[(&str, &str)] = &[
 /// then `node`, and getting this wrong made all 21 roles report as dead on the
 /// first run.
 fn eval(call: &str) -> Option<splash_render::UiNode> {
-    let src = format!("{KIT}\nlet node = {call}\nnode\n");
+    let src = format!("{}\nlet node = {call}\nnode\n", kit());
     splash_render::build(&src, |_vm| {})
 }
 
@@ -154,4 +177,53 @@ fn an_unsupported_role_is_visible_rather_than_absent() {
         text.contains("TempBar"),
         "the marker must NAME the role it stands in for, got {text:?}"
     );
+}
+
+/// Every palette defines every name, and they are the names the kit reads.
+///
+/// A missing entry is NOT a default. An undefined name coerces to 0 — fully
+/// transparent — so the role that reads it renders as nothing and the card still
+/// looks complete. That is the §1.1 failure this whole file exists to catch, and
+/// with four palettes it is now four times as easy to make: adding a colour to
+/// the kit means adding it to all four.
+#[test]
+fn l0_palettes_agree() {
+    fn names(src: &str) -> std::collections::BTreeSet<String> {
+        src.lines()
+            .filter_map(|l| l.trim().strip_prefix("let "))
+            .filter_map(|l| l.split_whitespace().next())
+            .map(str::to_owned)
+            .collect()
+    }
+    let (_, dark) = PALETTES[0];
+    let reference = names(dark);
+    assert!(
+        reference.len() >= 15,
+        "the reference palette looks empty: {reference:?}"
+    );
+    for (theme, src) in PALETTES {
+        assert_eq!(
+            names(src),
+            reference,
+            "palette {theme:?} does not define the same names as dark"
+        );
+    }
+
+    // And the kit must not read a colour no palette defines. `l0_*` idents in
+    // the kit that look like palette entries have to be in the set.
+    for line in KIT_BODY.lines() {
+        for tok in line.split(|c: char| !(c.is_alphanumeric() || c == '_')) {
+            if let Some(rest) = tok.strip_prefix("l0_") {
+                let name = format!("l0_{rest}");
+                // Roles are `fn l0_*`; only names the palette owns are checked.
+                if reference.contains(&name) {
+                    continue;
+                }
+                assert!(
+                    KIT_BODY.contains(&format!("fn {name}(")),
+                    "the kit reads {name:?}, which is neither a role nor a palette entry"
+                );
+            }
+        }
+    }
 }

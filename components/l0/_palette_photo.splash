@@ -1,0 +1,28 @@
+// _palette_photo.splash — the `photo` mood, for a card whose page IS an image.
+// See `_palette_dark.splash` for the contract: same names, every one defined,
+// palette first.
+//
+// Values from the shipped immersive weather style (a2app/apps/weather/exemplars/
+// style-immersive.splash). Nearly black and nearly transparent throughout: a
+// photo card's own picture is the surface, so every fill here is something laid
+// ON it rather than something replacing it.
+
+fn argb(a, r, g, b) { return ((a * 256 + r) * 256 + g) * 256 + b }
+
+let l0_base     = argb(255,   5,   7,  12)   // #05070c page — for the strip a photo misses
+// HEAVIER than every other mood. This is the one palette whose cards are read
+// over an arbitrary photograph, so the scrim carries all of the legibility.
+let l0_scrim    = argb(140,   5,   7,  12)   // #05070c8c over a photo
+let l0_sheet    = argb(242,   5,   7,  12)   // #05070cf2 over a map — near-opaque
+let l0_danger   = argb(255, 140,  32,  32)   // #8c2020 destructive fill
+let l0_danger_i = argb(255, 255, 224, 224)   // #ffe0e0 its ink
+let l0_fill     = argb( 26, 255, 255, 255)   // #ffffff1a panel fill
+let l0_active   = argb( 64, 255, 255, 255)   // #ffffff40 selected chip
+let l0_hairline = argb( 34, 255, 255, 255)   // #ffffff22 divider
+let l0_text     = argb(255, 255, 255, 255)   // #ffffff primary
+let l0_soft     = argb(221, 255, 255, 255)   // #ffffffdd secondary
+let l0_dim      = argb(136, 255, 255, 255)   // #ffffff88 captions and labels
+let l0_up       = argb(255,  90, 240, 130)   // #5af082 a rise
+let l0_go       = argb(255,  52, 199,  89)   // #34c759 the action a screen is for
+let l0_ondark   = argb(255,   5,   7,  12)   // #05070c text on a lit fill
+let l0_down     = argb(255, 255, 105, 105)   // #ff6969 a fall

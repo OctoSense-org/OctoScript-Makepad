@@ -1,0 +1,31 @@
+// _palette_light.splash — the `light` mood. See `_palette_dark.splash` for the
+// contract: same names, every one defined, palette first.
+//
+// Values are the shipped light weather style's own (a2app/apps/weather/
+// exemplars/style-light.splash), so a card that used to ask for "minimal
+// weather" and get a hand-authored DSL template lands on the same colours
+// through the kit instead.
+
+fn argb(a, r, g, b) { return ((a * 256 + r) * 256 + g) * 256 + b }
+
+let l0_base     = argb(255, 242, 242, 247)   // #f2f2f7 page
+// Over a photo a light scrim would wash the image out AND leave dark ink
+// unreadable, so the scrim stays dark even here: it exists to make text legible
+// over an image, not to match the page.
+let l0_scrim    = argb(102,   0,   0,   0)   // #00000066 over a photo
+let l0_sheet    = argb(255, 255, 255, 255)   // #ffffff over a map — opaque
+let l0_danger   = argb(255, 215,  58,  73)   // #d73a49 destructive fill
+let l0_danger_i = argb(255, 255, 255, 255)   // #ffffff its ink
+// OPAQUE, not a white-on-white alpha. On a dark page a 7% white fill reads as a
+// panel; on a #f2f2f7 page the same alpha is invisible, so the light mood uses
+// the style's actual card colour and its actual hairlines.
+let l0_fill     = argb(255, 255, 255, 255)   // #ffffff panel fill
+let l0_active   = argb(255, 226, 226, 231)   // #e2e2e7 selected chip
+let l0_hairline = argb(255, 236, 236, 241)   // #ececf1 divider
+let l0_text     = argb(255,  28,  28,  30)   // #1c1c1e primary
+let l0_soft     = argb(255,  72,  72,  76)   // #48484c secondary
+let l0_dim      = argb(255, 142, 142, 147)   // #8e8e93 captions and labels
+let l0_up       = argb(255,  30, 160,  60)   // #1ea03c a rise — darkened to read on white
+let l0_go       = argb(255,  52, 199,  89)   // #34c759 the action a screen is for
+let l0_ondark   = argb(255, 255, 255, 255)   // #ffffff text on a lit fill
+let l0_down     = argb(255, 215,  58,  73)   // #d73a49 a fall
