@@ -72,7 +72,7 @@ fn l0_spacer()  { return {t: "column", fillw: 1, h: 1} }
 // design. Once a value lowers to a live backend call the drawn text is not in
 // the DSL at all — `"$" + sys.stock("NVDA", "price")` renders as six characters
 // and reads as thirty-three — so only the lowering knows what will be drawn.
-fn l0_hero(s, pt) { return l0_txt(s, pt, 700, l0_text) }
+fn l0_hero(s, pt) { return l0_txt(s, pt, weight_bold, l0_text) }
 
 // The type scale, TAKEN FROM THE WIDGETS THIS REPLACES rather than chosen.
 //
@@ -81,11 +81,11 @@ fn l0_hero(s, pt) { return l0_txt(s, pt, 700, l0_text) }
 // them. Moving the layer and restyling at once would make a golden failure
 // ambiguous between "the theme moved" and "the theme is wrong" — so the theme
 // does not move yet. Restyling comes after, against green goldens.
-fn l0_title(s)    { return l0_txt(s, 18, 700, l0_text) }
-fn l0_body(s)     { return l0_para(s, 12, 400, l0_text) }
-fn l0_row_text(s) { return l0_txt(s, 10, 400, l0_soft) }
-fn l0_caption(s)  { return l0_txt(s, 8, 400, l0_dim) }
-fn l0_value(s)    { return l0_txt(s, 14, 600, l0_text) }
+fn l0_title(s)    { return l0_txt(s, font_title, weight_bold, l0_text) }
+fn l0_body(s)     { return l0_para(s, font_body, weight_normal, l0_text) }
+fn l0_row_text(s) { return l0_txt(s, font_row, weight_normal, l0_soft) }
+fn l0_caption(s)  { return l0_txt(s, font_caption, weight_normal, l0_dim) }
+fn l0_value(s)    { return l0_txt(s, font_value, weight_semi, l0_text) }
 
 // A statistic, tinted by direction. `dir` is -1, 0 or 1 — the SIGN, decided by
 // the card, not the colour: red-versus-green is presentation, but "this value
@@ -95,7 +95,7 @@ fn l0_tint(dir) {
     if dir < 0 { return l0_down }
     return l0_text
 }
-fn l0_stat(s, dir) { return l0_txt(s, 10, 600, l0_tint(dir)) }
+fn l0_stat(s, dir) { return l0_txt(s, font_row, weight_semi, l0_tint(dir)) }
 
 // Recolour any text by DIRECTION, composed around the role rather than folded
 // into it.
@@ -183,7 +183,7 @@ fn l0_aligned(node, how) {
 // half differed, on a card whose content was correct.
 fn l0_surface(kids) {
     return {t: "column", fillw: 1, fith: 1, bg: l0_base,
-            padx: 20, padtop: 54, padbottom: 24, c: kids}
+            padx: pad_page_x, padtop: pad_page_top, padbottom: pad_page_bot, c: kids}
 }
 
 // A page whose background is a photo, with a scrim so text stays legible over
@@ -192,7 +192,7 @@ fn l0_surface_photo(src, kids) {
     return {t: "stack", fillw: 1, fillh: 1, c: [
         {t: "image", src: src, fit: 2, fillw: 1, fillh: 1},
         {t: "column", fillw: 1, fillh: 1, bg: l0_scrim},
-        {t: "column", fillw: 1, fillh: 1, padx: 20, padtop: 54, padbottom: 24, c: kids}
+        {t: "column", fillw: 1, fillh: 1, padx: pad_page_x, padtop: pad_page_top, padbottom: pad_page_bot, c: kids}
     ]}
 }
 
@@ -358,7 +358,7 @@ fn l0_col_gap(g, kids) { return {t: "column", fillw: 1, spacing: g, c: kids} }
 // is to put unlike things side by side — a 44px icon beside 14pt text beside an
 // 8px gradient bar — and top-aligning those reads as three separate things that
 // happen to be adjacent. The reference rendering aligns every row this way.
-fn l0_row(kids)        { return {t: "row", fillw: 1, spacing: 6, aligny: 0.5, c: kids} }
+fn l0_row(kids)        { return {t: "row", fillw: 1, spacing: gap_row, aligny: 0.5, c: kids} }
 fn l0_row_gap(g, kids) { return {t: "row", fillw: 1, spacing: g, aligny: 0.5, c: kids} }
 // A grid of tiles. `w` is WIDTH IN PIXELS on the shared node model, and this
 // said `w: 2` meaning "two columns" — so the stock card's six statistic tiles
@@ -370,16 +370,16 @@ fn l0_grid(kids)     { return {t: "grid", fillw: 1, spacing: 10, c: kids} }
 
 // A raised surface holding related content.
 fn l0_panel(kids) {
-    return {t: "card", fillw: 1, bg: l0_fill, radius: 14,
-            padx: 14, pady: 12, margintop: 16, c: kids}
+    return {t: "card", fillw: 1, bg: l0_fill, radius: radius_panel,
+            padx: pad_panel_x, pady: pad_panel_y, margintop: gap_panel_top, c: kids}
 }
 
 fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
 
 // A labelled value — the unit a detail grid is made of.
 fn l0_tile(label, value) {
-    return {t: "card", fillw: 1, bg: l0_fill, radius: 12, padx: 12, pady: 10,
-            c: [ l0_caption(label), l0_gap(4), l0_value(value) ]}
+    return {t: "card", fillw: 1, bg: l0_fill, radius: radius_tile, padx: pad_tile_x, pady: pad_tile_y,
+            c: [ l0_caption(label), l0_gap(gap_tile), l0_value(value) ]}
 }
 
 // A selectable token. `on` is the card's own notion of selected — without it
@@ -440,11 +440,11 @@ fn l0_chip_primary(s) {
 
 fn l0_chip(s, on) {
     if on == 1 {
-        return {t: "chip", bg: l0_active, radius: 12, padx: 10, pady: 5, selected: 1,
-                fitw: 1, fith: 1, c: [ l0_txt(s, 10, 500, l0_text) ]}
+        return {t: "chip", bg: l0_active, radius: radius_chip, padx: pad_chip_x, pady: pad_chip_y, selected: 1,
+                fitw: 1, fith: 1, c: [ l0_txt(s, font_row, weight_medium, l0_text) ]}
     }
-    return {t: "chip", bg: l0_fill, radius: 12, padx: 10, pady: 5, selected: 0,
-            fitw: 1, fith: 1, c: [ l0_txt(s, 10, 500, l0_dim) ]}
+    return {t: "chip", bg: l0_fill, radius: radius_chip, padx: pad_chip_x, pady: pad_chip_y, selected: 0,
+            fitw: 1, fith: 1, c: [ l0_txt(s, font_row, weight_medium, l0_dim) ]}
 }
 
 fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
