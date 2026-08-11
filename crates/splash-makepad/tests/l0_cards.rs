@@ -21,10 +21,14 @@ use splash_ui_l0::{kit, realize, RealizeLimits};
 /// `_palette_dark.splash`); these tests assert structure, not colour, so they
 /// assemble the default and `l0_kit.rs` covers the moods.
 const KIT_BODY: &str = include_str!("../../../components/l0/_kit.splash");
-const PALETTE: &str = include_str!("../../../components/l0/_palette_dark.splash");
+const BASE: &str = include_str!("../../../components/l0/_palette_dark.splash");
+const DERIVE: &str = include_str!("../../../components/l0/_derive.splash");
 
+/// Base, then the derivation, then the body — the default mood's assembly. Omit
+/// `_derive.splash` and every SIZE is an undefined name, which is 0: the tree
+/// still builds and every padding, radius and font size is gone.
 fn kit() -> String {
-    format!("{PALETTE}\n{KIT_BODY}")
+    format!("{BASE}\n{DERIVE}\n{KIT_BODY}")
 }
 
 const WEATHER: &str = include_str!("../../../../Splash/crates/splash-ui-l0/tests/fixtures/weather.card");

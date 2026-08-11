@@ -1,13 +1,24 @@
-// _palette_dark.splash — the default L0 palette, and the reference for the rest.
+// _palette_dark.splash — the BASE theme: every token, and the reference for the rest.
 //
 // A THEME IS A PALETTE PREFIX. The DSL has no `import`, so a card is rendered by
 // concatenating <palette> + `_kit.splash` + the lowered card. The palette must
 // come FIRST: a function body resolves a name at its declaration point, so a
 // palette appended after the kit would not reach the roles that read it.
 //
-// EVERY PALETTE MUST DEFINE EVERY NAME BELOW. A missing one is not a default —
-// it coerces to 0, which is transparent, and the role that reads it renders as
-// nothing at all. `l0_palettes_agree` in `tests/l0_kit.rs` pins the set.
+// ASSEMBLY IS `base + delta + _derive + kit`, in that order, and the order is
+// load-bearing. This file holds the KNOBS and the COLOURS; a mood is a DELTA that
+// restates only what differs; `_derive.splash` then computes every size FROM the
+// knobs. Derivation has to come after the delta or a mood could not move a knob —
+// `let` evaluates at its own line, so a delta setting `radius_factor` after
+// `radius_panel` was already computed would change nothing. It works at all
+// because a name resolves to its most recent binding and the kit's roles are
+// declared last, after all three.
+//
+// A token this file omits is not a default: it coerces to 0, which is
+// transparent for a colour and zero for a size, and the role that reads it draws
+// nothing. `l0_palettes_agree` in `tests/l0_kit.rs` pins the set, and pins every
+// delta to naming only tokens that exist here — a typo in a delta is otherwise
+// silent.
 //
 // Hex from the shipped lowering, as ARGB. Note makepad writes #RRGGBBAA, so
 // `#ffffff12` is white at alpha 0x12 — a barely-there panel over a dark page,
@@ -15,6 +26,29 @@
 
 fn argb(a, r, g, b) { return ((a * 256 + r) * 256 + g) * 256 + b }
 
+// ---- knobs -----------------------------------------------------------------
+// The whole point of Option A: a handful of dials, everything else derived from
+// them, so a mood can be "dark but roomier" without restating a layout. Values
+// are 1 / 10 / 2 because that reproduces the shipped numbers EXACTLY — the layer
+// moves here, the look does not. Four device goldens assert those numbers.
+//
+// Integers on purpose. A fractional `space_factor` is legal and yields floats,
+// which every size slot accepts; the TYPE scale is dialled with `font_base` and
+// `font_step` instead, so a larger-text theme does not have to risk a fractional
+// font size.
+let space_factor  = 1
+let radius_factor = 1
+let font_base     = 10
+let font_step     = 2
+
+// ---- weights ---------------------------------------------------------------
+// Not derived: a weight is a discrete choice from what a font actually ships.
+let weight_normal = 400
+let weight_medium = 500
+let weight_semi   = 600
+let weight_bold   = 700
+
+// ---- colours ---------------------------------------------------------------
 let l0_base     = argb(255,  10,  14,  20)   // #0a0e14  page
 let l0_scrim    = argb(102,   0,   0,   0)   // #00000066 over a photo
 // A sheet floating over a MAP, and the one fill in this palette that must be
