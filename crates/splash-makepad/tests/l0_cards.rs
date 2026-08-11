@@ -309,3 +309,33 @@ fn every_emitted_widget_name_is_defined_in_the_kit() {
         "no L0 widget was emitted, so this asserted nothing: {emitted:?}"
     );
 }
+
+/// An L1 coefficient reaches the backend at FULL precision.
+///
+/// `trim_num` is a display rule — one decimal, because a temperature reads as
+/// 21.4 and not 21.437 — and it was also being used to emit an arithmetic
+/// OPERAND. Rounding an operand silently changes the result: a converter card
+/// declaring `factor 0.621371` lowered to `(42 * 0.6)` and drew 42 km as 25.2
+/// miles instead of 26.1, on device, with the checker accepting the card. The
+/// card was right and the number on screen was wrong, which is exactly the
+/// failure §1.1 exists to prevent — and no test could see it, because both the
+/// realized tree and the built widget tree were structurally perfect.
+#[test]
+fn an_l1_coefficient_is_not_rounded_on_its_way_to_the_backend() {
+    let card = "# level: L1\n\
+        state amount { shape: number, initial: 42 }\n\
+        state factor { shape: number, initial: 0.621371 }\n\
+        view root Surface { TextHero(value: amount * factor) }\n";
+    let report = realize(card, &serde_json::json!({}), RealizeLimits::default());
+    assert!(report.diagnostics.is_empty(), "{:#?}", report.diagnostics);
+    let lowered = kit::lower(&report.root.expect("root"));
+    assert!(
+        lowered.contains("0.621371"),
+        "the coefficient was rounded on the way out:\n{lowered}"
+    );
+    // And a whole number must not grow a decimal point on the way through.
+    assert!(
+        lowered.contains("42 *"),
+        "an integer operand should stay an integer:\n{lowered}"
+    );
+}
