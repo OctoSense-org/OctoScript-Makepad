@@ -58,18 +58,17 @@ No size, no weight, no color.
 
 ## Components
 
-**Status, measured on the makepad host (6T, 2026-08-12).** ✅ = interaction
-verified by synthetic tap + state diff. 🎨 = renders correctly, write-back NOT
-verified. ⛔ = renders but does not write. A widget is not "ready" until a tap
-changed a slot and a screenshot changed with it — tonight produced four
-controls that fired on every tap and wrote nothing, and they looked identical
-to working ones.
+**Status, measured on the makepad host (6T, 2026-08-12) by the `wired` screen:**
+every control writes its own slot and a caption renders that slot, so a
+screenshot diff IS a state diff. Two proven anchors validate the harness.
 
-| status | widget |
-|---|---|
-| ✅ | `segmented`, `chip`, `button` (with `tap:1`/`action:`), `tabs`, `card`, `listitem` (display), `divider`, `text`, `col/row/flow/scroll/spacer` |
-| 🎨 | `checkbox` (auto-wired in code, untested), `fab`, `badgeicon`, `progress` (drew as a ring even with `value:`), `input`, `searchbar`, `dropdown`, `radio`, `datepicker`, `timepicker`, `navbar`, `navrail`, `carousel` |
-| ⛔ | `slider` (its editor opens; nothing commits), `listitem action:"switch"` (switch unwired), `toggle` (same class, presumed) |
+| verdict | widgets | evidence |
+|---|---|---|
+| ✅ writes | `chip`, `button` (`tap:1`/`action:`), `segmented`, `tabs`, `checkbox` | tap moved the caption |
+| ⛔ **lies** | `radio`, `toggle`, `listitem action:"switch"` | flipped ON SCREEN, caption held 0, and the next remount silently reverted them — worse than inert, because the user saw it work |
+| ⛔ inert | `fab`, `dropdown` (no key wiring in the renderer), `slider` (its editor opens; nothing commits) | tap changed nothing |
+| 🎨 render notes | `progress` draws a RING even with `value:` (no linear bar); `dropdown` caret is a missing glyph | visual |
+| untested | `input`, `searchbar`, `datepicker`, `timepicker`, `navbar`, `navrail`, `carousel` | need IME/dialog passes |
 
 New screens should draw from the ✅ row. A 🎨 widget is promoted by adding it
 to a wired-controls test screen and showing a tap moves its slot — not by

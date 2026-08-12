@@ -19,6 +19,8 @@ pub const SCREENS: &[(&str, &str)] = &[
     ("brew", include_str!("../../../components/material/screens/brew.splash")),
     // The three-screen ordering app (tabs, per-drink customization, rewards).
     ("siren", include_str!("../../../components/material/screens/siren.splash")),
+    // The promotion harness: every control writes a slot, a caption renders it.
+    ("wired", include_str!("../../../components/material/screens/wired.splash")),
     ("adaptive", include_str!("../../../components/material/screens/adaptive.splash")),
     ("allcomponents", include_str!("../../../components/material/screens/allcomponents.splash")),
     ("badge", include_str!("../../../components/material/screens/badge.splash")),
@@ -71,6 +73,7 @@ pub fn title_of(route: &str) -> &str {
         "allcomponents" => "All components",
         "brew" => "Brew",
         "siren" => "Siren Coffee",
+        "wired" => "Wired controls",
             "adaptive" => "Adaptive layouts",
             "badge" => "Badge",
             "bottomappbar" => "Bottom app bar",
