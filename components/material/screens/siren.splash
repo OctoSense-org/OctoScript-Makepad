@@ -136,7 +136,7 @@ fn screen_home() {
   if cart_count() > 0 {
     kids.push({t:"button", variant:"filled", icon:"check",
                label:"View order (" + cart_count() + ") · " + money(cart_total()),
-               key:"sb_cart", tap: 1})
+               key:"sb_tab", action:"2"})
   }
   return kids
 }
@@ -153,7 +153,7 @@ fn screen_menu() {
   if cart_count() > 0 {
     kids.push({t:"button", variant:"filled", icon:"check",
                label:"View order (" + cart_count() + ") · " + money(cart_total()),
-               key:"sb_cart", tap: 1})
+               key:"sb_tab", action:"2"})
   }
   return kids
 }
@@ -247,12 +247,6 @@ fn body() {
   let open = open_item()
   if open >= 0 { return screen_customize(open) }
   let kids = []
-  if N("sb_cart", 0) == 1 {
-    kids.push({t:"tabs", items:"Home;Menu;Order", key:"sb_tab", selected: 2})
-    kids.push({t:"chip", variant:"assist", text:"Close order", icon:"close", key:"sb_cart", on: 1})
-    for k in screen_order() { kids.push(k) }
-    return kids
-  }
   let tab = N("sb_tab", 0)
   kids.push({t:"tabs", items:"Home;Menu;Order", key:"sb_tab", selected: tab})
   let inner = screen_home()
