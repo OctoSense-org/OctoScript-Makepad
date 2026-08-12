@@ -58,6 +58,23 @@ No size, no weight, no color.
 
 ## Components
 
+**Status, measured on the makepad host (6T, 2026-08-12).** ✅ = interaction
+verified by synthetic tap + state diff. 🎨 = renders correctly, write-back NOT
+verified. ⛔ = renders but does not write. A widget is not "ready" until a tap
+changed a slot and a screenshot changed with it — tonight produced four
+controls that fired on every tap and wrote nothing, and they looked identical
+to working ones.
+
+| status | widget |
+|---|---|
+| ✅ | `segmented`, `chip`, `button` (with `tap:1`/`action:`), `tabs`, `card`, `listitem` (display), `divider`, `text`, `col/row/flow/scroll/spacer` |
+| 🎨 | `checkbox` (auto-wired in code, untested), `fab`, `badgeicon`, `progress` (drew as a ring even with `value:`), `input`, `searchbar`, `dropdown`, `radio`, `datepicker`, `timepicker`, `navbar`, `navrail`, `carousel` |
+| ⛔ | `slider` (its editor opens; nothing commits), `listitem action:"switch"` (switch unwired), `toggle` (same class, presumed) |
+
+New screens should draw from the ✅ row. A 🎨 widget is promoted by adding it
+to a wired-controls test screen and showing a tap moves its slot — not by
+looking at it.
+
 | t | required | optional | behaviour |
 |---|---|---|---|
 | `button` | `label`, `variant:` `elevated\|filled\|tonal\|outlined\|text` | `icon`, `key`+`tap:1`, `action:"v"`, `enabled:0` | `key` alone is INERT: add `tap:1` to write 1, or `action:"v"` to write the literal v (`action:"0"` clears a flag) |
