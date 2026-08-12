@@ -14,6 +14,9 @@ pub const KIT: &str = include_str!("../../../components/material/screens/kit.spl
 
 /// Every route, in the order the reference lists them.
 pub const SCREENS: &[(&str, &str)] = &[
+    // The semantic-vocabulary experiment: a NEW app authored only from
+    // WIDGETS.md by a generator, to test the vocabulary as a contract.
+    ("brew", include_str!("../../../components/material/screens/brew.splash")),
     ("adaptive", include_str!("../../../components/material/screens/adaptive.splash")),
     ("allcomponents", include_str!("../../../components/material/screens/allcomponents.splash")),
     ("badge", include_str!("../../../components/material/screens/badge.splash")),
@@ -64,6 +67,7 @@ pub fn title_of(route: &str) -> &str {
     match route {
         INDEX => "Catalog",
         "allcomponents" => "All components",
+        "brew" => "Brew",
             "adaptive" => "Adaptive layouts",
             "badge" => "Badge",
             "bottomappbar" => "Bottom app bar",
