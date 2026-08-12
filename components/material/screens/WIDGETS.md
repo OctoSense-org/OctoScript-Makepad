@@ -60,15 +60,15 @@ No size, no weight, no color.
 
 | t | required | optional | behaviour |
 |---|---|---|---|
-| `button` | `label`, `variant:` `elevated\|filled\|tonal\|outlined\|text` | `icon`, `key`, `enabled:0` | tap writes `key` (0↔1) |
-| `chip` | `text`, `variant:` `assist\|filter\|input\|suggestion` | `icon`, `key`, `on: N(...)`, `enabled:0` | filter chips show a check when `on`; tap flips `key` |
+| `button` | `label`, `variant:` `elevated\|filled\|tonal\|outlined\|text` | `icon`, `key`+`tap:1`, `action:"v"`, `enabled:0` | `key` alone is INERT: add `tap:1` to write 1, or `action:"v"` to write the literal v (`action:"0"` clears a flag) |
+| `chip` | `text`, `variant:` `assist\|filter\|input\|suggestion` | `icon`, `key`, `on: N(...)`, `enabled:0` | tap writes `!on` — so a chip that CLOSES something open must declare `on: 1`, or every tap rewrites 1 into a slot already at 1 and nothing moves |
 | `checkbox` | `text`, `key`, `on: N(...)` | `indeterminate:1`, `enabled:0` | tap flips `key` |
 | `toggle` | `key`, `on: N(...)` | `enabled:0` | a switch; tap flips `key` |
 | `radio` | `text`, `key`, `on:` | `enabled:0` | one `key` per option; you keep them exclusive |
 | `segmented` | `items:"A;B;C"`, `key`, `selected: N(...)` | — | joined single-select; tap writes the index |
-| `slider` | `key`, `value: N(...)`, `min`, `max` | `step`, `enabled:0` | drag writes `key` |
+| `slider` | `key`, `value: N(...)`, `min`, `max` | `step`, `enabled:0` | AVOID for now on the makepad host: taps/drags open its text editor and the typed value never commits to the slot (kit-host's slider-sync is not ported). Use `segmented` — the index is the value |
 | `input` | `hint` | `key`, `helper`, `error`, `enabled:0` | text field; typed text lands in `S(key)` |
-| `listitem` | `label` | `supporting`, `icon`, `lines:1..3`, `action:"switch"\|"more"`, `on`, `key` | M3 list row; `action:"switch"` puts a switch at the trailing edge |
+| `listitem` | `label` | `supporting`, `icon`, `lines:1..3`, `action:"switch"\|"more"`, `on`, `key` | M3 list row. CAUTION: the trailing switch renders but is NOT wired to `key` on the makepad host — for a working toggle use a filter `chip` |
 | `card` | children `c:` | `variant:` `elevated\|filled\|outlined`, `title` | a container with M3 surface treatment |
 | `divider` | — | `variant:"inset"` | hairline rule |
 | `fab` | `icon` | `variant:` `small\|regular\|large\|extended`, `label` (extended), `key` | floating action button |
@@ -97,3 +97,10 @@ delete edit info warning`.
    styling, and the styling is not yours.
 5. Everything unknown fails silently. If a widget you want is not in the table,
    compose it from listed parts — do not invent a `t:`.
+6. A control that navigates "back" is a WRITE like any other, and it usually
+   writes 0: chips need `on: 1`, buttons need `action:"0"`. The no-op form —
+   `key` writing the value already there — renders perfectly, fires on every
+   tap, and changes nothing.
+7. Put back/close affordances at the TOP of a screen. Tap targets hit-test in
+   unscrolled coordinates on this host, so a control below the fold cannot be
+   aimed at reliably once the page scrolls.

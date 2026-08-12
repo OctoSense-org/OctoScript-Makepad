@@ -17,6 +17,8 @@ pub const SCREENS: &[(&str, &str)] = &[
     // The semantic-vocabulary experiment: a NEW app authored only from
     // WIDGETS.md by a generator, to test the vocabulary as a contract.
     ("brew", include_str!("../../../components/material/screens/brew.splash")),
+    // The three-screen ordering app (tabs, per-drink customization, rewards).
+    ("siren", include_str!("../../../components/material/screens/siren.splash")),
     ("adaptive", include_str!("../../../components/material/screens/adaptive.splash")),
     ("allcomponents", include_str!("../../../components/material/screens/allcomponents.splash")),
     ("badge", include_str!("../../../components/material/screens/badge.splash")),
@@ -68,6 +70,7 @@ pub fn title_of(route: &str) -> &str {
         INDEX => "Catalog",
         "allcomponents" => "All components",
         "brew" => "Brew",
+        "siren" => "Siren Coffee",
             "adaptive" => "Adaptive layouts",
             "badge" => "Badge",
             "bottomappbar" => "Bottom app bar",
