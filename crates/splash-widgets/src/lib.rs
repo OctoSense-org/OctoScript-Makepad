@@ -101,14 +101,21 @@ script_mod! {
     }
     mod.prelude.widgets.RadioButton = mod.widgets.RadioButton
 
-    // Slider: primary active track + handle, neutral inactive track.
-    mod.widgets.Slider = mod.widgets.SliderFlat{
+    // Slider: primary track, ROUND handle. The default `Slider` base is
+    // SliderFlat, whose handle is a full-height rounded box — a vertical stick
+    // poking past both edges of the track ("remove the stick on the moving
+    // cursor, too ugly"). SliderRound draws the handle as a circle, which is
+    // the classic knob; same uniforms, so only the base changes.
+    mod.widgets.Slider = mod.widgets.SliderRound{
         draw_bg +: {
             val_color: #6750A4
             val_color_hover: #6750A4
+            val_color_drag: #6750A4
+            val_color_focus: #6750A4
             handle_color: #6750A4
             handle_color_hover: #6750A4
-            handle_color_2: #6750A4
+            handle_color_focus: #6750A4
+            handle_color_drag: #6750A4
             border_color: #CAC4D0
             border_color_2: #CAC4D0
         }
