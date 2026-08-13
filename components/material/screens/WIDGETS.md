@@ -31,6 +31,31 @@ There is one global store of number slots, read by name, written by taps.
   `N(...) + " x"` is arithmetic against a word.
 - A slot name is global to the app: prefix yours (`brew_size`, not `size`).
 
+## Language facts — the expression dialect, exactly
+
+The script is NOT JavaScript. Generators keep reaching for JS idioms; every
+one of these was measured as a parser failure:
+
+- **No ternary.** `if(cond, a, b)` is not a function and `cond ? a : b` does
+  not parse. Write a helper: `fn pick(c, a, b) { if c == 1 { return a } return b }`
+  and call `pick(...)` — or use early-return `if` statements.
+- **No spread.** `...list` does not exist. Build arrays with `push`:
+  `let kids = []  kids.push(x)  for m in list { kids.push(f(m)) }`.
+- **`if` is a STATEMENT.** `if cond { ... }` and `if cond { ... } else { ... }`
+  with mandatory braces. It has no value — never use an if where a value is
+  expected (inside an array literal, an attribute, an argument).
+- **`for x in list { ... }`** — no parentheses, no index form, no `for(;;)`.
+- **Comparisons:** `==`, `!=`, `<`, `>`, `<=`, `>=` on numbers and strings.
+  Logical and/or of conditions: nest ifs or sum flag helpers — `&&`/`||` are
+  not reliable; prefer `if a == 1 { if b == 1 { ... } }`.
+- **Strings** concatenate with `+`, and the concatenation must START with a
+  string: `"n: " + n` yes, `n + " items"` no.
+- **A list-returning fn is spliced as the WHOLE children value** —
+  `c: my_body()` — never placed inside `c: [ ... ]` (a list inside a list is
+  dropped silently).
+- Statements separate by newline; no semicolons needed; `let` declares,
+  plain `x = v` reassigns.
+
 ## Layout containers
 
 | t | attrs | notes |
