@@ -561,6 +561,11 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         None if a.fitw == Some(1) => {
             let _ = writeln!(out, "{ind}width: Fit");
         }
+        // A bundled photo spans its column by default, so a card author need not
+        // know makepad's width model to get a full-width banner.
+        None if node.kind == NodeKind::Image => {
+            let _ = writeln!(out, "{ind}width: Fill");
+        }
         None if container => {
             let _ = writeln!(out, "{ind}width: Fill");
         }
@@ -790,7 +795,16 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         }
     }
     if let Some(src) = &a.src {
-        let _ = writeln!(out, "{ind}source: {src:?}");
+        if node.kind == NodeKind::Image {
+            // A real bundled photo: makepad's Image widget takes a resource
+            // handle via `src:` (same `crate_resource` mechanism the font uses,
+            // which already renders on device). CropToFill fills the box and
+            // crops the overflow — right for a banner.
+            let _ = writeln!(out, "{ind}src: crate_resource(\"self:resources/{src}.png\")");
+            let _ = writeln!(out, "{ind}fit: ImageFit.CropToFill");
+        } else {
+            let _ = writeln!(out, "{ind}source: {src:?}");
+        }
     }
 
     // Data-visualisation uniforms. The names are the shader's, not the model's:

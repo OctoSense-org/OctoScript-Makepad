@@ -161,7 +161,54 @@ pub struct App {
     /// Seconds since startup, fed to the kit as `st.t`.
     #[rust]
     clock: f64,
+    /// SELF-DRIVE: commands loaded from /data/local/tmp/fs_cmd.txt — the phone
+    /// taps and captures ITSELF; no adb input, no adb screencap. `tap X Y`
+    /// (physical px), `shot <path.png>`, `wait <ticks>`.
+    #[rust]
+    drive_cmds: Vec<String>,
+    #[rust]
+    drive_at: usize,
+    #[rust]
+    drive_delay: u32,
+    /// A Stop touch waiting to follow its Start.
+    #[rust]
+    drive_stop: Option<(f64, f64, u64)>,
+    #[rust]
+    drive_uid: u64,
+    #[rust]
+    drive_last_file: String,
+    /// Frames remaining on an active capture (env var set).
+    #[rust]
+    drive_shot: u32,
 }
+
+/// One synthetic touch through the REAL input pipeline: the same channel and
+/// coalescing the JNI layer uses, physical coords, converted by the same
+/// handler. The phone touching its own screen.
+#[cfg(target_os = "android")]
+fn self_tap(x: f64, y: f64, uid: u64, down: bool) {
+    use makepad_widgets::makepad_platform::os::linux::android::android_jni;
+    use makepad_widgets::makepad_platform::event::{TouchPoint, TouchState};
+    use makepad_widgets::makepad_platform::Area;
+    let t = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs_f64())
+        .unwrap_or(0.0);
+    let touch = TouchPoint {
+        state: if down { TouchState::Start } else { TouchState::Stop },
+        abs: makepad_widgets::makepad_platform::math_f64::dvec2(x, y),
+        time: t,
+        uid,
+        rotation_angle: 0.0,
+        force: 1.0,
+        radius: makepad_widgets::makepad_platform::math_f64::dvec2(1.0, 1.0),
+        handled: std::cell::Cell::new(Area::Empty),
+        sweep_lock: std::cell::Cell::new(Area::Empty),
+    };
+    android_jni::send_from_java_message(android_jni::FromJavaMessage::Touch(vec![touch]));
+}
+#[cfg(not(target_os = "android"))]
+fn self_tap(_x: f64, _y: f64, _uid: u64, _down: bool) {}
 
 impl App {
     fn current_source() -> String {
@@ -311,6 +358,45 @@ impl AppMain for App {
         }
         if self.next_frame.is_event(event).is_some() {
             self.tick = self.tick.wrapping_add(1);
+            // SELF-DRIVE executor: one command at a time, frame-paced.
+            if let Some((x, y, uid)) = self.drive_stop.take() {
+                self_tap(x, y, uid, false);
+            } else if self.drive_shot > 0 {
+                self.drive_shot -= 1;
+                if self.drive_shot == 0 {
+                    std::env::remove_var("MAKEPAD_WRITE_FRAMEBUFFER_PNG");
+                }
+            } else if self.drive_delay > 0 {
+                self.drive_delay -= 1;
+            } else if self.drive_at < self.drive_cmds.len() {
+                let cmd = self.drive_cmds[self.drive_at].clone();
+                self.drive_at += 1;
+                let parts: Vec<&str> = cmd.split_whitespace().collect();
+                match parts.as_slice() {
+                    ["tap", x, y] => {
+                        if let (Ok(x), Ok(y)) = (x.parse::<f64>(), y.parse::<f64>()) {
+                            self.drive_uid += 1;
+                            self_tap(x, y, self.drive_uid, true);
+                            self.drive_stop = Some((x, y, self.drive_uid));
+                            self.drive_delay = 30;
+                        }
+                    }
+                    ["shot", path] => {
+                        std::env::set_var("MAKEPAD_WRITE_FRAMEBUFFER_PNG", path);
+                        self.drive_shot = 3;
+                        self.drive_delay = 6;
+                    }
+                    ["wait", n] => self.drive_delay = n.parse().unwrap_or(30),
+                    _ => {}
+                }
+                let done = self.drive_at >= self.drive_cmds.len();
+                let _ = std::fs::write(
+                    "/storage/emulated/0/Android/data/dev.makepad.flutter_samples/files/fs_cmd_done.txt",
+                    format!("{} {}/{}{}\n", cmd, self.drive_at, self.drive_cmds.len(),
+                            if done { " DONE" } else { "" }),
+                );
+                if done { log!("SELFDRIVE done"); }
+            }
             let nav_raw = take_tap().unwrap_or_default();
             let nav = nav_raw.trim();
             if !nav.is_empty() {
@@ -332,6 +418,19 @@ impl AppMain for App {
                 }
                 self.mount(cx);
             } else if self.tick % 10 == 0 {
+                // SELF-DRIVE: load a new command file (mtime-independent — the
+                // file's CONTENT is the identity; clear it to re-arm).
+                if let Ok(txt) = std::fs::read_to_string("/data/local/tmp/fs_cmd.txt") {
+                    if !txt.trim().is_empty() && txt != self.drive_last_file {
+                        self.drive_last_file = txt.clone();
+                        self.drive_cmds =
+                            txt.lines().map(|l| l.trim().to_string()).filter(|l| !l.is_empty()).collect();
+                        self.drive_at = 0;
+                        self.drive_delay = 0;
+                        let _ = std::fs::write("/storage/emulated/0/Android/data/dev.makepad.flutter_samples/files/fs_cmd_done.txt", "LOADED\n");
+                        log!("SELFDRIVE loaded {} cmds", self.drive_cmds.len());
+                    }
+                }
                 // A route written to ROUTE_PATH wins over whatever was tapped,
                 // so the QA sweep can drive every screen from adb. Checked
                 // independently of the source, so pushing an edited kit still

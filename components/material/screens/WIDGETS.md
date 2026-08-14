@@ -118,6 +118,12 @@ looking at it.
 | `tabs` | `items:"A;B"`, `key`, `selected: N(...)` | `variant:"scrollable"` | tab strip |
 | `searchbar` | `hint` | `key` | M3 search bar |
 | `dropdown` | `items:"A;B"`, `key`, `selected: N(...)` | `label` | exposed dropdown menu |
+| `image` | `src:"<asset>"` | `h` (dp height, default 180), `w` | a real bundled photo, cropped to fill its box, full-width by default |
+
+**Available `image` assets** (name them in `src:`): `coffee/hero` (a wide
+moody latte banner), `coffee/cup_small` (an espresso), `coffee/cup_large` (a
+latte) — all square/banner photos on dark walnut, matching a dark theme. A
+`src:` that is not a listed asset or `grad1|grad2|grad3` renders nothing.
 
 `icon` takes a **name** — the set used by the screens: `add share bookmark
 place call check close star favorite settings search more menu home person
