@@ -72,7 +72,7 @@ fn l0_spacer()  { return {t: "column", fillw: 1, h: 1} }
 // design. Once a value lowers to a live backend call the drawn text is not in
 // the DSL at all — `"$" + sys.stock("NVDA", "price")` renders as six characters
 // and reads as thirty-three — so only the lowering knows what will be drawn.
-fn l0_hero(s, pt) { return l0_txt(s, pt, weight_bold, l0_text) }
+fn l0_hero(s, pt) { return l0_txt(s, pt, weight_hero, l0_text) }
 
 // The type scale, TAKEN FROM THE WIDGETS THIS REPLACES rather than chosen.
 //
@@ -191,7 +191,13 @@ fn l0_surface(kids) {
 fn l0_surface_photo(src, kids) {
     return {t: "stack", fillw: 1, fillh: 1, c: [
         {t: "image", src: src, fit: 2, fillw: 1, fillh: 1},
-        {t: "column", fillw: 1, fillh: 1, bg: l0_scrim},
+        // Two stops, not one wash: bright sky at the top, near-black under
+        // the content. The L1 immersive exemplar this mood was ported from had
+        // exactly this (GradientYView) and it was flattened on the way into
+        // L0 — the flat wash is why a forecast panel never read as floating
+        // out of the dark. `l0_scrim` stays the mood's strong BOTTOM stop;
+        // `l0_scrim_top` is the light one the photograph shows through.
+        {t: "column", fillw: 1, fillh: 1, bg: l0_scrim_top, bg2: l0_scrim},
         {t: "column", fillw: 1, fillh: 1, padx: pad_page_x, padtop: pad_page_top, padbottom: pad_page_bot, c: kids}
     ]}
 }
