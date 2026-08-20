@@ -9,7 +9,11 @@
 let l0_base     = argb(255,   5,   7,  12)   // #05070c for the strip a photo misses
 // HEAVIER than every other mood. These cards are read over an arbitrary
 // photograph, so the scrim carries all of the legibility.
-let l0_scrim    = argb(140,   5,   7,  12)   // #05070c8c over a photo
+// The two stops of the shipped immersive exemplar (GradientYView
+// #0a0f1a22 -> #05070cf2), restored: the photograph reads at the top and
+// the content floats out of near-black at the bottom.
+let l0_scrim     = argb(242,   5,   7,  12)   // #05070cf2 bottom stop
+let l0_scrim_top = argb( 34,  10,  15,  26)   // #0a0f1a22 top stop
 let l0_sheet    = argb(242,   5,   7,  12)   // #05070cf2 over a map — near-opaque
 let l0_fill     = argb( 26, 255, 255, 255)   // #ffffff1a panel fill
 let l0_active   = argb( 64, 255, 255, 255)   // #ffffff40 selected chip
@@ -21,3 +25,7 @@ let l0_down     = argb(255, 255, 105, 105)   // #ff6969 a fall
 let l0_ondark   = argb(255,   5,   7,  12)   // #05070c text on a lit fill
 let l0_danger   = argb(255, 140,  32,  32)   // #8c2020 destructive fill
 let l0_danger_i = argb(255, 255, 224, 224)   // #ffe0e0 its ink
+
+// A hairline numeral over a photograph — the largest visual difference
+// between the shipped hero and the design-mockup hero after size itself.
+let weight_hero  = 100
