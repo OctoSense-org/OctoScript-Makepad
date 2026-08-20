@@ -518,6 +518,12 @@ fn l0_tap(target, node) {
 }
 
 fn l0_tap_fit(target, node) {
+    // The wrapper hugs its content, so a Fill CHILD here resolves to a
+    // zero-width box (Fill inside Fit is 0 in makepad) — measured: a
+    // tap-wrapped live hero drew as an invisible column of one-glyph-wide
+    // wrapped lines, tiny at 17pt and a half-screen void at 43. A hug
+    // wrapper means hug content, so say it on the child as well.
+    node.fitw = 1
     return {t: "column", fitw: 1, fith: 1, tapto: target, c: [node]}
 }
 
