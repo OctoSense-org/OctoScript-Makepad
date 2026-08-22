@@ -50,6 +50,15 @@ let weight_bold   = 700
 // The one number a card exists to show gets its own axis: a hero over a
 // list is bold; a hero over a photograph wants a hairline. Moods dial it.
 let weight_hero   = 700
+// The hero's top-step multiplier; only a surface whose hero dominates a
+// photograph moves it (see l0_hero).
+let hero_factor   = 1
+// Data-vis restraint knobs: 0 = the widget's legacy look.
+let l0_bar        = 0
+let l0_bar_rail   = 0
+let icon_mono     = 0
+// A floating pane's side inset; 0 = the classic full-bleed panel.
+let panel_inset   = 0
 
 // ---- colours ---------------------------------------------------------------
 let l0_base     = argb(255,  10,  14,  20)   // #0a0e14  page
