@@ -92,6 +92,10 @@ fn l0_title(s)    { return l0_txt(s, font_title, weight_bold, l0_text) }
 fn l0_body(s)     { return l0_para(s, font_body, weight_normal, l0_text) }
 fn l0_row_text(s) { return l0_txt(s, font_row, weight_normal, l0_soft) }
 fn l0_caption(s)  { return l0_txt(s, font_caption, weight_normal, l0_dim) }
+// The tracked-caps line above a hero. `variant` marks it for the backend,
+// which spaces and uppercases a LITERAL — a live value stays as it arrives.
+fn l0_eyebrow(s)  { return {t: "text", text: s, size: font_caption, weight: weight_medium,
+                            color: l0_soft, fith: 1, variant: "eyebrow"} }
 fn l0_value(s)    { return l0_txt(s, font_value, weight_semi, l0_text) }
 
 // A statistic, tinted by direction. `dir` is -1, 0 or 1 — the SIGN, decided by
