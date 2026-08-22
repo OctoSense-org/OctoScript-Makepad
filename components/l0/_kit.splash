@@ -72,7 +72,14 @@ fn l0_spacer()  { return {t: "column", fillw: 1, h: 1} }
 // design. Once a value lowers to a live backend call the drawn text is not in
 // the DSL at all — `"$" + sys.stock("NVDA", "price")` renders as six characters
 // and reads as thirty-three — so only the lowering knows what will be drawn.
-fn l0_hero(s, pt) { return l0_txt(s, pt, weight_hero, l0_text) }
+fn l0_hero(s, pt) {
+    // A hero over a full-bleed photograph does a different job than one in a
+    // list, and 43 was its ceiling (gap 2 of the mockup study). The factor
+    // scales only the TOP step — a short numeral — so a long text hero that
+    // already stepped down never doubles into a wall of 86pt wrap.
+    if pt >= 43 { return l0_txt(s, pt * hero_factor, weight_hero, l0_text) }
+    return l0_txt(s, pt, weight_hero, l0_text)
+}
 
 // The type scale, TAKEN FROM THE WIDGETS THIS REPLACES rather than chosen.
 //
@@ -377,7 +384,8 @@ fn l0_grid(kids)     { return {t: "grid", fillw: 1, spacing: 10, c: kids} }
 // A raised surface holding related content.
 fn l0_panel(kids) {
     return {t: "card", fillw: 1, bg: l0_fill, radius: radius_panel,
-            padx: pad_panel_x, pady: pad_panel_y, margintop: gap_panel_top, c: kids}
+            padx: pad_panel_x, pady: pad_panel_y, margintop: gap_panel_top,
+            marginx: panel_inset, c: kids}
 }
 
 fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
@@ -585,10 +593,17 @@ fn l0_map(mode, zoom, lat, lon, poly, pins, badge) {
 // A condition, drawn. `cond` is a NUMBER — the WMO code the forecast returns —
 // and `size` is which of the three places this icon sits in: the hero block, a
 // forecast row, or a tile. The card says which; how big each is, is the theme's.
+fn l0_icon_ink(node) {
+    // A mood that wants line-art restraint recolours the glyph to one ink
+    // (gap 8); 0 keeps the filled multi-colour icon.
+    if icon_mono != 0 { node.color = l0_text }
+    return node
+}
+
 fn l0_weathericon(cond, size) {
-    if size == "hero" { return {t: "weathericon", variant: cond, w: 64, h: 64} }
-    if size == "tile" { return {t: "weathericon", variant: cond, w: 28, h: 28} }
-    return {t: "weathericon", variant: cond, w: 34, h: 34}
+    if size == "hero" { return l0_icon_ink({t: "weathericon", variant: cond, w: 64, h: 64}) }
+    if size == "tile" { return l0_icon_ink({t: "weathericon", variant: cond, w: 28, h: 28}) }
+    return l0_icon_ink({t: "weathericon", variant: cond, w: 34, h: 34})
 }
 
 // The five that used to be markers.
@@ -600,8 +615,12 @@ fn l0_weathericon(cond, size) {
 
 // A day's low and high against the week's range, as a gradient segment.
 fn l0_tempbar(lo, hi, min, max) {
-    return {t: "tempbar", fillw: 1, h: 8, marginx: 10,
-            lo: lo, hi: hi, min: min, max: max}
+    let node = {t: "tempbar", fillw: 1, h: 8, marginx: 10,
+                lo: lo, hi: hi, min: min, max: max}
+    // A mood that owns the bar palette says so (gap 7): rail + single hue
+    // instead of the nine-stop spectrum. `l0_bar` of 0 means legacy.
+    if l0_bar != 0 { node.bg = l0_bar_rail; node.bg2 = l0_bar }
+    return node
 }
 
 // The sun's path, with now marked on it. Hours are fractional — 18.9 is 18:54.
