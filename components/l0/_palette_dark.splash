@@ -59,6 +59,11 @@ let l0_bar_rail   = 0
 let icon_mono     = 0
 // A floating pane's side inset; 0 = the classic full-bleed panel.
 let panel_inset   = 0
+// One line per list row, with an ellipsis. 0 would mean unlimited.
+let row_lines     = 1
+// A surface outline. 0 = none; the mood supplies both width and ink.
+let panel_border  = 0
+let l0_stroke     = l0_hairline
 
 // ---- colours ---------------------------------------------------------------
 let l0_base     = argb(255,  10,  14,  20)   // #0a0e14  page

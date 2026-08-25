@@ -32,3 +32,9 @@ let l0_ondark   = argb(255, 255, 255, 255)   // #ffffff text on a lit fill
 //     match the page, so the base's dark one is right here too.
 //   l0_go — #34c759 reads on both.
 //   every SIZE token — this mood is a repaint, not a relayout.
+
+// A hairline outline instead of relying on fill alone: on a light page a
+// panel with no edge dissolves into the ground, which is what the material
+// and pastel schools kept being marked down for.
+let panel_border = 1
+let l0_stroke    = argb( 38,   0,   0,   0)   // #00000026 a quiet edge
