@@ -38,3 +38,11 @@ let l0_ondark   = argb(255, 255, 255, 255)   // #ffffff text on a lit fill
 // and pastel schools kept being marked down for.
 let panel_border = 1
 let l0_stroke    = argb( 38,   0,   0,   0)   // #00000026 a quiet edge
+
+// The knobs below existed for months wired into `photo` alone. Round 2 scored
+// the light-page schools (material, pastel) lowest, and their mockups all show
+// a commanding numeral, line-art glyphs and a floating pane — three things the
+// photo mood already renders and this one simply never asked for.
+let hero_factor  = 1.35
+let icon_mono    = 1
+let panel_inset  = 6

@@ -26,3 +26,10 @@ let l0_danger_i = argb(255, 255, 235, 235)   // #ffebeb its ink
 // A frosted surface wants a softer corner than a flat one. The ONE size this
 // mood touches, and it is dialled rather than restated: 12 → 18, 14 → 21.
 let radius_factor = 1.5
+
+// Same reasoning as the light mood: glass already dials radius, but never
+// asked for the hero scale or the line-art glyphs that its own reference
+// designs carry.
+let hero_factor  = 1.35
+let icon_mono    = 1
+let panel_inset  = 8

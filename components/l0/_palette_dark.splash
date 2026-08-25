@@ -52,11 +52,11 @@ let weight_bold   = 700
 let weight_hero   = 700
 // The hero's top-step multiplier; only a surface whose hero dominates a
 // photograph moves it (see l0_hero).
-let hero_factor   = 1
+let hero_factor   = 1.35
 // Data-vis restraint knobs: 0 = the widget's legacy look.
 let l0_bar        = 0
 let l0_bar_rail   = 0
-let icon_mono     = 0
+let icon_mono     = 1
 // A floating pane's side inset; 0 = the classic full-bleed panel.
 let panel_inset   = 0
 // One line per list row, with an ellipsis. 0 would mean unlimited.
