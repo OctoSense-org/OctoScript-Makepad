@@ -90,7 +90,14 @@ fn l0_hero(s, pt) {
 // does not move yet. Restyling comes after, against green goldens.
 fn l0_title(s)    { return l0_txt(s, font_title, weight_bold, l0_text) }
 fn l0_body(s)     { return l0_para(s, font_body, weight_normal, l0_text) }
-fn l0_row_text(s) { return l0_txt(s, font_row, weight_normal, l0_soft) }
+fn l0_row_text(s) {
+    // `lines` is the theme's call, not the card's: a row that wraps to three
+    // lines breaks the list rhythm, and mid-word wrapping ("Thund erstorm")
+    // was visible in the round-2 corpus.
+    let node = l0_txt(s, font_row, weight_normal, l0_soft)
+    node.lines = row_lines
+    return node
+}
 fn l0_caption(s)  { return l0_txt(s, font_caption, weight_normal, l0_dim) }
 // The tracked-caps line above a hero. `variant` marks it for the backend,
 // which spaces and uppercases a LITERAL — a live value stays as it arrives.
@@ -389,7 +396,8 @@ fn l0_grid(kids)     { return {t: "grid", fillw: 1, spacing: 10, c: kids} }
 fn l0_panel(kids) {
     return {t: "card", fillw: 1, bg: l0_fill, radius: radius_panel,
             padx: pad_panel_x, pady: pad_panel_y, margintop: gap_panel_top,
-            marginx: panel_inset, c: kids}
+            marginx: panel_inset, border: panel_border, bordercolor: l0_stroke,
+            c: kids}
 }
 
 fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
