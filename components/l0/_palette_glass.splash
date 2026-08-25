@@ -33,3 +33,12 @@ let radius_factor = 1.5
 let hero_factor  = 1.35
 let icon_mono    = 1
 let panel_inset  = 8
+
+// One hue on a faint rail instead of the nine-stop spectrum. The round-1
+// judges called that ramp noisy, cheap and garish more than any other single
+// element, and the photo mood has answered it since 0ee6366.
+let l0_bar      = argb(255, 128, 168, 255)
+let l0_bar_rail = argb( 46, 255, 255, 255)
+// Row values at regular weight: the photo mood dropped these to 400 after the
+// parity study called the rows heavier than the mockups'.
+let weight_semi = 400
