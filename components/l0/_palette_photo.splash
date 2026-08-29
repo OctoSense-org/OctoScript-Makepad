@@ -13,7 +13,17 @@ let l0_base     = argb(255,   5,   7,  12)   // #05070c for the strip a photo mi
 // #0a0f1a22 -> #05070cf2), restored: the photograph reads at the top and
 // the content floats out of near-black at the bottom.
 let l0_scrim     = argb(242,   5,   7,  12)   // #05070cf2 bottom stop
-let l0_scrim_top = argb( 34,  10,  15,  26)   // #0a0f1a22 top stop
+// The TOP stop, raised from 13% to 40% opacity.
+//
+// This file's own comment says "the scrim carries all of the legibility", and at
+// 13% it did not: the hero numeral measured 2.6:1 against the photograph behind
+// it — under WCAG AA's 3:1 for large text — and a paired judge preferred an
+// older build purely because its hero sat over a darker part of the image.
+// Legibility cannot depend on which photograph the generator returns.
+//
+// 40% rather than the ~65% that would reach 4.5:1: past that the photograph
+// stops reading as a photograph, and this mood exists to show one.
+let l0_scrim_top = argb(102,  10,  15,  26)   // #0a0f1a66 top stop
 let l0_sheet    = argb(242,   5,   7,  12)   // #05070cf2 over a map — near-opaque
 let l0_fill     = argb( 26, 255, 255, 255)   // #ffffff1a panel fill
 let l0_active   = argb( 64, 255, 255, 255)   // #ffffff40 selected chip
