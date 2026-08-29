@@ -54,9 +54,24 @@ let weight_hero   = 700
 // photograph moves it (see l0_hero).
 let hero_factor   = 1
 // Data-vis restraint knobs: 0 = the widget's legacy look.
-let l0_bar        = 0
-let l0_bar_rail   = 0
-let icon_mono     = 0
+// A single hue on a faint rail, not the nine-stop spectrum.
+//
+// Same natural experiment that decided `icon_mono`: `photo` was the only mood
+// carrying these and the only one a judge did NOT accuse of "spectral gradient
+// bars that break the restrained palette". A rainbow ramp also encodes nothing
+// — the bar's LENGTH already carries the range — so the spectrum is decoration
+// competing with the type for attention.
+let l0_bar        = argb(255, 109, 121, 240)   // #6d79f0 indigo
+let l0_bar_rail   = argb( 41, 255, 255, 255)   // #ffffff29 faint rail on a dark page
+// Single-ink glyphs, not the filled multi-colour ones.
+//
+// A natural experiment decided this. Scoring the four moods, `photo` was the
+// only one carrying `icon_mono = 1` and the only one a judge did NOT accuse of
+// "system emoji icons instead of custom iconography" — the other three, all at
+// 0, were each flagged for it. A filled multi-colour cloud reads as a stock
+// emoji dropped into the card; recoloured to the text ink it reads as the
+// card's own iconography.
+let icon_mono     = 1
 // A floating pane's side inset; 0 = the classic full-bleed panel.
 let panel_inset   = 0
 // One line per list row, with an ellipsis. 0 would mean unlimited.

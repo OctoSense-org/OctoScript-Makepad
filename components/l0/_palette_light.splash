@@ -45,3 +45,6 @@ let panel_lift   = 6
 // A light theme is where a raised surface reads: a card on near-white needs a
 // shadow to separate from the page, where the dark mood separates by fill alone.
 let l0_stroke    = argb( 38,   0,   0,   0)   // #00000026 a quiet edge
+
+// The base's rail is white at 16%, which vanishes on a near-white page.
+let l0_bar_rail = argb( 26,   0,   0,   0)   // #0000001a a rail that reads on light
