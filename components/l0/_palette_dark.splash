@@ -66,6 +66,10 @@ let panel_border  = 0
 // How high a panel floats. 0 = flat, which is this mood's answer; a mood that
 // wants a raised card dials it up and `Attrs.elevation` casts the shadow.
 let panel_lift    = 0
+// How much of a card's own large `Col(gap:)` survives. 1 keeps every pixel of
+// the card's air, which is right when a photograph fills it. A flat mood has
+// nothing behind that air, so it reads as a hole and is tightened.
+let air_factor    = 0.62
 
 // ---- colours ---------------------------------------------------------------
 let l0_base     = argb(255,  10,  14,  20)   // #0a0e14  page

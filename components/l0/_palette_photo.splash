@@ -41,3 +41,6 @@ let l0_bar       = argb(255, 109, 121, 240)   // #6d79f0 the mockup's indigo
 let l0_bar_rail  = argb( 41, 255, 255, 255)   // #ffffff29 faint rail
 let icon_mono    = 1
 let panel_inset  = 10   // the mockup's floating inset card
+
+// The gap frames the photograph here, so the card's air is kept whole.
+let air_factor = 1

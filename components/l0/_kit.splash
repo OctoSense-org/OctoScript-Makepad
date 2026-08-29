@@ -377,7 +377,26 @@ fn l0_surface_map(map, topkids, sidekids, kids, hastop, controls, hasside) {
 }
 
 fn l0_col(kids)      { return {t: "column", fillw: 1, c: kids} }
-fn l0_col_gap(g, kids) { return {t: "column", fillw: 1, spacing: g, c: kids} }
+// A card writes its own `Col(gap: N)`, so this is the one place the KIT can
+// still speak about that spacing — and §1.1 says spacing is the kit's to choose.
+//
+// A LARGE gap is "air", and what air reads as depends on the mood. The weather
+// fixture's `gap: 36` is commented "the mockup's air — the half-screen of
+// photograph": over a photo mood it frames the picture, over a flat fill it is
+// simply a hole. Measured on device, the flat moods carried 540px of dead
+// vertical space, 23% of the screen, and every mood's judge named that void as
+// its biggest gap while the photo mood — same card — scored highest.
+//
+// So scale only the big gaps. Anything under 24 is deliberate fine spacing
+// between related things and is left exactly alone.
+fn l0_col_gap(g, kids) {
+    // Early return rather than reassigning a local inside the `if`: the first
+    // version did `let s = g` then `s = g * air_factor` in the branch, and the
+    // rendered dead space did not move a pixel (540 -> 543), so the mutation
+    // does not escape the block. `l0_colw` already branches by returning.
+    if g >= 24 { return {t: "column", fillw: 1, spacing: g * air_factor, c: kids} }
+    return {t: "column", fillw: 1, spacing: g, c: kids}
+}
 // A row centres its children vertically by default, because a row's whole job
 // is to put unlike things side by side — a 44px icon beside 14pt text beside an
 // 8px gradient bar — and top-aligning those reads as three separate things that
