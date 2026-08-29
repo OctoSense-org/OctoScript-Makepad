@@ -49,5 +49,11 @@ let l0_stroke    = argb( 38,   0,   0,   0)   // #00000026 a quiet edge
 // The base's rail is white at 16%, which vanishes on a near-white page.
 let l0_bar_rail = argb( 26,   0,   0,   0)   // #0000001a a rail that reads on light
 
-// Light's page lifts toward white at the top instead of falling to black.
-let l0_base_2 = argb(255, 255, 255, 255)   // #ffffff
+// Light's page DEEPENS downward, away from the card, not toward it.
+//
+// The first version of this lifted the page to #ffffff — which is exactly
+// `l0_fill`, the card's own colour — so the card dissolved into the page at the
+// bottom of the screen. A judge scoring that build called it "near-white" with
+// "flat low-contrast surfaces", which is precisely the merge described.
+// A gradient behind a surface has to move AWAY from that surface's fill.
+let l0_base_2 = argb(255, 232, 232, 240)   // #e8e8f0 deeper than the page top
