@@ -30,3 +30,8 @@ let radius_factor = 1.5
 // Glass keeps its navy but deepens downward, so the frosted panels sit in front
 // of something rather than on top of a single tone.
 let l0_base_2 = argb(255,  10,  16,  34)   // #0a1022
+
+// The base's indigo measures 1.76:1 against this mood's navy panel — the
+// "accent bars clash" a judge named. A bar has to separate from the surface it
+// sits on, and on navy that means going lighter, not sideways in hue.
+let l0_bar = argb(255, 159, 216, 255)   // #9fd8ff  2.76:1 on the glass panel
