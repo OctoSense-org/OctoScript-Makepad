@@ -57,3 +57,8 @@ let l0_bar_rail = argb( 26,   0,   0,   0)   // #0000001a a rail that reads on l
 // "flat low-contrast surfaces", which is precisely the merge described.
 // A gradient behind a surface has to move AWAY from that surface's fill.
 let l0_base_2 = argb(255, 232, 232, 240)   // #e8e8f0 deeper than the page top
+
+// Same measurement on a white card: the base's indigo is 1.92:1 there, so the
+// bar reads as a pale smudge. On white the separation has to come from going
+// DEEPER.
+let l0_bar = argb(255,  61,  72, 184)   // #3d48b8  2.96:1 on the white card
