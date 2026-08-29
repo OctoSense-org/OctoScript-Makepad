@@ -11,7 +11,15 @@
 
 // ---- spacing ------------------------------------------------------
 let pad_page_x    = 20 * space_factor
-let pad_page_top  = 54 * space_factor   // clears the status bar
+// Clears the status bar AND leaves breathing room — but measured on device the
+// system already insets the app below the bar: the page's own fill starts at
+// y=102, under a black status area, so all 54 of these sat inside already-safe
+// space and read as the screen's single largest void (173px, 7.4%).
+//
+// 36 rather than 0: a 24dp status bar still clears with margin if some window
+// configuration ever stops insetting, and the point is to reclaim dead space,
+// not to crowd the top edge.
+let pad_page_top  = 36 * space_factor
 let pad_page_bot  = 24 * space_factor   // clears the gesture bar
 let pad_panel_x   = 14 * space_factor
 let pad_panel_y   = 12 * space_factor
