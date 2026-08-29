@@ -63,7 +63,9 @@ let panel_inset   = 0
 let row_lines     = 1
 // A surface outline. 0 = none; the mood supplies both width and ink.
 let panel_border  = 0
-let l0_stroke     = l0_hairline
+// How high a panel floats. 0 = flat, which is this mood's answer; a mood that
+// wants a raised card dials it up and `Attrs.elevation` casts the shadow.
+let panel_lift    = 0
 
 // ---- colours ---------------------------------------------------------------
 let l0_base     = argb(255,  10,  14,  20)   // #0a0e14  page
@@ -91,6 +93,12 @@ let l0_danger_i = argb(255, 255, 217, 217)   // #ffd9d9 its ink
 let l0_fill     = argb( 18, 255, 255, 255)   // #ffffff12 panel fill
 let l0_active   = argb( 56, 255, 255, 255)   // #ffffff38 selected chip
 let l0_hairline = argb( 26, 255, 255, 255)   // #ffffff1a divider
+// The surface outline's ink. Declared HERE, after `l0_hairline`, and not up with
+// the other stroke knobs: `let` evaluates at its own line, so reading a colour
+// declared 27 lines below yielded an unresolved name — which coerces to 0, a
+// fully transparent stroke. That is why borders emitted at the right width and
+// painted nothing.
+let l0_stroke   = l0_hairline
 let l0_text     = argb(255, 255, 255, 255)   // #ffffff   primary
 let l0_soft     = argb(230, 255, 255, 255)   // #ffffffe6 secondary
 let l0_dim      = argb(153, 255, 255, 255)   // #ffffff99 captions and labels

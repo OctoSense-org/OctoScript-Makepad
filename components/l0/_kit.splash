@@ -397,6 +397,7 @@ fn l0_panel(kids) {
     return {t: "card", fillw: 1, bg: l0_fill, radius: radius_panel,
             padx: pad_panel_x, pady: pad_panel_y, margintop: gap_panel_top,
             marginx: panel_inset, border: panel_border, bordercolor: l0_stroke,
+            elevation: panel_lift,
             c: kids}
 }
 
