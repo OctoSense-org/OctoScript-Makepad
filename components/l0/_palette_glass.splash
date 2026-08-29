@@ -26,3 +26,7 @@ let l0_danger_i = argb(255, 255, 235, 235)   // #ffebeb its ink
 // A frosted surface wants a softer corner than a flat one. The ONE size this
 // mood touches, and it is dialled rather than restated: 12 → 18, 14 → 21.
 let radius_factor = 1.5
+
+// Glass keeps its navy but deepens downward, so the frosted panels sit in front
+// of something rather than on top of a single tone.
+let l0_base_2 = argb(255,  10,  16,  34)   // #0a1022
