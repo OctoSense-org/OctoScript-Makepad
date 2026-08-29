@@ -88,6 +88,9 @@ let air_factor    = 0.62
 
 // ---- colours ---------------------------------------------------------------
 let l0_base     = argb(255,  10,  14,  20)   // #0a0e14  page
+// The page's second stop. A page that is one flat colour reads as a default
+// rather than a decision; a few levels of vertical fall gives it a horizon.
+let l0_base_2   = argb(255,   5,   8,  13)   // #05080d  a shade under l0_base
 let l0_scrim    = argb(102,   0,   0,   0)   // #00000066 photo scrim, bottom stop
 let l0_scrim_top = argb( 34,   0,   0,   0)   // #00000022 photo scrim, top stop
 // A sheet floating over a MAP, and the one fill in this palette that must be

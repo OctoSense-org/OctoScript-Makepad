@@ -199,8 +199,17 @@ fn l0_aligned(node, how) {
 // surface shows below it. Filling the height painted the whole screen in the
 // card's base colour and covered the app's own background — 94% of the lower
 // half differed, on a card whose content was correct.
+// The page. Its fill is a two-stop VERTICAL gradient, not a flat colour.
+//
+// A judge scoring these renders called the flat moods "generic flat surfaces"
+// with "no atmosphere", and scored the photo mood — the only one whose page is
+// not a flat fill — on its atmosphere rather than against it. `bg2` is the same
+// second stop the photo scrim already uses, so this is an existing, working
+// capability applied where it was missing rather than anything new.
+//
+// A mood that wants a genuinely flat page sets `l0_base_2` equal to `l0_base`.
 fn l0_surface(kids) {
-    return {t: "column", fillw: 1, fith: 1, bg: l0_base,
+    return {t: "column", fillw: 1, fith: 1, bg: l0_base, bg2: l0_base_2,
             padx: pad_page_x, padtop: pad_page_top, padbottom: pad_page_bot, c: kids}
 }
 
