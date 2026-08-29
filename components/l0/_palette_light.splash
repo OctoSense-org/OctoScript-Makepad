@@ -37,4 +37,11 @@ let l0_ondark   = argb(255, 255, 255, 255)   // #ffffff text on a lit fill
 // panel with no edge dissolves into the ground, which is what the material
 // and pastel schools kept being marked down for.
 let panel_border = 1
+// A light theme is where a raised surface reads: a card on near-white needs a
+// shadow to separate from the page, where the dark mood separates by fill alone.
+// Delivery-gated on device 2026-08-30: this darkens the page by 44 luminance
+// levels just below the card edge.
+let panel_lift   = 6
+// A light theme is where a raised surface reads: a card on near-white needs a
+// shadow to separate from the page, where the dark mood separates by fill alone.
 let l0_stroke    = argb( 38,   0,   0,   0)   // #00000026 a quiet edge
