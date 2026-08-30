@@ -32,8 +32,13 @@ let l0_ondark   = argb(255,  22,  10,  30)   // #160a1e ink on a lit fill
 
 // Ink stays near-white: the ground is doing the colour work, and tinting the
 // text as well is how a vibrant mood turns into an unreadable one.
-let l0_text     = argb(255, 255, 252, 255)   // #fffcff
-let l0_soft     = argb(232, 255, 252, 255)   // #fffcffe8
-let l0_dim      = argb(158, 255, 252, 255)   // #fffcff9e
+//
+// `l0_text` is deliberately NOT overridden. `light` is the only mood allowed to
+// invert the ink, because the host's light-over-Photo substitution keys on
+// exactly that — a second mood setting a dark ink would render unreadable text
+// over a photograph with every automated check still passing. Inheriting dark's
+// white is also what this mood wants, so there is nothing to give up.
+let l0_soft     = argb(232, 255, 255, 255)   // #ffffffe8
+let l0_dim      = argb(158, 255, 255, 255)   // #ffffff9e
 
 let radius_factor = 1.2

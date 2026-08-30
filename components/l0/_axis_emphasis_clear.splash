@@ -1,0 +1,6 @@
+// Axis delta: emphasis .clear — one dominant number, a legible ramp
+// One coordinate of the theme, concatenated after the mood and before the
+// derive step so a factor change propagates. Identity values emit nothing.
+
+let hero_factor = 1.35
+let font_step   = 2
