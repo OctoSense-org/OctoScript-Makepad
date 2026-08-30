@@ -1,0 +1,5 @@
+// Axis delta: density .compact — dense feeds and dashboards
+// One coordinate of the theme, concatenated after the mood and before the
+// derive step so a factor change propagates. Identity values emit nothing.
+
+let space_factor = 0.75

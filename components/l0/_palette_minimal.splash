@@ -32,7 +32,10 @@ let l0_ondark   = argb(255,  16,  17,  19)   // #101113 ink on a lit fill
 
 // A wider ink range than dark: with colour withdrawn, the only thing left to
 // build a hierarchy out of is how bright each level is.
-let l0_text     = argb(255, 255, 255, 255)   // #ffffff
+//
+// `l0_text` is inherited, not restated. Only `light` may override it — the
+// host's light-over-Photo substitution depends on that being the single case —
+// and dark's white is already the value this mood would have written.
 let l0_soft     = argb(214, 255, 255, 255)   // #ffffffd6
 let l0_dim      = argb(130, 255, 255, 255)   // #ffffff82
 
