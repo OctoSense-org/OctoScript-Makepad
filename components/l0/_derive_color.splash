@@ -40,6 +40,42 @@ fn dc_toward_pole(t) {
                      dc_mix(seed_ground_b, dc_pole(), t))
 }
 
+// ---- accent-as-seed: the ground x accent composition ----------------------
+// When BOTH a seeded ground and a seeded hue are present, the ink is pulled
+// toward the hue as hard as this ground can carry: an UNROLLED five-step
+// contrast solve (no loops in this language; five nested picks are the loop).
+// The threshold is 4.9 against the ground — margin over AA's 4.5 to cover the
+// panel lift, matching the offline auditor's math exactly.
+fn dc_lin(c) { return mod.math.pow(c / 255, 2.2) }
+fn dc_rlum(r, g, b) {
+    return 0.2126 * dc_lin(r) + 0.7152 * dc_lin(g) + 0.0722 * dc_lin(b)
+}
+fn dc_contrast(r1, g1, b1, r2, g2, b2) {
+    let a = dc_rlum(r1, g1, b1)
+    let b = dc_rlum(r2, g2, b2)
+    let hi = dc_pick(a > b, a, b)
+    let lo = dc_pick(a > b, b, a)
+    return (hi + 0.05) / (lo + 0.05)
+}
+fn dc_tint_ok(t) {
+    return dc_contrast(
+        dc_mix(seed_ink_r, seed_hue_r, t), dc_mix(seed_ink_g, seed_hue_g, t),
+        dc_mix(seed_ink_b, seed_hue_b, t),
+        seed_ground_r, seed_ground_g, seed_ground_b) >= 4.9
+}
+let dc_t = dc_pick(dc_tint_ok(1.0), 1.0,
+           dc_pick(dc_tint_ok(0.85), 0.85,
+           dc_pick(dc_tint_ok(0.7), 0.7,
+           dc_pick(dc_tint_ok(0.55), 0.55,
+           dc_pick(dc_tint_ok(0.4), 0.4, 0.0)))))
+let dc_both = seed_on * seed_hue_on
+let seed_ink_r = dc_pick(dc_both, dc_mix(seed_ink_r, seed_hue_r, dc_t), seed_ink_r)
+let seed_ink_g = dc_pick(dc_both, dc_mix(seed_ink_g, seed_hue_g, dc_t), seed_ink_g)
+let seed_ink_b = dc_pick(dc_both, dc_mix(seed_ink_b, seed_hue_b, dc_t), seed_ink_b)
+let seed_accent_r = dc_pick(dc_both, seed_hue_r, seed_accent_r)
+let seed_accent_g = dc_pick(dc_both, seed_hue_g, seed_accent_g)
+let seed_accent_b = dc_pick(dc_both, seed_hue_b, seed_accent_b)
+
 // The relationships, lifted verbatim from the E4 solver's shipped ratios.
 let l0_base     = dc_pick(seed_on, argb(255, seed_ground_r, seed_ground_g, seed_ground_b), l0_base)
 let l0_base_2   = dc_pick(seed_on, dc_toward_pole(0.055), l0_base_2)

@@ -467,6 +467,15 @@ fn l0_card(kids) {
     return n
 }
 
+// A semantic icon: the glyph arrives already resolved (lower time), the size
+// is a PLACE in the type scale, the ink is the theme's — so `icons: .mono`
+// and an accent both reach it for free through l0_text.
+fn l0_icon(glyph, size) {
+    if size == "hero" { return {t: "text", text: glyph, icon: 1, size: font_title * 1.6, color: l0_text, fitw: 1, fith: 1} }
+    if size == "tile" { return {t: "text", text: glyph, icon: 1, size: font_caption, color: l0_dim, fitw: 1, fith: 1} }
+    return {t: "text", text: glyph, icon: 1, size: font_value, color: l0_soft, fitw: 1, fith: 1}
+}
+
 fn l0_avatar(s) {
     // Initials in a tinted circle — the no-photo avatar every kit ships.
     // A fixed 40px circle: radius half the box, accent fill, light ink.

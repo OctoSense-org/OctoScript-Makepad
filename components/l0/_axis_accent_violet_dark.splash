@@ -14,3 +14,11 @@ let l0_bar      = l0_accent
 let l0_bar_rail = argb( 38, 128, 128, 128)
 let l0_active   = argb( 72, 139, 92, 246)
 let l0_go       = l0_accent
+
+// accent-as-seed: with a seeded ground, _derive_color re-solves the
+// ink against THAT ground in-kit (unrolled five-step contrast search)
+// instead of keeping this fragment's mood-solved literals.
+let seed_hue_on = 1
+let seed_hue_r  = 139
+let seed_hue_g  = 92
+let seed_hue_b  = 246

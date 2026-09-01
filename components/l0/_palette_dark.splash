@@ -184,3 +184,11 @@ let seed_accent_b = 0
 // both stops to give its cards the design system's signature fill.
 let l0_card_1 = 0
 let l0_card_2 = 0
+
+// The accent-as-seed switch: an accent fragment sets the hue; only when a
+// seeded ground is ALSO present does the in-kit solve replace the mood-
+// solved literals.
+let seed_hue_on = 0
+let seed_hue_r  = 0
+let seed_hue_g  = 0
+let seed_hue_b  = 0
