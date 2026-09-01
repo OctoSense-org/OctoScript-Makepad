@@ -138,3 +138,49 @@ let l0_up       = argb(255,  50, 215,  75)   // #32d74b   a rise
 let l0_go       = argb(255,  52, 199,  89)   // #34c759   the action a screen is for
 let l0_ondark   = argb(255,  14,  22,  32)   // #0e1620   text on a lit fill
 let l0_down     = argb(255, 255,  69,  58)   // #ff453a   a fall
+
+// The theme's surface grain. Empty here: the base moods are flat, and a
+// texture arrives only when a card names one on its theme line.
+let l0_texture   = ""
+let l0_texture_a = 0.06
+let l0_texture_s = 6
+
+// The theme's shadow. Zero ink means "no opinion": the backend keeps the
+// soft shadow it derives from `elevation`, which is what every mood shipped
+// before a card could ask for anything else.
+let l0_shadow_ink  = argb(0, 0, 0, 0)
+let l0_shadow_blur = 0
+let l0_shadow_dx   = 0
+let l0_shadow_dy   = 0
+
+// Type. `sans` in every base mood, so a card naming no type axis renders the
+// face it always did. The display family is separate so a serif headline over
+// a sans body — the commonest pairing in the corpus — is one axis, not two.
+let l0_family         = "sans"
+let l0_display_family = "sans"
+let l0_tracking       = 0
+
+// Which way the page gradient runs. Down in every base mood, which is what
+// the shader defaulted to anyway — now it is a choice rather than the only
+// branch anything ever took.
+let l0_grad_across = 0
+
+// The colour-seed switch. Zero everywhere by default: `_derive_color`
+// then leaves every token exactly as the mood wrote it, so the six
+// shipped moods render byte-identically. A `ground:` fragment flips it
+// and supplies the nine seeds.
+let seed_on       = 0
+let seed_ground_r = 0
+let seed_ground_g = 0
+let seed_ground_b = 0
+let seed_ink_r    = 0
+let seed_ink_g    = 0
+let seed_ink_b    = 0
+let seed_accent_r = 0
+let seed_accent_g = 0
+let seed_accent_b = 0
+
+// The content-card gradient. Zero = flat (every base mood); a pack sets
+// both stops to give its cards the design system's signature fill.
+let l0_card_1 = 0
+let l0_card_2 = 0

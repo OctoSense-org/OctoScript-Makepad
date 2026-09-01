@@ -256,6 +256,56 @@ pub struct Attrs {
     /// The far end of a two-stop gradient fill (makepad's `draw_bg.color_2`).
     /// The reference's shapeable images are named gradients, not bitmaps.
     pub bg2: Option<u32>,
+    /// A tiled surface grain laid over this node — the NAME of a bundled
+    /// texture (`paper`, `linen`, …), never a path. The theme owns the asset,
+    /// so a card names an intent and never a file, exactly as it does for
+    /// colour. L0 refuses a literal in a data position (profile §4), and a
+    /// texture is no more the card's to choose than a hex value is.
+    ///
+    /// The assets are greyscale by construction: a texture carrying its own hue
+    /// would fight whatever accent the card asked for — the same defect as an
+    /// accent that never reached the ink.
+    pub texture: Option<String>,
+    /// The shadow's INK. Absent means the derived soft shadow that `elevation`
+    /// alone produces; present means the theme chose, which is the difference
+    /// between a Material lift and a neubrutalist offset block.
+    ///
+    /// `elevation` was always able to say how FAR a surface sits off the page.
+    /// It could never say what the shadow is made of, so every school that
+    /// wants a hard coloured drop — memphis, neubrutalist, punk — was
+    /// unreachable no matter what elevation it asked for.
+    pub shadowcolor: Option<u32>,
+    /// Blur radius. Zero is a hard edge; large with no offset is a glow.
+    pub shadowblur: Option<f32>,
+    /// Offset. A hard shadow is defined by having one; a glow by having none.
+    pub shadowdx: Option<f32>,
+    pub shadowdy: Option<f32>,
+    /// The type FAMILY this run is drawn in — `"sans"` (the default) or
+    /// `"serif"`. A role, not a file: the theme picks the family and the
+    /// backend owns which face answers it at each weight, exactly as the
+    /// backend already owns Roboto-Thin versus Roboto-Bold.
+    pub family: Option<String>,
+    /// Letter spacing, in ems. The text stack has always had `letter_spacing`
+    /// in its shaper; nothing above ever reached it, so the eyebrow role fakes
+    /// tracking by inserting thin spaces into the STRING — which cannot work on
+    /// a live value, because its text does not exist at lowering time.
+    pub tracking: Option<f32>,
+    /// Run the two-stop fill ACROSS rather than down.
+    ///
+    /// `gradient_fill_horizontal` has been a uniform on every view shader all
+    /// along and nothing has ever set it, so every gradient in the product ran
+    /// top-to-bottom because that is the branch the default takes — not because
+    /// anything chose it. A second direction is the cheapest axis in the whole
+    /// list: no shader work, one uniform.
+    pub gradient_across: Option<i32>,
+
+
+
+    /// How strongly the grain reads, 0..1. Small, because this is a surface and
+    /// not a picture.
+    pub texture_alpha: Option<f32>,
+    /// How many times the tile repeats across the node. Larger is finer.
+    pub texture_scale: Option<f32>,
     pub radius: Option<f32>,
     /// Material elevation (dp). Non-zero promotes a filled container to a
     /// shadow-casting view and scales its drop shadow.
