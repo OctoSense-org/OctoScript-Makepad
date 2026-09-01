@@ -47,15 +47,24 @@
 // someone else's design system and will move for reasons that have nothing to
 // do with L0.
 
+// `family` and `tracking` ride on EVERY text role, attached here rather than at
+// each of the seven, because a card whose hero is serif and whose rows are sans
+// is two designs. `l0_family` is "sans" in every base mood, so nothing moves
+// until a card asks.
+//
+// `l0_display_family` is the DISPLAY face, used only where a role is a display
+// role. A theme that pairs a serif headline with a sans body is the commonest
+// pairing in the whole corpus, and one family token cannot express it.
 fn l0_txt(s, size, weight, color) {
-    return {t: "text", text: s, size: size, weight: weight, color: color, fith: 1}
+    return {t: "text", text: s, size: size, weight: weight, color: color, fith: 1,
+            family: l0_family, tracking: l0_tracking}
 }
 
 // Text that may wrap. `fillw` is what lets it, and forcing it on a short hero
 // wrapped "Top Movers" one character per line on device — so it is opt-in.
 fn l0_para(s, size, weight, color) {
     return {t: "text", text: s, size: size, weight: weight, color: color,
-            fillw: 1, fith: 1}
+            fillw: 1, fith: 1, family: l0_family, tracking: l0_tracking}
 }
 
 fn l0_gap(px)   { return {t: "column", h: px} }
@@ -72,13 +81,18 @@ fn l0_spacer()  { return {t: "column", fillw: 1, h: 1} }
 // design. Once a value lowers to a live backend call the drawn text is not in
 // the DSL at all — `"$" + sys.stock("NVDA", "price")` renders as six characters
 // and reads as thirty-three — so only the lowering knows what will be drawn.
+// The display roles take `l0_display_family`, which is what makes a serif
+// headline over sans body reachable. A theme setting only `l0_family` moves
+// everything together; one setting only the display family moves the headline.
+fn l0_display(node) { node.family = l0_display_family; return node }
+
 fn l0_hero(s, pt) {
     // A hero over a full-bleed photograph does a different job than one in a
     // list, and 43 was its ceiling (gap 2 of the mockup study). The factor
     // scales only the TOP step — a short numeral — so a long text hero that
     // already stepped down never doubles into a wall of 86pt wrap.
-    if pt >= 43 { return l0_txt(s, pt * hero_factor, weight_hero, l0_text) }
-    return l0_txt(s, pt, weight_hero, l0_text)
+    if pt >= 43 { return l0_display(l0_txt(s, pt * hero_factor, weight_hero, l0_text)) }
+    return l0_display(l0_txt(s, pt, weight_hero, l0_text))
 }
 
 // The type scale, TAKEN FROM THE WIDGETS THIS REPLACES rather than chosen.
@@ -88,7 +102,7 @@ fn l0_hero(s, pt) {
 // them. Moving the layer and restyling at once would make a golden failure
 // ambiguous between "the theme moved" and "the theme is wrong" — so the theme
 // does not move yet. Restyling comes after, against green goldens.
-fn l0_title(s)    { return l0_txt(s, font_title, weight_bold, l0_text) }
+fn l0_title(s)    { return l0_display(l0_txt(s, font_title, weight_bold, l0_text)) }
 fn l0_body(s)     { return l0_para(s, font_body, weight_normal, l0_text) }
 fn l0_row_text(s) {
     // `lines` is the theme's call, not the card's: a row that wraps to three
@@ -208,8 +222,15 @@ fn l0_aligned(node, how) {
 // capability applied where it was missing rather than anything new.
 //
 // A mood that wants a genuinely flat page sets `l0_base_2` equal to `l0_base`.
+// `l0_texture` is the theme's surface grain, laid over the page by the backend.
+// Empty in every base mood, so a card naming no texture emits the node it always
+// did. The card never names the FILE — a texture is the theme's to choose for
+// exactly the reason a colour is (profile §4), and the backend resolves the name.
 fn l0_surface(kids) {
     return {t: "column", fillw: 1, fith: 1, bg: l0_base, bg2: l0_base_2,
+            gradient_across: l0_grad_across,
+            texture: l0_texture, texture_alpha: l0_texture_a,
+            texture_scale: l0_texture_s,
             padx: pad_page_x, padtop: pad_page_top, padbottom: pad_page_bot, c: kids}
 }
 
@@ -426,7 +447,32 @@ fn l0_panel(kids) {
             padx: pad_panel_x, pady: pad_panel_y, margintop: gap_panel_top,
             marginx: panel_inset, border: panel_border, bordercolor: l0_stroke,
             elevation: panel_lift,
+            // The theme's shadow, when it has an opinion. Absent in every base
+            // mood, so a card that names no depth keeps the derived soft lift.
+            shadowcolor: l0_shadow_ink, shadowblur: l0_shadow_blur,
+            shadowdx: l0_shadow_dx, shadowdy: l0_shadow_dy,
             c: kids}
+}
+
+// A CONTENT card. Same box as a panel, but a pack may give it the design
+// system's signature gradient: `l0_card_1 -> l0_card_2`, drawn by the view
+// shader's own two-stop fill. Zero in every base mood, so nothing moves unless
+// a pack asks — the Atro credit cards are the motivating screen.
+fn l0_card(kids) {
+    let n = l0_panel(kids)
+    if l0_card_2 > 0 {
+        n.bg  = l0_card_1
+        n.bg2 = l0_card_2
+    }
+    return n
+}
+
+fn l0_avatar(s) {
+    // Initials in a tinted circle — the no-photo avatar every kit ships.
+    // A fixed 40px circle: radius half the box, accent fill, light ink.
+    return {t: "card", w: 40, h: 40, radius: 20, bg: l0_active,
+            padx: 10, pady: 11, fitw: 1, fith: 1,
+            c: [ l0_txt(s, font_caption, weight_semi, l0_ondark) ]}
 }
 
 fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
