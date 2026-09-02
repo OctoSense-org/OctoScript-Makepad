@@ -468,6 +468,7 @@ fn l0_card_tinted(c1, c2, kids) {
     let n = l0_panel(kids)
     n.bg = c1
     n.bg2 = c2
+    n.inkdark = 1
     return n
 }
 
@@ -481,6 +482,18 @@ fn l0_bubble_them(s) {
     return {t: "column", fillw: 1, c: [
         {t: "card", fitw: 1, bg: l0_fill, radius: radius_panel,
          padx: 12, pady: 7, c: [ l0_txt(s, font_body, weight_normal, l0_text) ]} ]}
+}
+// A LONG message wraps inside a capped-width bubble; single-line text would
+// stretch the pill across the page (the lower picks by literal length).
+fn l0_bubble_me_long(s) {
+    return {t: "column", fillw: 1, alignx: 1, c: [
+        {t: "card", w: 252, bg: l0_accent, radius: radius_panel,
+         padx: 12, pady: 7, c: [ l0_para(s, font_body, weight_normal, l0_base) ]} ]}
+}
+fn l0_bubble_them_long(s) {
+    return {t: "column", fillw: 1, c: [
+        {t: "card", w: 252, bg: l0_fill, radius: radius_panel,
+         padx: 12, pady: 7, c: [ l0_para(s, font_body, weight_normal, l0_text) ]} ]}
 }
 
 // The floating round action button, and the overlay that pins it over a page.
