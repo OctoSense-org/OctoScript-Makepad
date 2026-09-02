@@ -1,0 +1,30 @@
+// The camo_light pack (light mode), minted by lab/sketch/spec2pack.py.
+let l0_base     = argb(255, 255, 255, 255)
+let l0_base_2   = argb(255, 247, 247, 247)
+let l0_sheet    = argb(255, 247, 247, 247)
+let l0_fill     = argb(255, 243, 243, 243)
+let l0_hairline = argb(255, 222, 222, 222)
+let l0_stroke   = argb(255, 212, 212, 212)
+let l0_active   = argb(255, 0, 119, 255)
+let l0_bar_rail = argb(255, 217, 217, 217)
+let l0_text     = argb(255, 20, 20, 24)
+let l0_soft     = argb(255, 43, 43, 47)
+let l0_dim      = argb(255, 97, 97, 100)
+let icon_mono   = 1
+let l0_accent   = argb(255, 0, 119, 255)
+let l0_bar      = l0_accent
+let l0_go       = l0_accent
+let l0_scrim_top = argb(60, 255, 255, 255)
+let l0_scrim     = argb(242, 255, 255, 255)
+
+// measured type: p50 7pt -> makepad base 6 (x0.62 calibration)
+let font_base     = 6
+let font_step     = 1
+let hero_factor   = 1.45
+let radius_factor = 0.86
+let l0_family         = "geometric"
+let l0_display_family = "geometric"
+
+// the kit's most-reused two-stop gradient — content cards take it
+let l0_card_1 = argb(255, 0, 0, 0)
+let l0_card_2 = argb(255, 0, 0, 0)
