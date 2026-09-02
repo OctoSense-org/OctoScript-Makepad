@@ -440,6 +440,10 @@ fn l0_row_gap(g, kids) { return {t: "row", fillw: 1, spacing: g, aligny: 0.5, c:
 // flow it downward like a column. Until one does, the honest thing is to fill
 // the line and let the tiles stack.
 fn l0_grid(kids)     { return {t: "grid", fillw: 1, spacing: 10, c: kids} }
+// The column that holds a grid's chunked rows. `l0_col` has no spacing, so
+// grid rows fused vertically — a gallery of squares read as three solid
+// columns. Rows breathe at the same gap the cells do.
+fn l0_grid_rows(kids) { return {t: "column", fillw: 1, spacing: gap_row, c: kids} }
 
 // A raised surface holding related content.
 fn l0_panel(kids) {
@@ -560,8 +564,10 @@ fn l0_chip(s, on) {
 fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
 
 // A list row's image: fixed 16:9, so the text beside it keeps its baseline.
-// A list-row 16:9 tile, or a square mosaic cell when the card says so.
+// A list-row 16:9 tile, a square mosaic cell, or a full-width hero media
+// panel — the card names which (0/1/2), the kit owns the numbers.
 fn l0_thumb(src, sq) {
+    if sq > 1 { return {t: "image", src: src, fit: 2, fillw: 1, h: 210} }
     if sq > 0 { return {t: "image", src: src, fit: 2, w: 102, h: 102} }
     return {t: "image", src: src, fit: 2, w: 108, h: 61}
 }
