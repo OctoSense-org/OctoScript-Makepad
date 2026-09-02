@@ -491,6 +491,37 @@ fn l0_avatar(s) {
 fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
 
 // A labelled value — the unit a detail grid is made of.
+// A calendar day: a fixed SQUARE cell — flat sheet, hairline border, the
+// number centered, an optional event dot under it. A Panel here pills at the
+// pack radius and grows with its dot; a day cell must not.
+fn l0_tile_sq1(label) {
+    return {t: "card", w: 32, h: 32, radius: 4, bg: l0_sheet,
+            border: 1, bordercolor: l0_hairline, alignx: 0.5, aligny: 0.5,
+            c: [ l0_caption(label) ]}
+}
+// The dotted day flows from the top so the mark survives the fixed height:
+// centering two stacked lines in 32pt clips the second one.
+fn l0_tile_sq2(label, g) {
+    return {t: "card", w: 32, h: 32, radius: 4, bg: l0_sheet,
+            border: 1, bordercolor: l0_hairline, alignx: 0.5,
+            c: [ l0_caption(label), l0_caption(g) ]}
+}
+// A FULL-BLEED section band: escapes the page padding by its own margin and
+// paints the theme's INVERSE — ink for ground, ground for ink — the way a
+// month strip or a dark app-bar band sits edge-to-edge over a light page.
+fn l0_band(txt) {
+    return {t: "card", fillw: 1, radius: 0,
+            marginx: 0 - pad_page_x,
+            bg: l0_text, bg2: l0_soft,
+            padx: pad_page_x, pady: 9,
+            c: [ l0_txt(txt, font_title, weight_bold, l0_base) ]}
+}
+
+// A row/column of day cells spreads at the CALENDAR's pitch, not the list
+// gutter: fixed 32pt squares across a 341pt content width want ~16pt air.
+fn l0_day_row(kids)  { return {t: "row", fillw: 1, spacing: 16, aligny: 0.5, c: kids} }
+fn l0_day_rows(kids) { return {t: "column", fillw: 1, spacing: 14, c: kids} }
+
 fn l0_tile(label, value) {
     return {t: "card", fillw: 1, bg: l0_fill, radius: radius_tile, padx: pad_tile_x, pady: pad_tile_y,
             c: [ l0_caption(label), l0_gap(gap_tile), l0_value(value) ]}
