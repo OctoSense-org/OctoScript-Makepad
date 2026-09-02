@@ -462,6 +462,40 @@ fn l0_panel(kids) {
 // system's signature gradient: `l0_card_1 -> l0_card_2`, drawn by the view
 // shader's own two-stop fill. Zero in every base mood, so nothing moves unless
 // a pack asks — the Atro credit cards are the motivating screen.
+// A card whose DESIGN colour differs from the pack gradient: the lower
+// resolves the closed tint token to a pastel pair; ink stays the theme's.
+fn l0_card_tinted(c1, c2, kids) {
+    let n = l0_panel(kids)
+    n.bg = c1
+    n.bg2 = c2
+    return n
+}
+
+// Chat bubbles: mine right and accent-filled, theirs left on the panel fill.
+fn l0_bubble_me(s) {
+    return {t: "column", fillw: 1, alignx: 1, c: [
+        {t: "card", fitw: 1, bg: l0_accent, radius: radius_panel,
+         padx: 12, pady: 7, c: [ l0_txt(s, font_body, weight_normal, l0_base) ]} ]}
+}
+fn l0_bubble_them(s) {
+    return {t: "column", fillw: 1, c: [
+        {t: "card", fitw: 1, bg: l0_fill, radius: radius_panel,
+         padx: 12, pady: 7, c: [ l0_txt(s, font_body, weight_normal, l0_text) ]} ]}
+}
+
+// The floating round action button, and the overlay that pins it over a page.
+fn l0_fab(glyph) {
+    return {t: "card", w: 54, h: 54, radius: 27, bg: l0_go, elevation: 3,
+            alignx: 0.5, aligny: 0.5,
+            c: [ {t: "text", text: glyph, icon: 1, size: font_title, color: l0_base,
+                  fitw: 1, fith: 1} ]}
+}
+fn l0_surface_fab(page, fab) {
+    return {t: "stack", fillw: 1, fillh: 1, c: [ page,
+        {t: "column", fillw: 1, fillh: 1, alignx: 1, aligny: 1,
+         padx: pad_page_x, padbottom: pad_page_bot, c: [ fab ]} ]}
+}
+
 fn l0_card(kids) {
     let n = l0_panel(kids)
     if l0_card_2 > 0 {
@@ -512,7 +546,7 @@ fn l0_tile_sq2(label, g) {
 fn l0_band(txt) {
     return {t: "card", fillw: 1, radius: 0,
             marginx: 0 - pad_page_x,
-            bg: l0_text, bg2: l0_soft,
+            bg: l0_soft, bg2: l0_dim,
             padx: pad_page_x, pady: 9,
             c: [ l0_txt(txt, font_title, weight_bold, l0_base) ]}
 }
