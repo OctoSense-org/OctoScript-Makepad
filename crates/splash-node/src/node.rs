@@ -406,6 +406,10 @@ pub struct Attrs {
     /// Child alignment within a container, 0.0..=1.0 on each axis.
     pub alignx: Option<f32>,
     pub aligny: Option<f32>,
+    /// Force near-black ink on every descendant text — a tinted card's fill
+    /// is chosen by the card, but the mood's ink may be light and unreadable
+    /// on it; the theme cannot re-answer roles per-subtree, so the flag can.
+    pub inkdark: Option<i32>,
     pub on: Option<i32>,
     pub tap: Option<i32>,
     /// Map camera. `tilt` is what makes the view 2.5D; `rotation` is the bearing.
