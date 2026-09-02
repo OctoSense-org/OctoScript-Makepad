@@ -227,7 +227,7 @@ fn l0_aligned(node, how) {
 // did. The card never names the FILE — a texture is the theme's to choose for
 // exactly the reason a colour is (profile §4), and the backend resolves the name.
 fn l0_surface(kids) {
-    return {t: "column", fillw: 1, fith: 1, bg: l0_base, bg2: l0_base_2,
+    return {t: "column", fillw: 1, fillh: 1, bg: l0_base, bg2: l0_base_2,
             gradient_across: l0_grad_across,
             texture: l0_texture, texture_alpha: l0_texture_a,
             texture_scale: l0_texture_s,
@@ -560,7 +560,38 @@ fn l0_chip(s, on) {
 fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
 
 // A list row's image: fixed 16:9, so the text beside it keeps its baseline.
-fn l0_thumb(src) { return {t: "image", src: src, fit: 2, w: 108, h: 61} }
+// A list-row 16:9 tile, or a square mosaic cell when the card says so.
+fn l0_thumb(src, sq) {
+    if sq > 0 { return {t: "image", src: src, fit: 2, w: 102, h: 102} }
+    return {t: "image", src: src, fit: 2, w: 108, h: 61}
+}
+
+// A flexible blank: absorbs the leftover height of the column it sits in.
+fn l0_space() { return {t: "column", fillh: 1} }
+
+// Aligned page layers. Deferred fills are greedy in the app's layout fork —
+// anything walked after one never fits — so `Space()` splits the page into
+// layers and ALIGNMENT does the pinning: `aligny: 1` sits a footer on the page
+// floor, `0.5` centers a hero, with no fill arithmetic anywhere.
+fn l0_surface_layer(kids, y) {
+    return {t: "column", fillw: 1, fillh: 1, aligny: y,
+            padx: pad_page_x, padtop: pad_page_top, padbottom: pad_page_bot, c: kids}
+}
+fn l0_surface_pin2(top, bottom) {
+    return {t: "stack", fillw: 1, fillh: 1, bg: l0_base, bg2: l0_base_2,
+            gradient_across: l0_grad_across,
+            texture: l0_texture, texture_alpha: l0_texture_a,
+            texture_scale: l0_texture_s,
+            c: [l0_surface_layer(top, 0), l0_surface_layer(bottom, 1)]}
+}
+fn l0_surface_pin3(top, mid, bottom) {
+    return {t: "stack", fillw: 1, fillh: 1, bg: l0_base, bg2: l0_base_2,
+            gradient_across: l0_grad_across,
+            texture: l0_texture, texture_alpha: l0_texture_a,
+            texture_scale: l0_texture_s,
+            c: [l0_surface_layer(top, 0), l0_surface_layer(mid, 0.5),
+                l0_surface_layer(bottom, 1)]}
+}
 
 // ---- interaction -----------------------------------------------------------
 // A tap target, carried as `tapto` — an arbitrary string this renderer does not
