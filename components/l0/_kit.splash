@@ -497,12 +497,38 @@ fn l0_bubble_them_long(s) {
 }
 
 // The floating round action button, and the overlay that pins it over a page.
+// The bottom tab bar: a full-width row of icon+label tabs on the theme's bar
+// rail, the active one lit in the accent. Nearly every app screen has one, and
+// without it the model drew five "Item" captions in a flat strip.
+fn l0_tab(glyph, label, active) {
+    let ink = l0_dim
+    if active > 0 { ink = l0_accent }
+    return {t: "column", fillw: 1, alignx: 0.5, gap: 3, c: [
+        {t: "text", text: glyph, icon: 1, size: font_value, color: ink, fitw: 1, fith: 1},
+        {t: "text", text: label, size: font_caption - 1, weight: weight_normal, color: ink}
+    ]}
+}
+fn l0_tabbar(kids) {
+    return {t: "row", fillw: 1, bg: l0_base_2, radius: radius_panel,
+            padx: 8, pady: 10, marginx: 0 - pad_page_x, c: kids}
+}
+
 fn l0_fab(glyph) {
     return {t: "card", w: 54, h: 54, radius: 27, bg: l0_go, elevation: 3,
             alignx: 0.5, aligny: 0.5,
             c: [ {t: "text", text: glyph, icon: 1, size: font_title, color: l0_base,
                   fitw: 1, fith: 1} ]}
 }
+// A page with a tab bar pinned to its floor: the page owns the top, the bar
+// sits on the bottom, via the same aligned-layer trick as the pin surfaces.
+fn l0_surface_tabbar(page, bar) {
+    return {t: "stack", fillw: 1, fillh: 1, c: [
+        page,
+        {t: "column", fillw: 1, fillh: 1, aligny: 1,
+         padx: pad_page_x, padbottom: pad_page_bot, c: [bar]}
+    ]}
+}
+
 fn l0_surface_fab(page, fab) {
     return {t: "stack", fillw: 1, fillh: 1, c: [ page,
         {t: "column", fillw: 1, fillh: 1, alignx: 1, aligny: 1,
