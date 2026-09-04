@@ -192,3 +192,8 @@ let seed_hue_on = 0
 let seed_hue_r  = 0
 let seed_hue_g  = 0
 let seed_hue_b  = 0
+
+// Frame-fill stretch: >1 grows media heights and card paddings so a
+// sparse card fills its design frame. 1 everywhere but the fidelity
+// harness, which measures dead space and re-renders with the ratio.
+let media_stretch = 1
