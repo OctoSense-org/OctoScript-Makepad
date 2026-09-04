@@ -556,8 +556,9 @@ fn l0_icon(glyph, size) {
 fn l0_avatar(s) {
     // Initials in a tinted circle — the no-photo avatar every kit ships.
     // A fixed 40px circle: radius half the box, accent fill, light ink.
-    return {t: "card", w: 40, h: 40, radius: 20, bg: l0_active,
-            padx: 10, pady: 11, fitw: 1, fith: 1,
+    return {t: "card", w: 40 * media_stretch, h: 40 * media_stretch,
+            radius: 20 * media_stretch, bg: l0_active,
+            padx: 10 * media_stretch, pady: 11 * media_stretch, fitw: 1, fith: 1,
             c: [ l0_txt(s, font_caption, weight_semi, l0_ondark) ]}
 }
 
@@ -671,9 +672,9 @@ fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
 // A list-row 16:9 tile, a square mosaic cell, or a full-width hero media
 // panel — the card names which (0/1/2), the kit owns the numbers.
 fn l0_thumb(src, sq) {
-    if sq > 1 { return {t: "image", src: src, fit: 2, fillw: 1, h: 210} }
+    if sq > 1 { return {t: "image", src: src, fit: 2, fillw: 1, h: 210 * media_stretch} }
     if sq > 0 { return {t: "image", src: src, fit: 2, w: 102, h: 102} }
-    return {t: "image", src: src, fit: 2, w: 108, h: 61}
+    return {t: "image", src: src, fit: 2, w: 108, h: 61 * media_stretch}
 }
 
 // A flexible blank: absorbs the leftover height of the column it sits in.
