@@ -406,10 +406,18 @@ pub struct Attrs {
     /// Child alignment within a container, 0.0..=1.0 on each axis.
     pub alignx: Option<f32>,
     pub aligny: Option<f32>,
-    /// Force near-black ink on every descendant text — a tinted card's fill
-    /// is chosen by the card, but the mood's ink may be light and unreadable
-    /// on it; the theme cannot re-answer roles per-subtree, so the flag can.
-    pub inkdark: Option<i32>,
+    /// The ink descendant text is read with, where the mood's own ink cannot
+    /// be read on this node's fill.
+    ///
+    /// A card's fill belongs to the PACK — CaMo's black slab, Atro's indigo
+    /// gradient — and it does not flip when the pack's light variant flips
+    /// `l0_text`; the theme cannot re-answer a role per subtree. CaMo light
+    /// therefore drew near-black headlines on a pure black card, on every
+    /// rail. This was an `inkdark` FLAG, which no renderer ever read and which
+    /// the evaluator never even parsed, so it fixed nothing. Carrying the
+    /// colour lets a backend apply it, and apply it only where a descendant's
+    /// own colour fails contrast — an accent that already reads keeps its own.
+    pub ink: Option<u32>,
     pub on: Option<i32>,
     pub tap: Option<i32>,
     /// Map camera. `tilt` is what makes the view 2.5D; `rotation` is the bearing.

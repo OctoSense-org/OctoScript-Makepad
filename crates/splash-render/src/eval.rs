@@ -113,6 +113,7 @@ fn walk(vm: &mut ScriptVm, value: ScriptValue, depth: usize) -> Option<UiNode> {
         error: string_prop(vm, value, id!(error)),
         accent: u32_prop(vm, value, id!(accent)),
         markcolor: u32_prop(vm, value, id!(markcolor)),
+        ink: u32_prop(vm, value, id!(ink)),
         value: f32_prop(vm, value, id!(value)),
         total: f32_prop(vm, value, id!(total)),
         align: int_prop(vm, value, id!(align)),
