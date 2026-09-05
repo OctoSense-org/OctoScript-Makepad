@@ -57,9 +57,57 @@ fn theme() -> material::Roles {
 /// (`bg` → `show_bg`+`draw_bg.color`, `size` → `draw_text` font size, etc.).
 pub fn to_makepad_ui(root: &UiNode) -> String {
     material::reset_slider_index();
+    let mut root = root.clone();
+    resolve_ink_planes(&mut root, None, None);
     let mut out = String::new();
-    emit(root, &mut out, 0);
+    emit(&root, &mut out, 0);
     out
+}
+
+/// Relative luminance of an 0xAARRGGBB colour, sRGB, alpha ignored.
+fn rlum(c: u32) -> f64 {
+    let ch = |s: u32| {
+        let v = ((c >> s) & 0xff) as f64 / 255.0;
+        if v <= 0.04045 {
+            v / 12.92
+        } else {
+            ((v + 0.055) / 1.055).powf(2.4)
+        }
+    };
+    0.2126 * ch(16) + 0.7152 * ch(8) + 0.0722 * ch(0)
+}
+
+fn contrast(a: u32, b: u32) -> f64 {
+    let (x, y) = (rlum(a), rlum(b));
+    (x.max(y) + 0.05) / (x.min(y) + 0.05)
+}
+
+/// Give descending text the ink of the nearest enclosing surface that states
+/// one, where its own colour cannot be read on that surface.
+///
+/// A pack states its card colour once, and that colour does not flip when the
+/// pack's light variant flips `l0_text` — so CaMo light drew near-black
+/// headlines on a pure black card, unreadable here and on the ArkUI rail
+/// alike. Resolved as a pre-pass over the tree rather than threaded through
+/// `emit`, because it is a property of the tree and not of the emission, and
+/// the two backends then apply the same rule at the same place in their
+/// pipelines.
+///
+/// Only text that FAILS AA against the surface moves: a chip or a link that
+/// already contrasts keeps the colour the theme gave it.
+fn resolve_ink_planes(node: &mut UiNode, ink: Option<u32>, fill: Option<u32>) {
+    let (ink, fill) = match node.attrs.ink {
+        Some(i) => (Some(i), node.attrs.bg.or(fill)),
+        None => (ink, fill),
+    };
+    if let (Some(own), Some(i), Some(f)) = (node.attrs.color, ink, fill) {
+        if contrast(own, f) < 4.5 {
+            node.attrs.color = Some(i);
+        }
+    }
+    for c in &mut node.children {
+        resolve_ink_planes(c, ink, fill);
+    }
 }
 
 /// The makepad widget a kind renders as.
