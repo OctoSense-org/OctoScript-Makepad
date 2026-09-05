@@ -29,16 +29,15 @@ fn dc_lum(r, g, b) { return 0.2126 * r + 0.7152 * g + 0.0722 * b }
 let dc_dark   = dc_lum(seed_ground_r, seed_ground_g, seed_ground_b) < 128
 fn dc_pole()  { return dc_pick(dc_dark, 255, 0) }
 
-fn dc_toward_ink(t) {
-    return argb(255, dc_mix(seed_ground_r, seed_ink_r, t),
-                     dc_mix(seed_ground_g, seed_ink_g, t),
-                     dc_mix(seed_ground_b, seed_ink_b, t))
-}
-fn dc_toward_pole(t) {
-    return argb(255, dc_mix(seed_ground_r, dc_pole(), t),
-                     dc_mix(seed_ground_g, dc_pole(), t),
-                     dc_mix(seed_ground_b, dc_pole(), t))
-}
+// DEFINED BELOW, after the accent solve rebinds the ink seeds.
+//
+// A function in this VM keeps the binding a name had when the function was
+// DEFINED — asked on the device, the boot selftest logs the answer. Defined
+// here, `dc_toward_ink` read the ORIGINAL `seed_ink_*` and never saw the
+// accent-tinted values the solve below produces, so every ink it derives
+// (l0_text, l0_soft, l0_dim) came out untinted and the whole accent-as-seed
+// path was inert. A call may precede a definition, so moving the definitions
+// past the rebinds is the entire fix.
 
 // ---- accent-as-seed: the ground x accent composition ----------------------
 // When BOTH a seeded ground and a seeded hue are present, the ink is pulled
@@ -75,6 +74,17 @@ let seed_ink_b = dc_pick(dc_both, dc_mix(seed_ink_b, seed_hue_b, dc_t), seed_ink
 let seed_accent_r = dc_pick(dc_both, seed_hue_r, seed_accent_r)
 let seed_accent_g = dc_pick(dc_both, seed_hue_g, seed_accent_g)
 let seed_accent_b = dc_pick(dc_both, seed_hue_b, seed_accent_b)
+
+fn dc_toward_ink(t) {
+    return argb(255, dc_mix(seed_ground_r, seed_ink_r, t),
+                     dc_mix(seed_ground_g, seed_ink_g, t),
+                     dc_mix(seed_ground_b, seed_ink_b, t))
+}
+fn dc_toward_pole(t) {
+    return argb(255, dc_mix(seed_ground_r, dc_pole(), t),
+                     dc_mix(seed_ground_g, dc_pole(), t),
+                     dc_mix(seed_ground_b, dc_pole(), t))
+}
 
 // The relationships, lifted verbatim from the E4 solver's shipped ratios.
 let l0_base     = dc_pick(seed_on, argb(255, seed_ground_r, seed_ground_g, seed_ground_b), l0_base)

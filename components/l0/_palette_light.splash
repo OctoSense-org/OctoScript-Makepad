@@ -19,7 +19,14 @@ let l0_hairline = argb(255, 236, 236, 241)   // #ececf1 divider
 let l0_sheet    = argb(255, 255, 255, 255)   // #ffffff over a map — opaque
 let l0_text     = argb(255,  28,  28,  30)   // #1c1c1e primary
 let l0_soft     = argb(255,  72,  72,  76)   // #48484c secondary
-let l0_dim      = argb(255, 142, 142, 147)   // #8e8e93 captions and labels
+// #6d6d6e captions and labels. Was #8e8e93, which is 2.92 against this
+// mood's page — below AA and below even the large-text floor, so every caption
+// in the light mood was under-contrast. Nothing measured it: the auditor
+// checked the PRIMARY ink only, and captions do not use the primary ink.
+// Darkened along its own faint blue cast until the page pair clears AA (4.63;
+// 5.17 on the panel). The other moods were already fine: dark 7.28, camo light
+// 6.17, atro light 6.47.
+let l0_dim      = argb(255, 109, 109, 110)
 let l0_up       = argb(255,  30, 160,  60)   // #1ea03c darkened to read on white
 let l0_down     = argb(255, 215,  58,  73)   // #d73a49 a fall
 let l0_danger   = argb(255, 215,  58,  73)   // #d73a49 destructive fill
