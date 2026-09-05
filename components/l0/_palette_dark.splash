@@ -62,6 +62,16 @@ let hero_factor   = 1
 // — the bar's LENGTH already carries the range — so the spectrum is decoration
 // competing with the type for attention.
 let l0_bar        = argb(255, 109, 121, 240)   // #6d79f0 indigo
+
+// The base's own accent, under the name the derivation reads.
+//
+// Nothing bound `l0_accent` unless a card named an accent AXIS, and
+// `_derive_color` reads its previous binding — so every base mood errored once
+// and painted the accent fully transparent, silently, because 0 is a legal
+// colour. The value is not invented here: `l0_bar` above IS this palette's
+// accent, and an accent fragment says so explicitly (`l0_bar = l0_accent`).
+// A fragment spliced later still overrides this.
+let l0_accent     = l0_bar
 let l0_bar_rail   = argb( 41, 255, 255, 255)   // #ffffff29 faint rail on a dark page
 // Single-ink glyphs, not the filled multi-colour ones.
 //
@@ -184,6 +194,11 @@ let seed_accent_b = 0
 // both stops to give its cards the design system's signature fill.
 let l0_card_1 = 0
 let l0_card_2 = 0
+// The ink that card reads with. A pack's card colour is part of its identity
+// and stays put across the pack's light and dark variants, while `l0_text`
+// flips — so a card states its own ink rather than borrowing the page's.
+// Unused while the stops are zero, since then a card is just a panel.
+let l0_card_ink = argb(255, 255, 255, 255)
 
 // The accent-as-seed switch: an accent fragment sets the hue; only when a
 // seeded ground is ALSO present does the in-kit solve replace the mood-
