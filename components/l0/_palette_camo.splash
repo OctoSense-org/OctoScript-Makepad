@@ -28,3 +28,7 @@ let l0_display_family = "geometric"
 // the kit's most-reused two-stop gradient — content cards take it
 let l0_card_1 = argb(255, 0, 0, 0)
 let l0_card_2 = argb(255, 0, 0, 0)
+// Every card stop this pack states is dark or saturated, so its contents
+// read in white — in the light variant too, where `l0_text` goes dark and
+// the card colour does not follow it.
+let l0_card_ink = argb(255, 255, 255, 255)

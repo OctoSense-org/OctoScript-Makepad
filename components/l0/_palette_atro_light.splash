@@ -47,6 +47,10 @@ let l0_shadow_ink = argb( 34,  59,  74, 116)
 // screens). Content cards take it; panels stay flat.
 let l0_card_1 = argb(255, 100,  90, 255)
 let l0_card_2 = argb(255, 165, 115, 255)
+// Every card stop this pack states is dark or saturated, so its contents
+// read in white — in the light variant too, where `l0_text` goes dark and
+// the card colour does not follow it.
+let l0_card_ink = argb(255, 255, 255, 255)
 
 // The kit packs ~8 rows where L0 default spacing fits ~5; judges read
 // that as "everything oversized". Tighten the whole rhythm.

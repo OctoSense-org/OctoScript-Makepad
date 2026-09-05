@@ -198,6 +198,13 @@ fn l0_colw(node, col) {
 // header hard against the left margin — the card was right and looked wrong.
 fn l0_aligned(node, how) {
     if how == "center" {
+        // `Col(align: .center)` centres on ArkUI and does nothing on makepad,
+        // and giving the column `fillw` here does not close it: a makepad Label
+        // defaults to Fill width while an ArkUI text node hugs, so each child
+        // spans the centred column and still draws its glyphs at its own left
+        // edge. Measured — the hero stayed at x=166 of 750 with the column
+        // filling. Closing it means changing the text width default on one
+        // rail, across the whole corpus, which is its own pass.
         if node.t == "row" { node.aligny = 0.5 } else { node.alignx = 0.5 }
     }
     if how == "end" {
@@ -463,12 +470,21 @@ fn l0_panel(kids) {
 // shader's own two-stop fill. Zero in every base mood, so nothing moves unless
 // a pack asks — the Atro credit cards are the motivating screen.
 // A card whose DESIGN colour differs from the pack gradient: the lower
-// resolves the closed tint token to a pastel pair; ink stays the theme's.
+// resolves the closed tint token to a pastel pair.
+//
+// A card also states the ink its own contents are read with. The card colour
+// belongs to the PACK and does not flip when the pack's light variant flips
+// the ink: CaMo light put near-black headlines on a pure black card and they
+// simply were not there, on the desktop rail and the phone alike. `inkdark`
+// used to mark that condition, and no renderer ever read the flag. `ink`
+// carries the colour instead, and a renderer applies it to descending text
+// that cannot be read against the card — text that already contrasts, an
+// accent for instance, keeps its own colour.
 fn l0_card_tinted(c1, c2, kids) {
     let n = l0_panel(kids)
     n.bg = c1
     n.bg2 = c2
-    n.inkdark = 1
+    n.ink = l0_card_ink
     return n
 }
 
@@ -540,6 +556,7 @@ fn l0_card(kids) {
     if l0_card_2 > 0 {
         n.bg  = l0_card_1
         n.bg2 = l0_card_2
+        n.ink = l0_card_ink
     }
     return n
 }
