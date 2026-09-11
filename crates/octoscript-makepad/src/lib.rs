@@ -289,7 +289,7 @@ fn emit_vertical_pad(node: &UiNode, out: &mut String, depth: usize) {
 /// `Overlay{ <content>, Button{…on_click} }` — see [`needs_click_overlay`].
 ///
 /// The handler calls `NAV`, a global the host registers, rather than reaching
-/// through `ui.nav_signal`. `ui` is injected by `Octoscript::eval_body`, so a body
+/// through `ui.nav_signal`. `ui` is injected by `Splash::eval_body`, so a body
 /// mounted anywhere else — notably on the app's main VM, which is what gets this
 /// crate's fonts and a widget kit's theming into reach — had every tap silently
 /// do nothing. A global works on either VM.
@@ -373,7 +373,7 @@ fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
     // mods and nothing else, so this type used to be unnameable from a body and
     // the target had to be a `Button`, which captures on touch-down and starved
     // the scroll. The host registers this crate's mod into every isolate
-    // through `register_octoscript_isolate_mod`, so the right widget can be used.
+    // through `register_splash_isolate_mod`, so the right widget can be used.
     let _ = writeln!(out, "{inner_ind}OctoscriptTap {{");
     let _ = writeln!(out, "{inner_ind}    width: Fill");
     let _ = writeln!(out, "{inner_ind}    height: Fill");
@@ -447,7 +447,7 @@ fn has_text_states(kind: NodeKind) -> bool {
 /// The Material state colours for a native control, as `draw_bg` keys.
 ///
 /// A control is drawn by its own shader, so `bg`/`color` alone cannot describe
-/// it. They cannot come from a widget kit either: `Octoscript` mounts its body on an
+/// it. They cannot come from a widget kit either: `Splash` mounts its body on an
 /// isolate VM that receives only makepad's own `script_mod`, so variants
 /// registered on the app VM are absent there and every control fell back to
 /// upstream's grey. A per-instance merge *does* arrive, so the roles travel with
@@ -737,7 +737,7 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         // Plex, so text could not match while the letterforms differed. `self:`
         // resolves against the `cargo_manifest_path` of the script_mod that
         // evaluates this — the host's, now that the body mounts on the main VM
-        // rather than a `Octoscript` isolate (whose empty manifest path blanked
+        // rather than a `Splash` isolate (whose empty manifest path blanked
         // every label).
         //
         // The device ships Roboto as a *variable* font with no separate Medium —
@@ -1049,7 +1049,7 @@ mod tests {
 
     #[test]
     fn a_control_carries_its_material_roles() {
-        // A control's shader colours cannot come from a widget kit: `Octoscript`
+        // A control's shader colours cannot come from a widget kit: `Splash`
         // mounts its body on an isolate VM that never receives one. They have to
         // travel with the node — and default from the scheme, because the
         // reference's screens carry no colour at all.

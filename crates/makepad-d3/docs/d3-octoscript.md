@@ -12,7 +12,7 @@ generating `runsplash`-style mini apps.
   (`use mod.prelude.widgets.*`) — no extra imports.
 - **In a sandboxed body** (`runsplash`-style): the host must render the body
   with the `d3.Octoscript` widget (an isolated VM with `d3.*` registered). Stock
-  `Octoscript`/`runsplash` sandboxes do NOT see `d3.*`.
+  `Splash`/`runsplash` sandboxes do NOT see `d3.*`.
 
 ## Key rules (inherit all of octoscript.md, plus)
 

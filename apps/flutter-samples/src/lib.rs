@@ -2,7 +2,7 @@
 //!
 //! Same shell as `kit-host`, pointed at `components/flutter/` instead of the
 //! Material kit: assemble the kit, inject `st`, run the Octoscript pipeline, feed
-//! makepad's dialect into the mounted `Octoscript` widget.
+//! makepad's dialect into the mounted `Splash` widget.
 //!
 //! Two pieces of state, because that is all the ports need: the current route
 //! and the light/dark flag. A screen navigates by setting `tapto`, which emits
@@ -104,7 +104,7 @@ script_mod! {
                         flow: Down
                         show_bg: true
                         draw_bg +: { color: #fef7ffff }
-                        // Upstream `Octoscript` always allocates an isolate VM; the
+                        // Upstream `Splash` always allocates an isolate VM; the
                         // light theme and the shared heap live on the app's main
                         // VM. See the repo README on the one upstream PR.
                         // Fit, not Fill — and this is load-bearing.
@@ -115,10 +115,10 @@ script_mod! {
                         // never scroll. See `page()` in `_kit.octoscript` for the
                         // measurement, and why mapping Scroll to ScrollYView
                         // makes it worse rather than better.
-                        host := Octoscript{ width: Fill, height: Fit }
+                        host := Splash{ width: Fill, height: Fit }
                     }
                     // PROBE: a plain makepad Label, drawn by the host rather
-                    // than through the Octoscript mount. If this is visible on
+                    // than through the Splash mount. If this is visible on
                     // OpenHarmony and the kit is not, the mount is at fault; if
                     // neither is, makepad's text/shader path is not working on
                     // that platform at all. Remove once answered.
@@ -223,7 +223,7 @@ impl AppMain for App {
     }
 
     fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
-        // The viewport, so a page can name its own height. `Octoscript` wraps its
+        // The viewport, so a page can name its own height. `Splash` wraps its
         // mount in `View{height:Fit}`, so filling is not available — see
         // `with_state_sized`. inner_size is physical; vp is what the kit's
         // lengths are in.

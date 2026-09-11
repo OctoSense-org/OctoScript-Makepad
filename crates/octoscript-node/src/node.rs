@@ -341,7 +341,7 @@ pub struct Attrs {
     ///
     /// Controls need this because they are drawn by their own shaders, whose
     /// colours are not reachable from `bg`/`color` alone. The theming a widget
-    /// kit registers on the app VM never reaches them either: `Octoscript` mounts its
+    /// kit registers on the app VM never reaches them either: `Splash` mounts its
     /// body on an isolate VM that only ever gets makepad's own `script_mod`
     /// (`widget_async.rs`), so the kit's variants are simply absent there. What
     /// does arrive is whatever the mounted dialect string carries — verified on

@@ -199,7 +199,7 @@ assertion. **Nine defects were found by looking that no test caught:**
 
 | what | why it happened |
 |---|---|
-| every screen blank | `page()` asked for `height: Fill` inside the host's `Octoscript{height: Fit}` |
+| every screen blank | `page()` asked for `height: Fill` inside the host's `Splash{height: Fit}` |
 | descenders sheared off every label | hand-picked text heights sat just under the font's line box |
 | paragraphs clipped mid-sentence | a Label with no width does not wrap; one with a guessed height clips the wrapped lines |
 | all three pickers empty white boxes | makepad has no picker widget, so `datepicker`/`timepicker`/`textpicker` fall through the translator to a bare `View` |
@@ -253,12 +253,12 @@ one property per line (the comma-joined form does not parse), and **no `draw_bg`
 override** — merging `border_size` into the themed button shader, which has no
 such instance, kills the whole widget silently.
 
-**2. `nav_signal` has to live inside the mounted tree.** Upstream's `Octoscript`
+**2. `nav_signal` has to live inside the mounted tree.** Upstream's `Splash`
 mounts on an isolate VM, and makepad injects `ui` into that VM *resolved against
-the octoscript's own view root* (`inject_octoscript_ui_handle` in
+the octoscript's own view root* (`inject_splash_ui_handle` in
 `widgets/src/widget_async.rs`, which returns early for the main VM). So
 `ui.nav_signal` inside a handler could never see the host's `nav_signal` Label,
-which is a sibling of the `Octoscript` widget rather than inside it. `page()` now
+which is a sibling of the `Splash` widget rather than inside it. `page()` now
 emits its own hidden `nav_signal`; the host's widget search does descend into
 the mounted subtree, so it still reads it.
 
@@ -299,7 +299,7 @@ so the next attempt does not rediscover it.
 **Working, verified from the device log:** XComponent callbacks registered, EGL
 context and window surface created, vsync registered, main loop entered, surface
 1320x2523 at density 3.25. `Event::Startup` fires, the kit evaluates
-(`built=true nodes=236 ui_len=71753`), and the `Octoscript` widget accepts the
+(`built=true nodes=236 ui_len=71753`), and the `Splash` widget accepts the
 dialect and produces a view without error.
 
 **Not working:** no glyphs. `Cx::get_dependency` looks in a dependency map and,
