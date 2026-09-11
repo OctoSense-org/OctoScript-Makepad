@@ -1,0 +1,664 @@
+// _kit.octoscript — the L0 theme.
+//
+// `ui-profile-l0.md` §1.1: an L0 card names ROLES and never presentation. This
+// file is a theme's answer to those roles — the layer the profile says must
+// exist between a card and a backend:
+//
+//     L0 card        names roles          TextHero, Panel, Chip, Tile
+//        ↓
+//     THIS FILE      role → presentation  l0_hero, l0_panel, l0_chip, l0_tile
+//        ↓
+//     octoscript-render  DSL → UiNode         renderer-free
+//        ↓
+//     backend                             octoscript-makepad · Octoscript-OH · Octoscript-Android
+//
+// WHY IT DID NOT EXIST UNTIL NOW. The profile said "lowering targets the
+// component kit" as though a kit answering L0's roles were sitting there. It was
+// not: `components/flutter` and `components/material` are ports of Flutter
+// samples, and against L0's 23 roles about four map loosely. What they DO
+// provide is the primitive layer — `txt`, `gap`, `rule`, `spacer` — and that is
+// what this is built from.
+//
+// THE PALETTE IS DELIBERATELY THE ONE ALREADY ON DEVICE. Every colour here is
+// lifted from `octoscript-ui-l0`'s `makepad::lower`, which four goldens on a
+// OnePlus 6T already assert. Changing the look and moving the layer at the same
+// time would make a golden failure ambiguous between "the theme moved" and "the
+// theme is wrong". Restyling comes after the move, against green goldens.
+//
+// EVERY ATTRIBUTE HERE IS ONE `octoscript-render` READS. Its `Attrs` is a fixed
+// struct, not an open bag, so an attribute it does not name is not a default —
+// it is silently discarded. A previous lowering attempt emitted roughly twenty
+// such attributes and was reverted.
+
+fn argb(a, r, g, b) { return ((a * 256 + r) * 256 + g) * 256 + b }
+
+// ---- palette ---------------------------------------------------------------
+// Hex from the shipped lowering, as ARGB. Note makepad writes #RRGGBBAA, so
+// `#ffffff12` is white at alpha 0x12 — a barely-there panel over a dark page,
+// not a near-white fill.
+let l0_base     = argb(255,  10,  14,  20)   // #0a0e14  page
+let l0_scrim    = argb(102,   0,   0,   0)   // #00000066 over a photo
+// A sheet floating over a MAP, and the one fill in this palette that must be
+// fully opaque. `l0_panel` is 7% white, which is a window rather than a surface:
+// over a map the road labels read straight through whatever the card put there.
+// The colour is the shipping nav card's own sheet.
+let l0_sheet    = argb(255,  15,  22,  32)   // #0f1620 over a map
+// The one action that ENDS something. Values from the shipping nav card's `endrow`.
+let l0_danger   = argb(255, 122,  31,  31)   // #7a1f1f destructive fill
+let l0_danger_i = argb(255, 255, 217, 217)   // #ffd9d9 its ink
+// NOT `l0_panel`, and the name is the whole point.
+//
+// `fn l0_panel(kids)` is a ROLE in this file, so a palette entry of the same name
+// is shadowed by it from the function's declaration onward — and a function
+// coerced to a colour is 0. Every use after `fn l0_panel` silently became fully
+// transparent: `l0_chip` and `l0_field` both asked for this fill and both got
+// nothing. Uses INSIDE `l0_panel`'s own body still resolved to the colour, which
+// is why panels looked right and chips did not, and why it read as a chip bug.
+//
+// Found by live-testing a nav card on a phone: Go and End rendered as bare text
+// with no button under them. No unit test could see it — zero is a valid colour.
+let l0_fill     = argb( 18, 255, 255, 255)   // #ffffff12 panel fill
+let l0_active   = argb( 56, 255, 255, 255)   // #ffffff38 selected chip
+let l0_hairline = argb( 26, 255, 255, 255)   // #ffffff1a divider
+let l0_text     = argb(255, 255, 255, 255)   // #ffffff   primary
+let l0_soft     = argb(230, 255, 255, 255)   // #ffffffe6 secondary
+let l0_dim      = argb(153, 255, 255, 255)   // #ffffff99 captions and labels
+let l0_up       = argb(255,  50, 215,  75)   // #32d74b   a rise
+let l0_go       = argb(255,  52, 199,  89)   // #34c759   the action a screen is for
+let l0_ondark   = argb(255,  14,  22,  32)   // #0e1620   text on a lit fill
+let l0_down     = argb(255, 255,  69,  58)   // #ff453a   a fall
+
+// ---- primitives ------------------------------------------------------------
+// Self-contained rather than shared with the sample kits: those are ports of
+// someone else's design system and will move for reasons that have nothing to
+// do with L0.
+
+fn l0_txt(s, size, weight, color) {
+    return {t: "text", text: s, size: size, weight: weight, color: color, fith: 1}
+}
+
+// Text that may wrap. `fillw` is what lets it, and forcing it on a short hero
+// wrapped "Top Movers" one character per line on device — so it is opt-in.
+fn l0_para(s, size, weight, color) {
+    return {t: "text", text: s, size: size, weight: weight, color: color,
+            fillw: 1, fith: 1}
+}
+
+fn l0_gap(px)   { return {t: "column", h: px} }
+fn l0_spacer()  { return {t: "column", fillw: 1, h: 1} }
+
+// ---- text roles ------------------------------------------------------------
+// A role says what a thing IS; the size ramp here is this theme's answer.
+
+// The ONE number a card exists to show. Sized by how long it is, because a hero
+// is defined by dominating the card rather than by a point size: "18°" fits at
+// 62 where "$184.20" clipped off the right edge.
+//
+// The CALLER measures and passes `pt`, and that is not an accident of interface
+// design. Once a value lowers to a live backend call the drawn text is not in
+// the DSL at all — `"$" + sys.stock("NVDA", "price")` renders as six characters
+// and reads as thirty-three — so only the lowering knows what will be drawn.
+fn l0_hero(s, pt) { return l0_txt(s, pt, 700, l0_text) }
+
+// The type scale, TAKEN FROM THE WIDGETS THIS REPLACES rather than chosen.
+//
+// These are the sizes `octos-one`'s `TextTitle`, `TextBody`, `TextRow`,
+// `TextCaption` and `TextValue` already carry, and four device goldens assert
+// them. Moving the layer and restyling at once would make a golden failure
+// ambiguous between "the theme moved" and "the theme is wrong" — so the theme
+// does not move yet. Restyling comes after, against green goldens.
+fn l0_title(s)    { return l0_txt(s, 18, 700, l0_text) }
+fn l0_body(s)     { return l0_para(s, 12, 400, l0_text) }
+fn l0_row_text(s) { return l0_txt(s, 10, 400, l0_soft) }
+fn l0_caption(s)  { return l0_txt(s, 8, 400, l0_dim) }
+fn l0_value(s)    { return l0_txt(s, 14, 600, l0_text) }
+
+// A statistic, tinted by direction. `dir` is -1, 0 or 1 — the SIGN, decided by
+// the card, not the colour: red-versus-green is presentation, but "this value
+// fell" is meaning, and a lowering that dropped the attribute lost both.
+fn l0_tint(dir) {
+    if dir > 0 { return l0_up }
+    if dir < 0 { return l0_down }
+    return l0_text
+}
+fn l0_stat(s, dir) { return l0_txt(s, 10, 600, l0_tint(dir)) }
+
+// Recolour any text by DIRECTION, composed around the role rather than folded
+// into it.
+//
+// Every text role may carry a tint — the stock list tints a `TextValue`, the
+// detail a `TextStat` — so the alternative was a direction parameter on all
+// seven, six of which would pass 0 forever. `dir` of 0 leaves the role's own
+// colour alone, which is what an untinted card gets.
+fn l0_tinted(node, dir) {
+    if dir != 0 { node.color = l0_tint(dir) }
+    return node
+}
+
+// Constrain a text role's WIDTH, composed around the role for the same reason
+// `l0_tinted` is: any text role may carry `width`, and folding a parameter into
+// all seven would have six passing a default forever.
+//
+// `fill` is what lets a long headline WRAP rather than run off the right edge.
+// Every story title in the news list clipped until this existed — "A new
+// approach to incremental c" — and a clipped title reads as a short one, so
+// nothing on screen says the card is wrong.
+fn l0_wide(node) { node.fillw = 1; return node }
+
+// The opposite, and it is NOT a no-op. `fit` is this backend's default for a
+// text role, so `l0_wide`'s absence says it — but `l0_row` fills by default,
+// because a list row must. A filling row inside a CENTRED column then ignores
+// the centring: the weather card's `↑37° ↓28° ≈37°` sat hard left under a
+// centred place name, icon and hero temperature, and no attribute the card could
+// write changed it. `align` on a row means the CROSS axis, which is vertical.
+fn l0_fit(node) { node.fillw = 0; node.fitw = 1; return node }
+
+// A fixed column, because these tokens name things that must LINE UP down a
+// list: the rank numbers in a feed, the day names in a forecast. Fitting each
+// to its own text ragged the column — "1" and "10" start at different x — so
+// the card says WHICH column it is and the theme says how wide.
+//
+// The pixel counts live here and not in the lowering for the same reason the
+// palette does: they are this theme's answer, and a different theme answers
+// differently.
+fn l0_colw(node, col) {
+    if col == "rank" { node.w = 28 }
+    if col == "day"  { node.w = 44 }
+    if col == "temp" { node.w = 52 }
+    // A FORM LABEL: a fixed-width column that RIGHT-aligns what is in it, so the
+    // labels end where the fields begin instead of each one starting its field at
+    // its own x. "FROM" is wider than "TO", so fitting each to its text ragged the
+    // column exactly the way the rank numbers above ragged theirs.
+    //
+    // A WRAPPER, not `alignx` on the text. Alignment positions a widget inside its
+    // parent; it does not move the run inside the widget — the same thing the
+    // backend already learned about `TextInput`, where the container's `align` did
+    // nothing and `label_align` was the property that moved the text. Setting both a
+    // width and an alignment on the label itself left the run starting at the box's
+    // left edge and clipping off its right.
+    if col == "label" {
+        return {t: "column", w: 64, fith: 1, alignx: 1.0, c: [node]}
+    }
+    return node
+}
+
+// Align a container's children on the CROSS axis — the axis the flow does not
+// already decide. A column lays out downward, so aligning it is horizontal; a
+// row lays out rightward, so aligning it is vertical. One token, one meaning,
+// and the container knows which axis that is.
+//
+// The weather card centres its place name, its icon and its hero temperature,
+// and that IS the screen's identity. Dropping the attribute left the whole
+// header hard against the left margin — the card was right and looked wrong.
+fn l0_aligned(node, how) {
+    if how == "center" {
+        if node.t == "row" { node.aligny = 0.5 } else { node.alignx = 0.5 }
+    }
+    if how == "end" {
+        if node.t == "row" { node.aligny = 1.0 } else { node.alignx = 1.0 }
+    }
+    return node
+}
+
+// ---- containers ------------------------------------------------------------
+
+// The page. Padding clears the status bar at the top and the gesture bar below.
+// The page. `fith`, not `fillh`: a card is as tall as its content, and the host
+// surface shows below it. Filling the height painted the whole screen in the
+// card's base colour and covered the app's own background — 94% of the lower
+// half differed, on a card whose content was correct.
+fn l0_surface(kids) {
+    return {t: "column", fillw: 1, fith: 1, bg: l0_base,
+            padx: 20, padtop: 54, padbottom: 24, c: kids}
+}
+
+// A page whose background is a photo, with a scrim so text stays legible over
+// whatever the image turns out to be.
+fn l0_surface_photo(src, kids) {
+    return {t: "stack", fillw: 1, fillh: 1, c: [
+        {t: "image", src: src, fit: 2, fillw: 1, fillh: 1},
+        {t: "column", fillw: 1, fillh: 1, bg: l0_scrim},
+        {t: "column", fillw: 1, fillh: 1, padx: 20, padtop: 54, padbottom: 24, c: kids}
+    ]}
+}
+
+// A page whose background is a MAP, with the card's own content floating over it
+// as an opaque sheet.
+//
+// Every number here came off `a2app/apps/nav`, which has four maps and puts none
+// of them in a column. A `MapView` is a fixed-pixel full-bleed surface that paints
+// its route through the GPU nav projection rather than inside a laid-out rect, so
+// stacked in a column beneath the card's content it draws straight over it —
+// measured, the trip's FROM/TO fields, duration and Go button were invisible under
+// the map, and in the driving view the route ribbon cut the turn banner in half.
+//
+// FIXED 812, not `fillh`: `Fill` inside a `Fit` parent resolves to 0 and a card is
+// an item in a chat list, so filling rendered an entirely empty screen.
+//
+// The sheet is OPAQUE because the ordinary panel is 7% white, which over a map is
+// a window — the map's own road labels read straight through the trip. And it sits
+// at the BOTTOM because `update_plan_preview_camera` fits the route into the band
+// ABOVE the summary sheet, so a sheet at the top lands exactly on the route it was
+// making room for. 76 rather than the shipping card's 30 at the bottom: that card
+// is full-screen, and an L0 card sits under the app's composer bar.
+// Content a swipe reveals. Hidden until then; the renderer wires the toggle.
+//
+// NOT card state. A state change re-resolves the card, re-parses the document and
+// rebuilds the `MapView` inside it — measured at up to 327 ms of frozen map. The
+// shipping nav card toggles `ui.endrow.set_visible` directly for exactly this reason,
+// and `action` is how the renderer is told which view to do that to.
+fn l0_reveal(kids) {
+    return {t: "column", fillw: 1, action: "reveal", c: kids}
+}
+
+// The top band, or nothing at all when nothing is docked there. `has` comes from
+// the LOWERING because that is what knows whether the card docked anything; the kit
+// has no way to ask a list its length.
+fn l0_band(kids, has) {
+    if has == 0 { return {t: "column", fillw: 1, h: 0} }
+    return {t: "column", fillw: 1, fith: 1, bg: l0_sheet, radius: 18,
+            padx: 14, padtop: 10, padbottom: 10, c: kids}
+}
+
+// The controls a map offers, top to bottom: the zoom pill, the current-location
+// ring, then whatever the card docked to the side — which is where a view switch
+// belongs, under the location button.
+//
+// Built HERE rather than inside `l0_map`: inside the map they sat at a fixed offset
+// from its top and the instruction banner covered them, so the zoom pill's `+` was
+// hidden behind it. In the surface's flow they come after the band and clear
+// whatever it is tall, and there is ONE column instead of two clusters competing for
+// the same corner.
+fn l0_mapside(sidekids, hasside) {
+    if hasside == 0 { return {t: "column", h: 0} }
+    // No box of its own: each side control is a 38x38 circle (`l0_mapchip`),
+    // the same size as the recenter ring above it — the eye-test asked for the
+    // 2D/3D switch and the location button to match, and a text pill in a
+    // rounded panel could not.
+    return {t: "column", fitw: 1, fith: 1, alignx: 1.0, c: sidekids}
+}
+
+// A side-docked map control: the card's own chip, drawn to the ring's spec.
+// 38x38, the sheet's dark fill, the label centred — over pale tiles the
+// generic sheet chip (`l0_fill` behind `l0_dim`) read as a grey smudge.
+fn l0_mapchip(s) {
+    return {t: "column", w: 38, h: 38, radius: 19, bg: l0_sheet,
+            alignx: 0.5, aligny: 0.5, c: [l0_txt(s, 11, 600, l0_text)]}
+}
+
+fn l0_mapcontrols(which, sidekids, hasside) {
+    let ring = {t: "column", fitw: 1, fith: 1, bg: l0_sheet, radius: 19, c: [
+        {t: "column", w: 38, h: 38, alignx: 0.5, aligny: 0.5, action: "recenter", c: [
+            // DRAWN, not typed: "◎" is U+25CE and the bundled Roboto has no glyph
+            // for it, so a typed one rendered as a tofu box.
+            {t: "column", w: 18, h: 18, radius: 9, bg: l0_text,
+             alignx: 0.5, aligny: 0.5, c: [
+                {t: "column", w: 8, h: 8, radius: 4, bg: l0_sheet}
+             ]}
+        ]}
+    ]}
+    let pill = {t: "column", fitw: 1, fith: 1, bg: l0_sheet, radius: 14, c: [
+        l0_mapbtn("+", "zoomin"),
+        l0_rule(),
+        l0_mapbtn("\u{2212}", "zoomout")
+    ]}
+    // NESTED, not concatenated. `[pill, gap] + sidekids` produced an empty column:
+    // the VM has no `+` for lists, so the whole expression evaluated to an error and
+    // every control vanished — the map kept its buttons only while they were built
+    // inside `l0_map` with literal lists. A column wrapping the card's own kids
+    // stacks them under the ring and needs no list arithmetic.
+    //
+    // The wrapper carries the pill's own dark backing, because whatever the card
+    // docked here is standing on MAP, not in a sheet. The nav card's 2D/3D switch is
+    // an ordinary `Chip`, and an ordinary chip is styled for a sheet: `l0_fill`
+    // behind `l0_dim`. Over pale tiles it read as a grey smudge — the label was
+    // there and could not be seen. `hasside` for the same reason `l0_band` takes
+    // `has`: the theme cannot ask a list its length, and an empty box drawn on every
+    // planning screen is the bug this kit already fixed once.
+    let docked = l0_mapside(sidekids, hasside)
+    if which == "none" { return [docked] }
+    if which == "zoom" { return [pill, l0_gap(10), docked] }
+    return [pill, l0_gap(10), ring, l0_gap(10), docked]
+}
+
+fn l0_surface_map(map, topkids, sidekids, kids, hastop, controls, hasside) {
+    // TWO LAYERS, not four — the shape `a2app/apps/nav` uses for its driving screen.
+    //
+    // An earlier version stacked the map, a top-aligned layer and a bottom-aligned
+    // layer as three siblings, each `fillh` with its own alignment. It rendered, but
+    // it is not how the card being replaced does it, and every layer that fills the
+    // screen is another surface competing for the same hit tests.
+    //
+    // Theirs is one UI layer over the map, in a single `Down` flow: the top pane is
+    // simply the FIRST child, a `fillh` spacer eats the slack, and the sheet is LAST.
+    // No alignment tricks, one thing on top of the map, and the panes cannot overlap
+    // because a column cannot overlap itself.
+    //
+    // The paddings are theirs, except the bottom. 44 at the top clears the status
+    // bar and 10 at the sides are copied; 76 at the bottom replaces their 10, because
+    // their card is full-screen and an L0 card is an item in a chat list with the
+    // app's composer bar over it. Measured with 10: the sheet rendered below the
+    // visible area, cut off behind "Reconnecting…". Measured with 76: it cleared the
+    // bar by ~70 logical units and floated in the middle of the map. 52 still left
+    // 258px — 11% of the screen — of empty map between the sheet and the edge, which
+    // reads as the sheet hovering rather than resting. 14 put it UNDER the chrome — the copy/share row and the gesture bar overlay the
+    // bottom ~110px, and the sheet disappeared behind them. 40 rests it just clear:
+    // 52 left 258px of empty map below the sheet, 30 and 14 put it under the chrome.
+    return {t: "stack", fillw: 1, h: 812, bg: l0_base, c: [
+        map,
+        // 56, raised from 40, and measured rather than tasted: with 40 the sheet's
+        // bottom sat within ~14dp of the clip line, and WHERE that line falls moves
+        // with the window's inset history — the same build rendered the bottom
+        // padding after a keyboard cycle and clipped it flat on a fresh boot, GO's
+        // rounding cut mid-pill. 56 keeps the sheet's padbottom and radius clear of
+        // the boundary wherever it lands.
+        {t: "column", fillw: 1, fillh: 1, padx: 10, padtop: 44, padbottom: 56, c: [
+            // EMPTY MEANS ABSENT. A screen that docks nothing at the top still had
+            // the band drawn for it — a dark pill floating over the map saying
+            // nothing, on every planning screen. A container with no children is not
+            // a container.
+            l0_band(topkids, hastop),
+            {t: "column", fillw: 1, fith: 1, alignx: 1.0, padtop: 10,
+             c: l0_mapcontrols(controls, sidekids, hasside)},
+            // The spacer. This is what puts the sheet at the bottom.
+            {t: "column", fillw: 1, fillh: 1},
+            // CENTRED, like theirs: `remmin`/`remrest` are `align: Align{x: 0.5}`
+            // and the End bar spans the sheet. A driving summary is read at a
+            // glance, and a glance goes to the middle.
+            {t: "column", fillw: 1, fith: 1, bg: l0_sheet, radius: 22,
+             // Tight. The sheet sits over the map a driver is reading, so every
+             // unit of its height is map they cannot see: it covered 22% of the
+             // screen expanded.
+             // 4/8 was tuned for the DRIVE sheet, which is a handle over two lines
+             // of text. A planning sheet ends in a button, and 8 left it 7px off the
+             // sheet's own edge — reading as clipped whether or not it was.
+             padx: 14, padtop: 10, padbottom: 18, alignx: 0.5,
+             action: "sheet", c: kids}
+        ]}
+    ]}
+}
+
+fn l0_col(kids)      { return {t: "column", fillw: 1, c: kids} }
+fn l0_col_gap(g, kids) { return {t: "column", fillw: 1, spacing: g, c: kids} }
+// A row centres its children vertically by default, because a row's whole job
+// is to put unlike things side by side — a 44px icon beside 14pt text beside an
+// 8px gradient bar — and top-aligning those reads as three separate things that
+// happen to be adjacent. The reference rendering aligns every row this way.
+fn l0_row(kids)        { return {t: "row", fillw: 1, spacing: 6, aligny: 0.5, c: kids} }
+fn l0_row_gap(g, kids) { return {t: "row", fillw: 1, spacing: g, aligny: 0.5, c: kids} }
+// A grid of tiles. `w` is WIDTH IN PIXELS on the shared node model, and this
+// said `w: 2` meaning "two columns" — so the stock card's six statistic tiles
+// rendered in a box two pixels wide, which reads on screen as the card simply
+// not having them. Neither backend implements a column count for a grid; both
+// flow it downward like a column. Until one does, the honest thing is to fill
+// the line and let the tiles stack.
+fn l0_grid(kids)     { return {t: "grid", fillw: 1, spacing: 10, c: kids} }
+
+// A raised surface holding related content.
+fn l0_panel(kids) {
+    return {t: "card", fillw: 1, bg: l0_fill, radius: 14,
+            padx: 14, pady: 12, margintop: 16, c: kids}
+}
+
+fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
+
+// A labelled value — the unit a detail grid is made of.
+fn l0_tile(label, value) {
+    return {t: "card", fillw: 1, bg: l0_fill, radius: 12, padx: 12, pady: 10,
+            c: [ l0_caption(label), l0_gap(4), l0_value(value) ]}
+}
+
+// A selectable token. `on` is the card's own notion of selected — without it
+// every chip in a range picker rendered identically and the card could not show
+// which was chosen.
+// A chip, selected or not.
+//
+// BRANCH AND RETURN rather than assign-then-patch. This was
+//
+//     let fill = l0_panel
+//     if on == 1 { fill = l0_active }
+//
+// and the reassignment does not take in this VM: `fill` arrived at the node as 0,
+// so every UNSELECTED chip was fully transparent. On a dark page that is a label
+// with no button under it, which is what it looked like — the stock card's four
+// unselected range chips, and a nav card's Go and End, all rendered as bare text.
+// Nothing was missing and nothing was wrong except that none of them looked
+// tappable. Found by live-testing on a phone, invisible to every unit test,
+// because a colour of zero is a perfectly valid colour.
+//
+// A chip is INTRINSIC — as wide as its label plus its padding. Saying so matters
+// because a tappable chip is wrapped in a fit-width hit target, and a fit wrapper
+// around a child that never stated a width collapsed to nothing: all five range
+// chips vanished from the stock detail, leaving a chart with no way to change its
+// range and no sign that anything was gone.
+// The action that ENDS something: full width, red, centred — the shipping nav card's
+// `endrow`. A card says `tone: .danger`; which colour that is, and that it spans the
+// sheet rather than hugging its label, is the theme's to decide.
+fn l0_chip_danger(s) {
+    return {t: "chip", bg: l0_danger, radius: 12, padx: 10, pady: 12,
+            fillw: 1, alignx: 0.5, aligny: 0.5,
+            c: [ l0_txt(s, 11, 500, l0_danger_i) ]}
+}
+
+// A destructive action scoped to ONE ROW — danger's colours in a chip's
+// geometry. The full-width `l0_chip_danger` is a screen action (nav's Stop);
+// this one sits beside the row it deletes, revealed by the card's own guard.
+fn l0_chip_danger_row(s) {
+    return {t: "chip", bg: l0_danger, radius: 12, padx: 12, pady: 12,
+            aligny: 0.5,
+            c: [ l0_txt(s, 11, 500, l0_danger_i) ]}
+}
+
+// The action a screen is FOR. `tone` says what an action means and the theme says
+// how loud that is — a primary one is twice the type and a full round target, which
+// is what an icon needs to be tappable at arm's length in a car.
+fn l0_chip_primary(s) {
+    // GREEN, and the card does not say so. `tone: .primary` says "this is the action
+    // the screen is for"; that it reads as go — the same green iOS Maps uses, the
+    // same green this palette already spends on a rise — is the theme's answer.
+    // Sized like a button, not like a banner. At 20pt with 22/14 of padding this
+    // came out roughly 250x110 on a 1080-wide screen — a quarter of the sheet for one
+    // word. iOS Maps' GO is about 90x60 on a wider screen; 15pt with 24/9 lands in
+    // proportion and still gives a thumb somewhere generous to land.
+    return {t: "chip", bg: l0_go, radius: 14, padx: 24, pady: 9, selected: 0,
+            fitw: 1, fith: 1, c: [ l0_txt(s, 15, 700, l0_ondark) ]}
+}
+
+fn l0_chip(s, on) {
+    if on == 1 {
+        return {t: "chip", bg: l0_active, radius: 12, padx: 10, pady: 5, selected: 1,
+                fitw: 1, fith: 1, c: [ l0_txt(s, 10, 500, l0_text) ]}
+    }
+    return {t: "chip", bg: l0_fill, radius: 12, padx: 10, pady: 5, selected: 0,
+            fitw: 1, fith: 1, c: [ l0_txt(s, 10, 500, l0_dim) ]}
+}
+
+fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
+
+// A list row's image: fixed 16:9, so the text beside it keeps its baseline.
+fn l0_thumb(src) { return {t: "image", src: src, fit: 2, w: 108, h: 61} }
+
+// ---- interaction -----------------------------------------------------------
+// A tap target, carried as `tapto` — an arbitrary string this renderer does not
+// interpret. Its own `set:…` verbs are handled inside `octoscript-render`, and
+// anything else falls through to the host, which is what lets an L0 event keep
+// its instance key without any change to the VM.
+//
+// THE WRAPPER IS NOT DECORATION. A `card`, `chip` or `image` carrying `tapto`
+// renders and does nothing: the attribute is accepted and then dropped, so the
+// target string never reaches the UI at all. Only a container carries a tap. So
+// a tappable role is wrapped in one, which is uniform and provable — deciding
+// per role which kinds carry a tap natively is a second rule that rots the next
+// time this renderer changes.
+//
+// Two variants because the wrapper must size like what it wraps. A chip is
+// intrinsic and sits in a row of chips; wrapping it in a filling container makes
+// the first chip eat the row.
+
+// The one role that receives something the user TYPED.
+//
+// `tapto` carries the commit target, exactly as it does for a tap — the backend
+// turns it into whatever binds a return key, and the typed text becomes the
+// payload. So text enters a card through the same declared, total path a tap
+// does: `on_commit` names an event, the event writes declared state.
+// Height is FIXED, not fitted. A text input is a control with a standing size
+// rather than a box around its current contents, and every working input in
+// this app states one — a fitted height also leaves the row's height dependent
+// on text that has not been typed yet.
+fn l0_field(text, placeholder, target, changing) {
+    // PADDED, not fixed-height. `h: 48` put the text at the top of a 48px box and
+    // every place name floated above the pill it was supposed to sit inside. Neither
+    // the container's `align` nor the input's `label_align` moved it — the run is laid
+    // out at the top of the turtle and the background is simply taller.
+    //
+    // Padding makes the pill grow around the text instead, so it is centred by
+    // construction: 14 above and below a 15pt run lands at the same 48 the fixed
+    // height was asking for, and it stays centred if the size ever changes.
+    return {t: "input", fillw: 1, text: text, placeholder: placeholder,
+            tapto: target, changeto: changing, bg: l0_fill, radius: 12, padx: 14,
+            padtop: 14, padbottom: 14,
+            // 15, not 17. A place name is the longest string a card puts in a
+            // fixed-width box, and at 17 "Saratoga High School" rendered as
+            // "Saratoga High Schoc" — clipped inside its own field, with no
+            // ellipsis to say so. The shipping nav card's search input is 15.
+            size: 11, color: l0_text}
+}
+
+// A text node that carries its own LIVE CALL, so the renderer can refresh it in
+// place instead of rebuilding the card around it.
+//
+// The kit evaluates a `sys.*` call to a string, and that string is all the renderer
+// would otherwise see — so refreshing it meant re-resolving the ledger and re-parsing
+// the whole document. On a driving screen that lands inside a frame: measured on a
+// OnePlus 6, frame hitches and card re-resolves correlate 1:1, up to 327 ms of frozen
+// map. The app this replaces never paid that: its card named its widgets and set
+// their text from `fn tick()`. `action` carries the call so the renderer can emit
+// the same thing.
+fn l0_live(node, call) {
+    node.action = call
+    return node
+}
+
+fn l0_tap(target, node) {
+    return {t: "column", fillw: 1, tapto: target, c: [node]}
+}
+
+fn l0_tap_fit(target, node) {
+    return {t: "column", fitw: 1, fith: 1, tapto: target, c: [node]}
+}
+
+// ---- data visualisations ---------------------------------------------------
+// Six roles are small data visualisations rather than compositions of boxes and
+// text: a gradient temperature bar is a fragment shader parameterised by data.
+//
+// `weathericon` is the one this renderer already has a kind for. The other five
+// do NOT have one, and §1.1 records that as unsettled — `shader`/`sdf` with a
+// variant is the mechanism this renderer documents, and adding five kinds
+// obliges every backend at once.
+//
+// Until that is settled they render a VISIBLE marker. Returning nothing would
+// let a card lose its temperature bars and still look complete, which is the
+// failure mode §1.1 exists to prevent.
+
+// A trip, drawn. The card named two places and the ROUTE arrives already
+// resolved — `poly` is an encoded polyline5, and `mode` is which member of the
+// map family this is: a north-up preview of the whole route, a chase camera, or
+// the same route drawn flat.
+//
+// How tall a map is, is the theme's answer, like every other role here — but the
+// answer is CONSTRAINED, not free. The shipping nav card's mandatory rules say a
+// `MapView` needs a fixed pixel height and that `Fill`/`Fit` "resolve to 0 and
+// hide the map". 452 is that card's panel size, for a screen with content above
+// the map; 812 is its full-bleed size. The first version here asked for 240 and
+// drew a correct map in a letterbox.
+// A map. `mode` is which member of the family; the centre and the route come
+// resolved.
+//
+// A FOLLOW map's centre is not this one. `follow`/`follow3d` read the device's fix
+// directly in the widget, every frame — a position that changes every second is not
+// a property, and routing it through one froze the camera. The centre here is the
+// trip's, which is what a preview needs and what a follow camera falls back to for
+// the frame before the first fix lands.
+// One control on a map: a fixed square that carries a glyph and an ACTION the
+// backend turns into a call on the map. The card never names the call.
+fn l0_mapbtn(glyph, act) {
+    return {t: "column", w: 38, h: 38, alignx: 0.5, aligny: 0.5, action: act,
+            c: [l0_title(glyph)]}
+}
+
+fn l0_map(mode, zoom, lat, lon, poly, pins, badge) {
+    // `pins` stands the trip's own endpoints on the route: green origin, blue
+    // stops, red destination. Derived from the SAME coordinates as `poly`, so a
+    // pin cannot mark a place the drawn line does not pass.
+    let m = {t: "navmap", fillw: 1, h: 812,
+             variant: mode, zoom: zoom, lat: lat, lon: lon, polyline: poly,
+             markers: pins, route_badge: badge}
+    return m
+}
+
+// A condition, drawn. `cond` is a NUMBER — the WMO code the forecast returns —
+// and `size` is which of the three places this icon sits in: the hero block, a
+// forecast row, or a tile. The card says which; how big each is, is the theme's.
+fn l0_weathericon(cond, size) {
+    if size == "hero" { return {t: "weathericon", variant: cond, w: 64, h: 64} }
+    if size == "tile" { return {t: "weathericon", variant: cond, w: 28, h: 28} }
+    return {t: "weathericon", variant: cond, w: 34, h: 34}
+}
+
+// The five that used to be markers.
+//
+// Each is a shader parameterised by data, so the kit chooses the SIZE — a
+// theme's business — and the card supplies the numbers. Height matters here in a
+// way it does not for text: a temperature bar is 8px of gradient and a contour
+// field is a map, and neither has an intrinsic size to fit to.
+
+// A day's low and high against the week's range, as a gradient segment.
+fn l0_tempbar(lo, hi, min, max) {
+    return {t: "tempbar", fillw: 1, h: 8, marginx: 10,
+            lo: lo, hi: hi, min: min, max: max}
+}
+
+// The sun's path, with now marked on it. Hours are fractional — 18.9 is 18:54.
+fn l0_sunarc(rise, set, now) {
+    return {t: "sunarc", fillw: 1, h: 90, rise: rise, set: set, now: now}
+}
+
+// 0..1 through the cycle, and percent illuminated.
+fn l0_moonphase(phase, illum) {
+    return {t: "moonphase", w: 64, h: 64, phase: phase, illum: illum}
+}
+
+// An air-quality field around a point. The widget fetches it: the card names
+// WHERE, never the sixteen scalars a field would otherwise need.
+// LIVE SATELLITE CLOUD IMAGERY (卫星云图) over a place.
+//
+// The one pane the shipping weather card has and L0 could not express: it names
+// two coordinates and the helper answers a tile URL, so the card says WHERE and
+// never what the sky looks like. Fetched here rather than passed in, for the same
+// reason `l0_aqicontour` takes a location and not a grid — a card that carried
+// the image would be carrying an observation.
+fn l0_satellite(lat, lon) {
+    return {t: "image", src: sys.satellite(lat, lon), fit: 2, fillw: 1, h: 190}
+}
+
+fn l0_aqicontour(lat, lon, span) {
+    return {t: "aqicontour", fillw: 1, h: 190, lat: lat, lon: lon, span: span}
+}
+
+// A price series. Likewise: the card names WHICH series and over what window.
+fn l0_stockplot(symbol, range) {
+    return {t: "stockplot", fillw: 1, h: 180, symbol: symbol, range: range}
+}
+
+// Several countries on one axis. The card names them and the indicator; the
+// widget fetches, scales every series to one viewport, and draws its own
+// legend — so the theme decides only the height it gets.
+fn l0_indicatorplot(countries, indicator, years) {
+    return {t: "indicatorplot", fillw: 1, h: 210,
+            countries: countries, indicator: indicator, years: years}
+}
+
+fn l0_unsupported(role) {
+    return {t: "card", fillw: 1, bg: l0_fill, radius: 8, padx: 10, pady: 8,
+            c: [ l0_caption("[" + role + " has no kind in this renderer]") ]}
+}

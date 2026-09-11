@@ -1,8 +1,8 @@
 //! flutter-samples — the flutter/samples catalog as native makepad widgets.
 //!
 //! Same shell as `kit-host`, pointed at `components/flutter/` instead of the
-//! Material kit: assemble the kit, inject `st`, run the Splash pipeline, feed
-//! makepad's dialect into the mounted `Splash` widget.
+//! Material kit: assemble the kit, inject `st`, run the Octoscript pipeline, feed
+//! makepad's dialect into the mounted `Octoscript` widget.
 //!
 //! Two pieces of state, because that is all the ports need: the current route
 //! and the light/dark flag. A screen navigates by setting `tapto`, which emits
@@ -11,7 +11,7 @@
 //!
 //! Hot reload: dropping an assembled kit at `DEVICE_PATH` overrides the baked
 //! one, so screens can be edited without a rebuild. Assemble one with
-//! `cargo run -p splash-makepad --example assemble -- components/flutter`.
+//! `cargo run -p octoscript-makepad --example assemble -- components/flutter`.
 //!
 //! The kit is baked by `include_str!` rather than generated into `OUT_DIR`,
 //! because `cargo-makepad` compiles the app inside a generated wrapper crate
@@ -26,12 +26,12 @@ use makepad_widgets::*;
 
 app_main!(App);
 
-/// One `.splash` per flutter/samples directory, in the order
-/// [`splash_makepad::kit`] fixes: `_kit.splash` first (tokens and helpers),
-/// the samples sorted, `_index.splash` last (the index and the router).
+/// One `.octoscript` per flutter/samples directory, in the order
+/// [`octoscript_makepad::kit`] fixes: `_kit.octoscript` first (tokens and helpers),
+/// the samples sorted, `_index.octoscript` last (the index and the router).
 macro_rules! kit {
     ($($name:literal),* $(,)?) => {
-        concat!($(include_str!(concat!("../../../components/flutter/", $name, ".splash")), "\n"),*)
+        concat!($(include_str!(concat!("../../../components/flutter/", $name, ".octoscript")), "\n"),*)
     };
 }
 
@@ -67,7 +67,7 @@ const BAKED: &str = kit![
     "_index",
 ];
 
-const DEVICE_PATH: &str = "/data/local/tmp/flutter_samples.splash";
+const DEVICE_PATH: &str = "/data/local/tmp/flutter_samples.octoscript";
 
 /// A route written here is picked up within a frame or two and mounted. Exists
 /// so the visual-QA sweep can drive all 108 screens on a real device without
@@ -104,7 +104,7 @@ script_mod! {
                         flow: Down
                         show_bg: true
                         draw_bg +: { color: #fef7ffff }
-                        // Upstream `Splash` always allocates an isolate VM; the
+                        // Upstream `Octoscript` always allocates an isolate VM; the
                         // light theme and the shared heap live on the app's main
                         // VM. See the repo README on the one upstream PR.
                         // Fit, not Fill — and this is load-bearing.
@@ -112,13 +112,13 @@ script_mod! {
                         // The kit's `{t: "scroll"}` emits a plain View on this
                         // backend, so this ScrollYView is the only scrolling in
                         // the app. A Fill child would exactly match it and
-                        // never scroll. See `page()` in `_kit.splash` for the
+                        // never scroll. See `page()` in `_kit.octoscript` for the
                         // measurement, and why mapping Scroll to ScrollYView
                         // makes it worse rather than better.
-                        host := Splash{ width: Fill, height: Fit }
+                        host := Octoscript{ width: Fill, height: Fit }
                     }
                     // PROBE: a plain makepad Label, drawn by the host rather
-                    // than through the Splash mount. If this is visible on
+                    // than through the Octoscript mount. If this is visible on
                     // OpenHarmony and the kit is not, the mount is at fault; if
                     // neither is, makepad's text/shader path is not working on
                     // that platform at all. Remove once answered.
@@ -187,10 +187,10 @@ impl App {
         } else {
             &self.route
         };
-        let full = splash_makepad::kit::with_state_sized(
+        let full = octoscript_makepad::kit::with_state_sized(
             route, self.dark, self.clock, self.vw, self.vh, &src,
         );
-        let built = splash_render::build(&full, splash_makepad::kit::register_stub_capabilities);
+        let built = octoscript_render::build(&full, octoscript_makepad::kit::register_stub_capabilities);
         let mut diag = format!(
             "route={route} src_len={} vw={} vh={} built={}",
             src.len(),
@@ -199,7 +199,7 @@ impl App {
             built.is_some()
         );
         if let Some(node) = built {
-            let ui = splash_makepad::to_makepad_ui(&node);
+            let ui = octoscript_makepad::to_makepad_ui(&node);
             diag.push_str(&format!(" nodes={} ui_len={}", node.count(), ui.len()));
             self.ui.widget(cx, ids!(host)).set_text(cx, &ui);
         }
@@ -218,12 +218,12 @@ impl AppMain for App {
             mod.theme = mod.themes.light
         });
         // Fork-free themed widgets, against upstream makepad.
-        splash_widgets::widgets_mod(vm);
+        octoscript_widgets::widgets_mod(vm);
         self::script_mod(vm)
     }
 
     fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
-        // The viewport, so a page can name its own height. `Splash` wraps its
+        // The viewport, so a page can name its own height. `Octoscript` wraps its
         // mount in `View{height:Fit}`, so filling is not available — see
         // `with_state_sized`. inner_size is physical; vp is what the kit's
         // lengths are in.
@@ -249,8 +249,8 @@ impl AppMain for App {
             self.started = true;
             // Start on a named screen instead of the index, so one can be opened
             // directly for a look (desktop only — on device, tap through):
-            //   SPLASH_ROUTE=date_planner/maya cargo run -p flutter-samples
-            self.route = std::env::var("SPLASH_ROUTE").unwrap_or_else(|_| "index".to_string());
+            //   OCTOSCRIPT_ROUTE=date_planner/maya cargo run -p flutter-samples
+            self.route = std::env::var("OCTOSCRIPT_ROUTE").unwrap_or_else(|_| "index".to_string());
             self.next_frame = cx.new_next_frame();
             self.mount(cx);
         }
@@ -262,7 +262,7 @@ impl AppMain for App {
                 self.ui.widget(cx, ids!(nav_signal)).set_text(cx, "");
                 if nav == "theme:toggle" {
                     self.dark = !self.dark;
-                } else if splash_render::state::apply(nav) {
+                } else if octoscript_render::state::apply(nav) {
                     // A control, not a link. The kit names these `set:key=!`,
                     // `set:key=+1`, `set:key=~n`, and `state::apply` is the same
                     // parser the ArkUI backend uses, so a checkbox behaves
@@ -332,19 +332,19 @@ mod tests {
     use std::path::PathBuf;
 
     /// The baked list is spelled out above because the Android wrapper crate
-    /// cannot run a build script. That means it can drift: add a `.splash` to
+    /// cannot run a build script. That means it can drift: add a `.octoscript` to
     /// `components/flutter/` and forget this list, and the screen is missing
-    /// from the app while every test in `splash-makepad` still passes, because
+    /// from the app while every test in `octoscript-makepad` still passes, because
     /// those assemble from the directory. This pins the two together.
     #[test]
     fn baked_kit_matches_the_directory() {
         let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../components/flutter");
-        let assembled = splash_makepad::kit::concat_kit(&dir).expect("kit assembles");
+        let assembled = octoscript_makepad::kit::concat_kit(&dir).expect("kit assembles");
         // `concat_kit` interleaves `// ---- <file>` markers; the baked const has
         // none. Strip them and the two must be byte-identical.
         let stripped: String = assembled
             .lines()
-            .filter(|l| !(l.starts_with("// ---- ") && l.ends_with(".splash")))
+            .filter(|l| !(l.starts_with("// ---- ") && l.ends_with(".octoscript")))
             .map(|l| format!("{l}\n"))
             .collect();
         assert_eq!(

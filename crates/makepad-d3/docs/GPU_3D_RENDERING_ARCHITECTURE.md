@@ -6,11 +6,11 @@
 **Based on:** Analysis of `makepad-urdf-player` GPU rendering pipeline
 
 > **Note (2026-07-13):** Makepad 2.0 replaced the Live system with the
-> Script/Splash system. The pipeline concepts in this document (passes,
+> Script/Octoscript system. The pipeline concepts in this document (passes,
 > depth, instancing, camera) remain valid, but all `live_design!` shader
 > samples are superseded — shaders are now authored in `script_mod!` blocks
 > and bound via `script_shader`. See
-> [`SPLASH_INTEGRATION_DESIGN.md`](SPLASH_INTEGRATION_DESIGN.md) §9 for the
+> [`OCTOSCRIPT_INTEGRATION_DESIGN.md`](OCTOSCRIPT_INTEGRATION_DESIGN.md) §9 for the
 > render3d migration.
 
 ---

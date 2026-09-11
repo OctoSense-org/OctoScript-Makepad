@@ -1,4 +1,4 @@
-# flutter/samples, on Splash + makepad
+# flutter/samples, on Octoscript + makepad
 
 > ## These are illustrations, not ports. Read this first.
 >
@@ -20,7 +20,7 @@
 ## Controls that are controls
 
 The review's middle column — eighteen screens "drawn only" — was not eighteen
-problems. It was one. A `.splash` screen is evaluated to a tree once per mount,
+problems. It was one. A `.octoscript` screen is evaluated to a tree once per mount,
 nothing survives that, and the only thing a tap could do was change the route.
 So no checkbox could stay checked: there was nowhere to put "checked".
 
@@ -77,7 +77,7 @@ the top of it. The offset is read off the old node before it is dropped and
 written back onto the new one, but only when the route is unchanged: a tap that
 ticks a checkbox should leave you looking at the checkbox, and a tap that
 navigates should start the new screen at the top. That needed the shim's only
-getter, `splash_get_f32`.
+getter, `octoscript_get_f32`.
 
 ## What an outside review found
 
@@ -107,7 +107,7 @@ Four things it found that were not just overclaiming:
 - **`google_maps` drew nothing on ArkUI** while its own text said "rendered from
   OpenStreetMap vector tiles". The `map` tag hits the walker's unknown-tag arm.
 - **`compass_app` never touched the location stack**, which was sitting in
-  Splash-OH complete and unreachable — permissions declared, `location::get`
+  Octoscript-OH complete and unreachable — permissions declared, `location::get`
   written, and no way for a DSL screen to call it.
 
 All four are fixed and verified on the device. The map now loads real OSM raster
@@ -117,7 +117,7 @@ and cannot do; the compass reads the platform's location switch and position.
 ## The "no analogue" screens are gone
 
 Every one of the 27 directories now has a screen that says something true about
-this stack. The old banner — *"No Splash+makepad analogue"* — was wrong six
+this stack. The old banner — *"No Octoscript+makepad analogue"* — was wrong six
 times, and always for the same reason: it judged what the **makepad DSL** could
 express rather than what the project has.
 
@@ -127,8 +127,8 @@ What it got wrong, and what was actually there:
 |---|---|---|
 | `google_maps` | "a platform view; no widget tree describes a map" | makepad ships a 12k-line OpenStreetMap renderer with tilt |
 | `platform_channels` | "there is no channel in the render pipeline" | `build` always took a `register` hook; the bridge has ~45 capabilities |
-| `pedometer` | "needs a platform sensor API" | Splash-OH has `sensor::list`/`sample`/`stream` |
-| `asset_transformation` | "Cargo has no asset pipeline" | `splash://` resolves a request to bytes, one generated |
+| `pedometer` | "needs a platform sensor API" | Octoscript-OH has `sensor::list`/`sample`/`stream` |
+| `asset_transformation` | "Cargo has no asset pipeline" | `octoscript://` resolves a request to bytes, one generated |
 | `add_to_app` | "no FlutterEngine equivalent" | this app *is* add-to-app, inverted |
 | `web_embedding` | "no hostElement to embed into" | `webslot::declare` composites a WebView into the native tree |
 
@@ -143,13 +143,13 @@ they closed says the same thing as the six above. A fragment shader is a
 function from a coordinate to a colour, and an SDF is arithmetic — so the DSL
 evaluates them itself, once per cell instead of once per pixel, and emits a
 grid of ordinary nodes. `sdHeart` needed `sqrt`, `min`, `sign` and
-`smoothstep`, which the VM does not have; they are ~12 lines in `_kit.splash`
+`smoothstep`, which the VM does not have; they are ~12 lines in `_kit.octoscript`
 (`sqrt` by Newton's method). Same maths, same colours, same picture, and it
 runs on ArkUI too, which has no fragment-shader path at all.
 
-The compiled-MPSL variants (`FlutterShader`/`FlutterSdf` in `splash-widgets`)
+The compiled-MPSL variants (`FlutterShader`/`FlutterSdf` in `octoscript-widgets`)
 are still the right answer on makepad and are still built. They compile and
-the node is emitted, but nothing draws; the suspect is the Splash isolate not
+the node is emitted, but nothing draws; the suspect is the Octoscript isolate not
 resolving a widget this crate adds to the prelude. Unconfirmed, and no longer
 blocking anything.
 
@@ -163,20 +163,20 @@ screen. All three were wrong, and wrong the same way: they judged what the
   renderer with rotation and tilt (`widgets/src/map`). A map is a widget here,
   not a platform view. Now a real map at the sample's own camera, plus a 2.5D
   view.
-- **platform_channels** — `splash_render::build` has always taken a `register`
-  hook for injecting host functions, and Splash-OH's weather card already used
+- **platform_channels** — `octoscript_render::build` has always taken a `register`
+  hook for injecting host functions, and Octoscript-OH's weather card already used
   it. The bridge carries ~45 capabilities. `invoke(tool)` now reaches that
   registry, installed by the bridge at mount so the renderer still does not
   depend on it. On device the screen shows the real answers.
 - **pedometer** — the FFIgen/JNIgen half has no counterpart, but the app is a
-  step counter over a platform sensor, and Splash-OH has `sensor::list` /
+  step counter over a platform sensor, and Octoscript-OH has `sensor::list` /
   `sample` / `stream`.
 
 The remaining thirteen look genuinely inert to me — lint config, an Android
 launch screen, an Xcode target, a UIKit technique, repo docs, CI tooling, a
 sample deleted upstream. Two are near-misses I have not done: `simple_sdf` and
-`simple_shader` need a compiled MPSL variant in `splash-widgets` that a DSL node
-selects by name, and `web_embedding` could use Splash-OH's web slots
+`simple_shader` need a compiled MPSL variant in `octoscript-widgets` that a DSL node
+selects by name, and `web_embedding` could use Octoscript-OH's web slots
 (`webslot::declare`). Treat the count as "not yet", not "impossible".
 
 ## Visual QA
@@ -199,7 +199,7 @@ assertion. **Nine defects were found by looking that no test caught:**
 
 | what | why it happened |
 |---|---|
-| every screen blank | `page()` asked for `height: Fill` inside the host's `Splash{height: Fit}` |
+| every screen blank | `page()` asked for `height: Fill` inside the host's `Octoscript{height: Fit}` |
 | descenders sheared off every label | hand-picked text heights sat just under the font's line box |
 | paragraphs clipped mid-sentence | a Label with no width does not wrap; one with a guessed height clips the wrapped lines |
 | all three pickers empty white boxes | makepad has no picker widget, so `datepicker`/`timepicker`/`textpicker` fall through the translator to a bare `View` |
@@ -216,18 +216,18 @@ really is fixed — a 30px colour tile, a 96px thumbnail.
 
 ### What still deviates from Flutter, and why
 
-These are structural, not fixable by editing `.splash`:
+These are structural, not fixable by editing `.octoscript`:
 
 - **Controls are makepad's, not Material's.** `CheckBox`, `RadioButton`,
   `Toggle` and `Slider` are drawn by makepad's own MPSL shaders. They render and
   they work; they do not look like Material or Cupertino. Restyling them is what
-  `splash-widgets` is for — that is the fork-free theming this repo already
+  `octoscript-widgets` is for — that is the fork-free theming this repo already
   demonstrates, just not yet applied to these kits.
 - **No ripples, no elevation tint overlays, no state layers.** `elevation` maps
   to a drop shadow only.
 - **Icons are Font Awesome**, not Material Symbols or SF Symbols, because that
   is the face the theme ships.
-- **The pickers are drawn, not native** — see `c_wheel` in `_kit.splash`. They
+- **The pickers are drawn, not native** — see `c_wheel` in `_kit.octoscript`. They
   do not spin.
 - **Nothing animates** beyond the two makepad widgets whose shaders run off draw
   time.
@@ -253,12 +253,12 @@ one property per line (the comma-joined form does not parse), and **no `draw_bg`
 override** — merging `border_size` into the themed button shader, which has no
 such instance, kills the whole widget silently.
 
-**2. `nav_signal` has to live inside the mounted tree.** Upstream's `Splash`
+**2. `nav_signal` has to live inside the mounted tree.** Upstream's `Octoscript`
 mounts on an isolate VM, and makepad injects `ui` into that VM *resolved against
-the splash's own view root* (`inject_splash_ui_handle` in
+the octoscript's own view root* (`inject_octoscript_ui_handle` in
 `widgets/src/widget_async.rs`, which returns early for the main VM). So
 `ui.nav_signal` inside a handler could never see the host's `nav_signal` Label,
-which is a sibling of the `Splash` widget rather than inside it. `page()` now
+which is a sibling of the `Octoscript` widget rather than inside it. `page()` now
 emits its own hidden `nav_signal`; the host's widget search does descend into
 the mounted subtree, so it still reads it.
 
@@ -266,7 +266,7 @@ This is the same isolate-VM constraint as [the one upstream
 PR](../../README.md#the-one-upstream-pr). With `isolate: false` the workaround
 stops being load-bearing, but it stays correct either way.
 
-> Note for anyone debugging this: the hot-reload path replaces the `.splash`
+> Note for anyone debugging this: the hot-reload path replaces the `.octoscript`
 > **data** only. The translator is Rust compiled into the binary, so a change to
 > the emitted dialect needs a rebuild and reinstall — pushing a new kit will not
 > show it. That cost an hour of chasing a fix that was already correct.
@@ -287,7 +287,7 @@ files:
 The Material catalog never hit it because it only ever puts `elevation` on an
 empty tonal swatch. Child emission is now decided by the node's *kind* rather
 than by the concrete widget; `a_raised_container_keeps_its_children` in
-`crates/splash-makepad/src/lib.rs` pins it.
+`crates/octoscript-makepad/src/lib.rs` pins it.
 
 ## Running the kit on HarmonyOS (attempted, not working)
 
@@ -299,7 +299,7 @@ so the next attempt does not rediscover it.
 **Working, verified from the device log:** XComponent callbacks registered, EGL
 context and window surface created, vsync registered, main loop entered, surface
 1320x2523 at density 3.25. `Event::Startup` fires, the kit evaluates
-(`built=true nodes=236 ui_len=71753`), and the `Splash` widget accepts the
+(`built=true nodes=236 ui_len=71753`), and the `Octoscript` widget accepts the
 dialect and produces a view without error.
 
 **Not working:** no glyphs. `Cx::get_dependency` looks in a dependency map and,
