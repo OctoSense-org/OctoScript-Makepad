@@ -1,4 +1,4 @@
-// Hierarchy / flow charts: Treemap and SankeyDiagram (Makepad 2.0 / Splash port)
+// Hierarchy / flow charts: Treemap and SankeyDiagram (Makepad 2.0 / Octoscript port)
 //
 // Both are NON-cartesian widgets: they draw in pixel space inside
 // plot_view.plot_rect() and only use draw_axes for the title.

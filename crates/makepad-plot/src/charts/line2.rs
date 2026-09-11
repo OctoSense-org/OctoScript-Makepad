@@ -1,6 +1,6 @@
 // Line-family charts (part 2): StemPlot, AreaChart, StepPlot
 //
-// Ported from the Makepad 1.0 makepad-plot library to Makepad 2.0 / Splash,
+// Ported from the Makepad 1.0 makepad-plot library to Makepad 2.0 / Octoscript,
 // following the LinePlot exemplar in charts/line.rs.
 
 use crate::charts::line::step_points;

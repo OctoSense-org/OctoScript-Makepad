@@ -1,4 +1,4 @@
-// Chart widget modules for makepad-plot (Makepad 2.0 / Splash)
+// Chart widget modules for makepad-plot (Makepad 2.0 / Octoscript)
 
 pub mod bar;
 pub mod circular;

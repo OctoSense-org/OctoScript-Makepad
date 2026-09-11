@@ -1,4 +1,4 @@
-// Makepad Plot - Matplotlib-style plotting library for Makepad 2.0 (Splash)
+// Makepad Plot - Matplotlib-style plotting library for Makepad 2.0 (Octoscript)
 
 pub use makepad_widgets;
 use makepad_widgets::*;
@@ -22,7 +22,7 @@ pub use charts::three_d::*;
 pub use plot_view::*;
 pub use types::*;
 
-/// Register all makepad-plot widgets and enums with the Splash VM under `mod.plot`.
+/// Register all makepad-plot widgets and enums with the Octoscript VM under `mod.plot`.
 /// Call after `makepad_widgets::script_mod(vm)`.
 pub fn script_mod(vm: &mut ScriptVm) {
     vm.bx.heap.new_module(id!(plot));

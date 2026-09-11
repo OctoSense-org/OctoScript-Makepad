@@ -10,12 +10,12 @@ keywords = ["visualization", "charts", "d3", "makepad", "gpu"]
 categories = ["visualization", "gui", "graphics"]
 
 [dependencies]
-# Makepad 2.0 (Script/Splash system). The same checkout splash-widgets builds
+# Makepad 2.0 (Script/Octoscript system). The same checkout octoscript-widgets builds
 # against — one makepad for the whole workspace, or two copies of
 # makepad-widgets meet in one binary and the VM registers into two heaps.
 # A git dependency is still not possible: the makepad repo vendors a pre-2.0
 # copy under old/, so cargo sees two packages named makepad-widgets.
-# Integration design: docs/SPLASH_INTEGRATION_DESIGN.md
+# Integration design: docs/OCTOSCRIPT_INTEGRATION_DESIGN.md
 makepad-widgets = { path = "../../../makepad-splash/widgets", version = "2.0.0" }
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
@@ -39,12 +39,12 @@ name = "render3d_bench"
 harness = false
 
 [[example]]
-name = "splash_demo"
-path = "examples/splash_demo/src/main.rs"
+name = "octoscript_demo"
+path = "examples/octoscript_demo/src/main.rs"
 
-# NOTE: chart_zoo predates the makepad 2.0 (Splash) migration and does not
+# NOTE: chart_zoo predates the makepad 2.0 (Octoscript) migration and does not
 # compile against it yet — it is the porting backlog for the d3.* namespace
-# (docs/SPLASH_INTEGRATION_DESIGN.md §11 Phase 4).
+# (docs/OCTOSCRIPT_INTEGRATION_DESIGN.md §11 Phase 4).
 # [[example]]
 # name = "chart_zoo"
 # path = "examples/chart_zoo/src/main.rs"
