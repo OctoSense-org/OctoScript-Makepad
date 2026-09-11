@@ -14,4 +14,4 @@ description = "Themed native-widget kits for makepad (M3 / iOS / liquid-glass) a
 [dependencies]
 # Upstream makepad — fork-free. The makepad-script rev pulled transitively here
 # must match the one octoscript-render pins (align both when wiring an app).
-makepad-widgets = { path = "../../../makepad-splash/widgets" }
+makepad-widgets = { workspace = true }

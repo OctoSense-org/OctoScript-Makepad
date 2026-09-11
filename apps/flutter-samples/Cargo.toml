@@ -5,7 +5,7 @@ edition = "2021"
 description = "The flutter/samples catalog rendered as native makepad widgets from the Octoscript DSL"
 
 [dependencies]
-makepad-widgets = { path = "../../../makepad-splash/widgets" }
+makepad-widgets = { workspace = true }
 octoscript-widgets = { path = "../../crates/octoscript-widgets" }
 octoscript-render = { path = "../../crates/octoscript-render" }
 octoscript-makepad = { path = "../../crates/octoscript-makepad" }

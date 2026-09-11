@@ -267,6 +267,7 @@ pub(crate) fn begin_plot(cx: &mut Cx2d, rect: &Rect, margin: &Inset, vector: &mu
             height: Size::Fixed(rect.size.y),
             margin: Inset::default(),
             metrics: Metrics::default(),
+            ..Walk::default()
         },
         Layout {
             clip_x: true,

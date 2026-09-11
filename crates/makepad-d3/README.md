@@ -12,14 +12,12 @@ A D3.js-compatible data visualization library for [Makepad](https://github.com/m
 
 ## Quick Run
 
-Makepad 2.0 is consumed as a **sibling path dependency** (its repo vendors a
-pre-2.0 crate copy under `old/`, which makes git dependencies ambiguous):
+Makepad 2.0 comes from the `guofoo/makepad` revision pinned in the Octoscript-Makepad
+workspace root (`[workspace.dependencies]`), the same pin OctoSense-org/octosense uses:
 
 ```bash
-# NOTE: this crate now lives in the Octoscript-Makepad workspace, which supplies
-# makepad at ../../../makepad-splash. The standalone instructions below are kept
-# for building it outside that workspace.
-git clone https://github.com/makepad/makepad.git --branch dev   # sibling checkout
+# NOTE: this crate now lives in the Octoscript-Makepad workspace; build it from there.
+# The standalone instructions below are kept for building it outside that workspace.
 git clone https://github.com/mofa-org/makepad-d3.git
 cd makepad-d3
 cargo run --example octoscript_demo

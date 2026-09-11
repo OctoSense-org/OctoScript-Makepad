@@ -81,10 +81,12 @@ Building + running the `kit-host` against upstream surfaced exactly **one** thin
 
 ## Relationship to makepad
 
-Upstream `makepad/makepad` (branch `dev`) already ships everything this needs — the `makepad-script` VM (`platform/script`) and the `Splash` runtime-mount widget. Nothing here requires a makepad fork:
+Makepad ships everything this needs — the `makepad-script` VM (`platform/script`) and the `Splash` runtime-mount widget. The whole workspace takes them from **one pinned revision** of [`guofoo/makepad`](https://github.com/guofoo/makepad) (a fork of upstream `dev`), declared once in the root `Cargo.toml` under `[workspace.dependencies]`:
 
-- The **core crates** depend on `makepad-script` by git.
-- **`octoscript-widgets`** and the kit apps depend on upstream **`makepad-widgets`** by git. (Keep the transitive `makepad-script` rev aligned with `octoscript-render`'s.)
+- The **core crates** depend on `makepad-script` from that pin.
+- **`octoscript-widgets`** and the kit apps depend on `makepad-widgets` from the same pin, so `makepad-script` stays aligned with `octoscript-render`'s.
+- The pin is the revision [OctoSense-org/octosense](https://github.com/OctoSense-org/octosense) builds against; bump both together so an app never carries two makepad lineages.
+- `octoscript-ui-l0` (the VM-independent node model) comes by git from [OctoSense-org/Octoscript](https://github.com/OctoSense-org/Octoscript), branch `main`.
 
 ## Build
 
