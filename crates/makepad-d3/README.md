@@ -58,7 +58,7 @@ impl AppMain for App {
 
 `makepad_d3::script_mod` also injects `d3` into the widgets prelude, so any
 scope that starts with `use mod.prelude.widgets.*` (which includes every
-`Octoscript`-hosted body) can write `d3.BarChart{...}` with no extra imports.
+`Splash`-hosted body) can write `d3.BarChart{...}` with no extra imports.
 
 ### 2. The chart widgets — all 21 of them
 

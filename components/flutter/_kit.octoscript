@@ -285,8 +285,8 @@ fn lerp_argb(c1, c2, t) {
 // once already. Both backends test `fillh` against 1, so 0 is a no-op on each.
 // 1 on ArkUI, 0 on makepad — and the makepad half is NOT the kit's fault.
 //
-// `Octoscript`'s own wrapper hardcodes `View{height:Fit, …}` around whatever it
-// mounts (OCTOSCRIPT_PREFIX, widgets/src/octoscript.rs). So any page asking to fill
+// `Splash`'s own wrapper hardcodes `View{height:Fit, …}` around whatever it
+// mounts (SPLASH_PREFIX, widgets/src/splash.rs). So any page asking to fill
 // resolves against a Fit parent and collapses — the whole screen renders blank,
 // measured on the 6T. Until that wrapper takes its height from the widget, Fit
 // all the way down is the only thing that draws here.
@@ -361,9 +361,9 @@ fn rule(color) { return {t: "column", h: 1, bg: color, fillw: 1} }
 fn page(bg_color, kids) {
     // The routing signal has to live INSIDE the mounted tree.
     //
-    // Upstream's `Octoscript` mounts on an isolate VM, and makepad injects `ui` into
+    // Upstream's `Splash` mounts on an isolate VM, and makepad injects `ui` into
     // that VM resolved against *the octoscript's own view root* (see
-    // `inject_octoscript_ui_handle` in widgets/src/widget_async.rs, which returns
+    // `inject_splash_ui_handle` in widgets/src/widget_async.rs, which returns
     // early for the main VM). So a `tapto` handler's `ui.nav_signal` can only
     // ever see widgets inside the mounted subtree — the host's own nav_signal
     // Label, a sibling of the Octoscript widget, is invisible to it. Every tap was
@@ -376,7 +376,7 @@ fn page(bg_color, kids) {
     for k in kids { c.push(k) }
     // An explicit height, not `fillh`.
     //
-    // `Octoscript` wraps its mount in `View{height:Fit}` from its own Rust source
+    // `Splash` wraps its mount in `View{height:Fit}` from its own Rust source
     // (OCTOSCRIPT_PREFIX), so a root asking to fill resolves against a Fit parent
     // and collapses — whole screen blank, measured on the 6T. A Fit wrapper
     // does size to its child, so naming the height fills the window and needs

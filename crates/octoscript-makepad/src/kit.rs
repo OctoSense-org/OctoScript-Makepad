@@ -109,7 +109,7 @@ pub fn with_state_at(route: &str, dark: bool, t: f64, kit: &str) -> String {
 
 /// As [`with_state_at`], plus the viewport size in vp as `st.vw`/`st.vh`.
 ///
-/// A page cannot ask to fill on this backend: `Octoscript` wraps whatever it mounts
+/// A page cannot ask to fill on this backend: `Splash` wraps whatever it mounts
 /// in `View{height:Fit, …}` (OCTOSCRIPT_PREFIX, its own Rust source), so a root
 /// asking for `height: Fill` resolves against a Fit parent and collapses — the
 /// screen renders blank, measured on device. A Fit wrapper does size to its

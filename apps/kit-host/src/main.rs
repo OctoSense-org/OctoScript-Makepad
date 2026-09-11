@@ -73,13 +73,13 @@ script_mod! {
                         flow: Down
                         show_bg: true
                         draw_bg +: { color: #101417ff }
-                        // Upstream `Octoscript` always allocates an isolate VM. The
+                        // Upstream `Splash` always allocates an isolate VM. The
                         // material kit needs the mount on the app's MAIN VM (light
                         // theme + shared heap live there), which requires the one
-                        // upstream PR: a `Octoscript` main-VM-mount option (the
+                        // upstream PR: a `Splash` main-VM-mount option (the
                         // `isolate: false` field this fork added). Until then the
                         // kit mounts on an isolate (dark-default theme).
-                        host := Octoscript{ width: Fill, height: Fit }
+                        host := Splash{ width: Fill, height: Fit }
                     }
                     // Routing signal the mounted kit writes; the app reads it each frame.
                     nav_signal := Label{ text: "" height: 0 draw_text.text_style.font_size: 1 }
@@ -488,7 +488,7 @@ impl App {
         }
         if let Some(node) = octoscript_render::build(&full, register_state) {
             // Every reference screen is rooted in its own `scroll`. This shell
-            // already provides one, and the mounted `Octoscript` is height:Fit — so a
+            // already provides one, and the mounted `Splash` is height:Fit — so a
             // nested Fill scroll resolves to zero height and the screen renders
             // blank. Unwrap it and let the shell's scroller do the scrolling.
             let node = match node.kind {
@@ -556,7 +556,7 @@ impl App {
             page.attrs.spacing = Some(16.0);
             page.attrs.fillw = Some(1);
             // The surface has to cover the viewport, not just the content. A Fill
-            // height collapses under the Fit-height Octoscript mount, so the backing
+            // height collapses under the Fit-height Splash mount, so the backing
             // layer is given the viewport height explicitly and the content sits
             // on top — otherwise every short screen showed makepad's grey below
             // the last widget where the reference shows unbroken surface.
@@ -582,7 +582,7 @@ impl App {
             let ui = octoscript_makepad::to_makepad_ui(&node);
             // Mount on the app's MAIN VM.
             //
-            // `Octoscript::set_text` allocates an isolate that only ever receives
+            // `Splash::set_text` allocates an isolate that only ever receives
             // makepad's own `script_mod`, which is why this crate's Roboto could
             // not resolve (every label blanked) and why octoscript-widgets' M3
             // control theming never applied. Evaluating here with `cx.with_vm`
@@ -605,7 +605,7 @@ impl App {
                     .then(|| View::script_from_value(vm, value))
             });
             if let Some(view) = built {
-                if let Some(mut host) = self.ui.widget(cx, ids!(host)).borrow_mut::<Octoscript>() {
+                if let Some(mut host) = self.ui.widget(cx, ids!(host)).borrow_mut::<Splash>() {
                     host.view = view;
                 }
                 cx.redraw_all();
@@ -644,7 +644,7 @@ fn state_set(key: &str, value: &str) {
 
 /// Taps land here. The mounted body's `on_click` calls `NAV(t: "…")`, a global
 /// registered below, instead of reaching through `ui.nav_signal` — `ui` is only
-/// injected inside a `Octoscript` isolate, so the old handler silently did nothing
+/// injected inside a `Splash` isolate, so the old handler silently did nothing
 /// on any other VM.
 static TAPS: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
 
@@ -788,7 +788,7 @@ impl AppMain for App {
             // touch-down. `OctoscriptTap` never calls `event.hits`, so the scroll
             // sees the whole gesture. Must run before the first mount, since an
             // isolate takes its mods at allocation.
-            makepad_widgets::widget_async::register_octoscript_isolate_mod(register_tap_mod);
+            makepad_widgets::widget_async::register_splash_isolate_mod(register_tap_mod);
             octoscript_makepad::set_scheme(octoscript_makepad::material::Roles::reference_dark());
             // The width a wrapping row packs into. Left at its 340dp default the
             // flow wrapped a row early — the content is 354dp here (measured:

@@ -1,7 +1,7 @@
 //! `d3.Octoscript` — a runtime Octoscript-DSL host with the `d3.*` namespace
 //! registered in its sandbox.
 //!
-//! The built-in `Octoscript` widget evaluates a Octoscript body string in an
+//! The built-in `Splash` widget evaluates a Octoscript body string in an
 //! isolated script VM, but that VM only registers the platform and
 //! `makepad_widgets` modules — third-party widget crates are invisible in
 //! `runsplash`-style sandboxes. `D3Octoscript` is a drop-in replacement that
@@ -12,7 +12,7 @@
 //! the Markdown widget uses for ```runsplash fences), or from script via
 //! `ui.host.set_text("d3.PieChart{data: [1 2 3]}")`.
 //!
-//! Known degradations vs. the built-in `Octoscript` (both need `pub(crate)`
+//! Known degradations vs. the built-in `Splash` (both need `pub(crate)`
 //! makepad APIs; see the upstream-hook proposal in
 //! `docs/OCTOSCRIPT_INTEGRATION_DESIGN.md` §8.3):
 //! - no `ui` global inside the sandbox, so body-level helper `fn`s cannot
@@ -24,7 +24,7 @@
 // cannot carry a doc comment.
 #![allow(missing_docs)]
 
-use makepad_widgets::widget_async::{CxOctoscriptVmExt, OctoscriptVmId, MAIN_OCTOSCRIPT_VM_ID};
+use makepad_widgets::widget_async::{CxSplashVmExt, SplashVmId, MAIN_SPLASH_VM_ID};
 use makepad_widgets::widget_tree::CxWidgetExt;
 use makepad_widgets::*;
 
@@ -54,7 +54,7 @@ pub struct D3Octoscript {
     #[live]
     body: ArcStringMut,
     #[rust]
-    vm_id: OctoscriptVmId,
+    vm_id: SplashVmId,
 }
 
 impl D3Octoscript {
@@ -69,8 +69,8 @@ impl D3Octoscript {
             return;
         }
 
-        if self.vm_id == MAIN_OCTOSCRIPT_VM_ID {
-            self.vm_id = cx.alloc_octoscript_vm_with_network(false);
+        if self.vm_id == MAIN_SPLASH_VM_ID {
+            self.vm_id = cx.alloc_splash_vm_with_network(false);
             // The whole point of this host: the d3 module joins the sandbox.
             cx.with_script_vm_id(self.vm_id, crate::script_mod);
         }

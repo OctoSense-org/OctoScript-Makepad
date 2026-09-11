@@ -28,7 +28,7 @@ use makepad_widgets::*;
 pub mod tap;
 
 /// Register upstream makepad's widgets, then this crate's Material-3 variants,
-/// re-referencing them into the prelude the Octoscript mount resolves.
+/// re-referencing them into the prelude the Splash mount resolves.
 pub fn widgets_mod(vm: &mut ScriptVm) {
     makepad_widgets::widgets_mod(vm);
     self::script_mod(vm);
@@ -41,7 +41,7 @@ script_mod! {
     // ---- Material 3 native controls (M3 light roles) -------------------------
     // primary #6750A4 · on-surface-variant #49454F · surface-variant #E7E0EC ·
     // Each: extend the base (keeps the pixel shader), then reference into the
-    // prelude so the runtime Octoscript mount sees the themed variant.
+    // prelude so the runtime Splash mount sees the themed variant.
 
     // Checkbox: 18dp box, 2dp stroke, transparent + outline -> primary + white tick.
     mod.widgets.CheckBox = mod.widgets.CheckBoxFlat{

@@ -11,7 +11,7 @@ Octoscript DSL  ──►  octoscript-render  ──►  UiNode tree  ──► 
 {t:"column",       (makepad-script VM,   (backend-       (pure translation)     View{…}/Label{…}/…
  c:[ … ]}           renderer-free)        agnostic)                              │
                                                                                  ▼
-                                                          makepad `Octoscript` widget .set_text() → live native widgets
+                                                          makepad `Splash` widget .set_text() → live native widgets
 ```
 
 - **`crates/octoscript-render`** — backend-agnostic core: evaluates the Octoscript DSL in the makepad-script VM and walks it into a `UiNode` tree. Depends only on `makepad-script`. Unit-tested.
@@ -59,7 +59,7 @@ remaining deviations from Flutter are structural and listed in the kit's README.
 Tapping needed two fixes on top of that, both in the kit's README: a `View`
 ignores `on_click` (only `Button`/`CheckBox`/`GlassPanel` have it), so the
 translator now overlays a transparent Button on any tappable container; and
-because the `Octoscript` isolate resolves `ui` against its own view root, the
+because the `Splash` isolate resolves `ui` against its own view root, the
 `nav_signal` label the handler writes to has to live *inside* the mounted tree.
 
 ## Fork-free theming (the key design point)
@@ -77,11 +77,11 @@ Each new theme is just more variants in `octoscript-widgets` + a `.octoscript` c
 
 ### The one upstream PR
 
-Building + running the `kit-host` against upstream surfaced exactly **one** thing upstream doesn't have: a **`Octoscript` main-VM-mount option**. Upstream's `Octoscript` always allocates an *isolate* VM (`alloc_octoscript_vm_with_network(allow_net)`), but the light theme and a shared heap live on the app's **main** VM. The fix is the small `isolate: false` field this project's fork added to `widgets/src/octoscript.rs` — upstreaming it lets a trusted, app-generated kit mount on the main VM (correct theme, no isolate-heap animator panics). Until then the kit mounts on an isolate (dark-default theme). That is the *only* upstream change needed; everything else runs against upstream `dev` as-is.
+Building + running the `kit-host` against upstream surfaced exactly **one** thing upstream doesn't have: a **`Splash` main-VM-mount option**. Upstream's `Splash` always allocates an *isolate* VM (`alloc_splash_vm_with_network(allow_net)`), but the light theme and a shared heap live on the app's **main** VM. The fix is the small `isolate: false` field this project's fork added to `widgets/src/splash.rs` — upstreaming it lets a trusted, app-generated kit mount on the main VM (correct theme, no isolate-heap animator panics). Until then the kit mounts on an isolate (dark-default theme). That is the *only* upstream change needed; everything else runs against upstream `dev` as-is.
 
 ## Relationship to makepad
 
-Upstream `makepad/makepad` (branch `dev`) already ships everything this needs — the `makepad-script` VM (`platform/script`) and the `Octoscript` runtime-mount widget. Nothing here requires a makepad fork:
+Upstream `makepad/makepad` (branch `dev`) already ships everything this needs — the `makepad-script` VM (`platform/script`) and the `Splash` runtime-mount widget. Nothing here requires a makepad fork:
 
 - The **core crates** depend on `makepad-script` by git.
 - **`octoscript-widgets`** and the kit apps depend on upstream **`makepad-widgets`** by git. (Keep the transitive `makepad-script` rev aligned with `octoscript-render`'s.)
@@ -100,7 +100,7 @@ cargo test            # builds + tests the portable core (octoscript-render, oct
 - ✅ **Material 3 kit** — `components/material/catalog.octoscript`: ~35 components (buttons, FABs, cards, chips, nav bar/rail/drawer, app bars, dialog/menu/sheets as **real interactive overlays**, pickers, tabs, badges, toolbars), M3 tokens (colour, type scale + Medium weight, shape, elevation, surface tones), Font-Awesome monochrome icons, and real animation (circular spinner + shape-morph loading indicator)
 - ✅ `octoscript-widgets` — Material 3 native-control variants (checkbox/switch/radio/slider/text field) + `LoadingMorph`, fork-free; **compiles against upstream `makepad-widgets`**
 - ✅ **`apps/kit-host`** — generic app shell that **builds + runs against upstream makepad** (desktop, ~37 MB binary), fork-free, mounting the Material kit via `octoscript_widgets::widgets_mod`
-- ⏳ **The one upstream PR:** the `Octoscript` main-VM-mount option (see above) — the single change needed for correct light-theme rendering
+- ⏳ **The one upstream PR:** the `Splash` main-VM-mount option (see above) — the single change needed for correct light-theme rendering
 - ⏳ **Next:** that PR (or an isolate-VM theme/heap fix so the mount works isolated); Android build via `cargo-makepad`; Button **touch-ripple** as a `RippleButton` variant; **iOS** + **liquid-glass** kits
 
 ## License

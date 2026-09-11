@@ -30,7 +30,7 @@
 
 makepad-d3 was designed (Jan 2026, `DEVELOPMENT_PLAN_FINAL.md`) against Makepad's **Live system**: `live_design!{}` DSL blocks, `#[derive(Live, LiveHook, Widget)]`, and `live_register`. In mid-2026 Makepad shipped **2.0**, which **removes the Live system entirely** and replaces it with the **Script/Octoscript system** — a runtime scripting VM (the *Octoscript DSL*) that now defines widgets, styling, shaders, and even whole mini-apps evaluated from strings at runtime.
 
-Our `Cargo.toml` tracks `branch = "dev"`, but `Cargo.lock` pins the pre-2.0 commit `7a50694`. The library still builds against that pin; any `cargo update` will break every widget in the repo. More importantly, the new Octoscript runtime is the strategic reason to update: **Octoscript apps — including AI-generated `runsplash` mini-apps in AI Chat and any app that embeds the `Octoscript` widget — can instantiate widgets from script at runtime.** Registering makepad-d3's charts into that VM makes the whole d3 grammar (scales, shapes, layouts, hierarchies, geo, 3D) scriptable from Octoscript with zero recompilation.
+Our `Cargo.toml` tracks `branch = "dev"`, but `Cargo.lock` pins the pre-2.0 commit `7a50694`. The library still builds against that pin; any `cargo update` will break every widget in the repo. More importantly, the new Octoscript runtime is the strategic reason to update: **Octoscript apps — including AI-generated `runsplash` mini-apps in AI Chat and any app that embeds the `Splash` widget — can instantiate widgets from script at runtime.** Registering makepad-d3's charts into that VM makes the whole d3 grammar (scales, shapes, layouts, hierarchies, geo, 3D) scriptable from Octoscript with zero recompilation.
 
 Makepad 2.0 also ships a *minimal* built-in chart module (`widgets/src/chart.rs`: line/bar/area/scatter/candlestick/OHLC on a pan-zoom `ChartView`). It has **no script-facing data API** (charts self-generate fake data) and no d3-style grammar. makepad-d3's value in the 2.0 world is exactly that gap: real data binding from script, plus the full d3 feature set.
 
@@ -115,8 +115,8 @@ Custom shaders are still available; they are now written in Octoscript script in
 
 ### 2.6 Runtime Octoscript apps ("octoscript app")
 
-- The **`Octoscript` widget** (`widgets/src/octoscript.rs`) hosts a Octoscript DSL **string** (`body`) at runtime: it allocates an **isolated script VM** (`cx.alloc_octoscript_vm_with_network(allow_net)`), evaluates `use mod.prelude.widgets.*\nView{height:Fit, ` + body under a 200k-instruction budget, builds a `View` from the result, and injects a `ui` global so handlers can address widgets.
-- The **Markdown widget maps ```` ```runsplash ```` fenced blocks to `Octoscript` widgets** (`widgets/src/markdown.rs:399-401`) — this is how AI Chat renders AI-generated mini-apps.
+- The **`Splash` widget** (`widgets/src/splash.rs`) hosts a Octoscript DSL **string** (`body`) at runtime: it allocates an **isolated script VM** (`cx.alloc_splash_vm_with_network(allow_net)`), evaluates `use mod.prelude.widgets.*\nView{height:Fit, ` + body under a 200k-instruction budget, builds a `View` from the result, and injects a `ui` global so handlers can address widgets.
+- The **Markdown widget maps ```` ```runsplash ```` fenced blocks to `Splash` widgets** (`widgets/src/markdown.rs:399-401`) — this is how AI Chat renders AI-generated mini-apps.
 - Isolated octoscript VMs register **exactly two module sets, hardcoded**: `makepad_platform::script::script_mod(vm)` and `makepad_widgets::script_mod(vm)` (`widgets/src/widget_async.rs:284-337`). Third-party crates are invisible inside these sandboxes unless the host app adds them (see [§8](#8-running-d3-inside-sandboxed-octoscript-apps-runsplash)).
 - Net-enabled VMs additionally get `mod.net`: `net.http_request`, `http_resource(url)`, `parse_json()`, `url_encode()` — the substrate for a d3-fetch equivalent.
 - The authoritative DSL guide for app bodies is **`octoscript.md`** in the makepad repo root (layout rules, `:=` addressable ids, `on_render` dynamic lists, glass kit, gotchas). `makepad.octoscript` at the repo root is the Studio hub run-item registry — new example crates must be added there to be runnable from Studio (per makepad `AGENTS.md`).
@@ -131,7 +131,7 @@ Custom shaders are still available; they are now written in Octoscript script in
 |---|------|-----------|
 | G1 | **Compile against makepad 2.0** (widgets 2.0.0, `dev` tip) | `cargo check` clean on lib + chart_zoo |
 | G2 | **`d3.*` charts usable from any app's Octoscript code** | An app that calls `makepad_d3::script_mod(vm)` can write `d3.BarChart{ data: [...] }` in its `script_mod!` blocks, with hot reload |
-| G3 | **`d3.*` charts usable inside runtime octoscript apps** (AI-chat-style `runsplash` bodies / `Octoscript`-widget hosts) | A `D3Octoscript` host widget evaluates a body containing `d3.*` charts in a sandboxed VM |
+| G3 | **`d3.*` charts usable inside runtime octoscript apps** (AI-chat-style `runsplash` bodies / `Splash`-widget hosts) | A `D3Octoscript` host widget evaluates a body containing `d3.*` charts in a sandboxed VM |
 | G4 | **Script-facing data contract** | Declarative `data:` property + imperative `ui.chart.set_data(...)`, `on_*` event closures firing back into script |
 | G5 | **Keep the d3 math core pure** | `scale/ shape/ color/ layout/ geo/ data/ axis` stay makepad-free (already true: only `render3d` + `lib.rs` touch makepad APIs) |
 
@@ -357,21 +357,21 @@ Octoscript-authoring constraints we inherit (from `octoscript.md`) and bake into
 
 ### 8.1 The gap
 
-`Octoscript` widget sandboxes register **only** platform + `makepad_widgets` modules (hardcoded in `widget_async.rs:284-337`). `d3.*` is invisible in stock `runsplash` blocks regardless of what the host app registered in its **main** VM.
+`Splash` widget sandboxes register **only** platform + `makepad_widgets` modules (hardcoded in `widget_async.rs:284-337`). `d3.*` is invisible in stock `runsplash` blocks regardless of what the host app registered in its **main** VM.
 
 ### 8.2 Solution: `D3Octoscript` host widget (Tier B)
 
-Ship a drop-in replacement for `Octoscript` in makepad-d3. Same shape as `widgets/src/octoscript.rs` (~170 lines), with one addition after VM allocation:
+Ship a drop-in replacement for `Splash` in makepad-d3. Same shape as `widgets/src/splash.rs` (~170 lines), with one addition after VM allocation:
 
 ```rust
-self.vm_id = cx.alloc_octoscript_vm_with_network(self.allow_net);
+self.vm_id = cx.alloc_splash_vm_with_network(self.allow_net);
 cx.with_script_vm_id(self.vm_id, |vm| {
     makepad_d3::script_mod(vm);       // adds mod.d3 + prelude injection
 });
 // then eval_with_append_source(prefix + body) exactly like Octoscript
 ```
 
-`CxOctoscriptVmExt` (`alloc_octoscript_vm_with_network`, `with_script_vm_id`) is public, so this needs **no makepad changes**. Apps that render AI-generated markdown opt in by overriding the Markdown widget's `runsplash` template to instantiate `D3Octoscript` instead of `Octoscript` (the code-block template is a normal widget template in `mod.widgets.Markdown`'s defaults).
+`CxSplashVmExt` (`alloc_splash_vm_with_network`, `with_script_vm_id`) is public, so this needs **no makepad changes**. Apps that render AI-generated markdown opt in by overriding the Markdown widget's `runsplash` template to instantiate `D3Octoscript` instead of `Splash` (the code-block template is a normal widget template in `mod.widgets.Markdown`'s defaults).
 
 `D3Octoscript` keeps the sandbox guarantees: isolated heap, instruction budget, opt-in networking — d3 only *adds registered modules*, it does not widen the sandbox.
 
@@ -383,7 +383,7 @@ File a makepad PR adding an extension registry, e.g.:
 Cx::register_octoscript_mod(|vm| makepad_d3::script_mod(vm));
 ```
 
-consulted inside `alloc_octoscript_vm_with_network`. Then stock `Octoscript`/`runsplash` (and AI Chat itself) picks up `d3.*` with one registration call at app startup, and `D3Octoscript` becomes a thin alias. Until merged, Tier B covers the use case.
+consulted inside `alloc_splash_vm_with_network`. Then stock `Splash`/`runsplash` (and AI Chat itself) picks up `d3.*` with one registration call at app startup, and `D3Octoscript` becomes a thin alias. Until merged, Tier B covers the use case.
 
 ### 8.4 Prompting layer (AI-generated octoscript apps)
 
@@ -499,8 +499,8 @@ All paths relative to the makepad `dev` checkout @ `4f9ce7a8b` (`~/home/makepad`
 | `DrawVector` GPU path API | `draw/src/shader/draw_vector.rs:265,331-700` |
 | `Vector` declarative SVG widget | `widgets/src/vector.rs:5-38` (`Path.d` SVG data `:693,750`) |
 | 2.0 shader idiom | `draw/src/shader/draw_quad.rs:1-108` (`script_shader`, `..mod.draw.DrawQuad`, `Vec4f` pods) |
-| `Octoscript` host widget | `widgets/src/octoscript.rs` (prefix `:37-38`, instruction limit `:39`, eval `:47-97`) |
-| Sandbox VM registration (hardcoded) | `widgets/src/widget_async.rs:284-337` (`CxOctoscriptVmExt`) |
+| `Splash` host widget | `widgets/src/splash.rs` (prefix `:37-38`, instruction limit `:39`, eval `:47-97`) |
+| Sandbox VM registration (hardcoded) | `widgets/src/widget_async.rs:284-337` (`CxSplashVmExt`) |
 | `runsplash` → Octoscript mapping | `widgets/src/markdown.rs:399-401` |
 | Octoscript DSL authoring guide | `octoscript.md` (repo root); glass kit section |
 | Studio run-item registry | `makepad.octoscript` (repo root); Studio runbook in `AGENTS.md` |
@@ -540,9 +540,9 @@ isolate renders charts from a runtime body string (screenshot-verified).
    for `script_eval!` from Rust — the last line of the charts block does
    `mod.prelude.widgets.d3 = mod.d3`.
 3. **`D3Octoscript` ships with documented degradations** (§8.2): three helpers
-   the built-in `Octoscript` uses are `pub(crate)` in makepad
-   (`inject_octoscript_ui_handle`, `mark_octoscript_isolate_dead`,
-   `handle_octoscript_network_responses`), so sandbox bodies have no `ui`
+   the built-in `Splash` uses are `pub(crate)` in makepad
+   (`inject_splash_ui_handle`, `mark_splash_isolate_dead`,
+   `handle_splash_network_responses`), so sandbox bodies have no `ui`
    global inside helper `fn`s (inline handlers work), dropped hosts do not
    reclaim their isolate, and networking is off. These become trivial once
    the §8.3 upstream hook (plus making those helpers public) lands.
