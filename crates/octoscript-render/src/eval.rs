@@ -16,11 +16,10 @@ use makepad_script::*;
 /// (`|_| {}`) if the script needs none. Returns `None` if the script evaluates
 /// to nil (a parse or runtime error) or the root tag is unknown.
 pub fn build(src: &str, register: impl FnOnce(&mut ScriptVm)) -> Option<UiNode> {
-    let mut std_slot = 0;
-    let mut host = 0;
+    // No host state and no std slot: the renderer only needs the VM itself.
+    let mut host = ScriptVmHost::new((), ());
     let vm = &mut ScriptVm {
         host: &mut host,
-        std: &mut std_slot,
         bx: Box::new(ScriptVmBase::new()),
     };
 
