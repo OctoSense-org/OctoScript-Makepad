@@ -26,6 +26,9 @@
 use makepad_widgets::*;
 
 pub mod tap;
+pub mod design;
+pub mod kit;
+pub mod progress;
 
 /// Register upstream makepad's widgets, then this crate's Material-3 variants,
 /// re-referencing them into the prelude the Splash mount resolves.

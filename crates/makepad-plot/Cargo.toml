@@ -8,7 +8,7 @@ autoexamples = false
 
 [dependencies]
 # The workspace's single makepad checkout (see makepad-d3's note).
-makepad-widgets = { path = "../../../makepad-splash/widgets" }
+makepad-widgets = { path = "../../../makepad/widgets" }
 
 [[bin]]
 name = "plot_demo"

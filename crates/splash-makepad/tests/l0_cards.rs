@@ -15,6 +15,7 @@
 //! possible only because it was extracted from `splash-core` and depends on
 //! `serde_json` alone.
 
+use splash_render::makepad_script::*;
 use splash_ui_l0::{kit, realize, RealizeLimits};
 
 /// The kit body plus the default palette. A theme is a palette prefix (see
@@ -24,6 +25,20 @@ const KIT_BODY: &str = include_str!("../../../components/l0/_kit.splash");
 const BASE: &str = include_str!("../../../components/l0/_palette_dark.splash");
 const DERIVE: &str = include_str!("../../../components/l0/_derive.splash");
 
+#[test]
+fn inspection_ids_and_selected_state_survive_native_translation() {
+    let mut tree = build("theme dark\nview root Surface { Chip(text: \"Selected\", active: .on) }", serde_json::json!({}));
+    let mut again = tree.clone();
+    let first = splash_makepad::l0::inspectable(&mut tree);
+    assert_eq!(first, splash_makepad::l0::inspectable(&mut again));
+    assert_eq!(first.len(), tree.count());
+    let ui = splash_makepad::to_makepad_l0_ui(&tree);
+    assert!(ui.contains("selected: true"), "{ui}");
+    for node in first {
+        assert!(ui.contains(&format!("{} :=", node["id"].as_str().unwrap())));
+    }
+}
+
 /// Base, then the derivation, then the body — the default mood's assembly. Omit
 /// `_derive.splash` and every SIZE is an undefined name, which is 0: the tree
 /// still builds and every padding, radius and font size is gone.
@@ -31,9 +46,47 @@ fn kit() -> String {
     format!("{BASE}\n{DERIVE}\n{KIT_BODY}")
 }
 
-const WEATHER: &str = include_str!("../../../../Splash/crates/splash-ui-l0/tests/fixtures/weather.card");
-const NEWS: &str = include_str!("../../../../Splash/crates/splash-ui-l0/tests/fixtures/news.card");
-const STOCK: &str = include_str!("../../../../Splash/crates/splash-ui-l0/tests/fixtures/stock.card");
+const WEATHER: &str =
+    include_str!("../../../../splash/crates/splash-ui-l0/tests/fixtures/weather.card");
+const NEWS: &str = include_str!("../../../../splash/crates/splash-ui-l0/tests/fixtures/news.card");
+const STOCK: &str =
+    include_str!("../../../../splash/crates/splash-ui-l0/tests/fixtures/stock.card");
+
+fn register_missing_capabilities(vm: &mut ScriptVm) {
+    let sys = vm.new_module(id!(sys));
+    // Deterministic missing-data adapters. Live calls remain in kit lowering,
+    // so structural tests must register their capabilities even with seed data.
+    for name in [
+        "news",
+        "stock",
+        "movers",
+        "geocode",
+        "geocodenum",
+        "weather",
+        "weathercond",
+        "photo",
+        "daylight",
+        "dayname",
+        "moonphase",
+        "weekmin",
+        "weekmax",
+        "gps",
+        "route",
+        "nav",
+        "cities",
+        "airquality",
+        "aqinum",
+        "satellite",
+    ] {
+        vm.add_method(
+            sys,
+            LiveId::from_str(name),
+            script_args_def!(a = NIL, b = NIL, c = NIL, d = NIL, e = NIL),
+            |vm, _| vm.bx.heap.new_string_from_str("—"),
+        );
+    }
+    vm.set_injected_global(id!(sys), sys.into());
+}
 
 fn build(card: &str, data: serde_json::Value) -> splash_render::UiNode {
     let report = realize(card, &data, RealizeLimits::default());
@@ -42,10 +95,10 @@ fn build(card: &str, data: serde_json::Value) -> splash_render::UiNode {
         "card did not realize cleanly: {:#?}",
         report.diagnostics
     );
-    let root = report.root.expect("a realized tree");
+    let root = report.complete_root().expect("a complete realized tree");
     // The tail is a bare VARIABLE, not a call — `fn f() {…}` then `f()` is nil.
     let src = format!("{}\n{}", kit(), kit::lower(&root));
-    splash_render::build(&src, |_vm| {})
+    splash_render::build(&src, register_missing_capabilities)
         .unwrap_or_else(|| panic!("the lowered card evaluated to nil:\n{}", kit::lower(&root)))
 }
 
@@ -141,7 +194,7 @@ fn a_card_carries_its_text_through_the_kit() {
     // The card's OWN words, from its `copy` declarations. A seeded headline used
     // to be checked here too and is not any more: `sys.news` is answered live, so
     // a story title lowers to the CALL rather than to the blob this test hands in,
-    // and a bare VM has no `sys` to run it. What this test guards is that words
+    // and the fixture adapters return missing. What this test guards is that words
     // survive the kit at all — a right-sized tree of empty nodes would pass the
     // count check beside it — and the card's own copy proves that without
     // depending on a value the backend now fetches.
@@ -178,10 +231,7 @@ fn the_lowered_card_names_roles_and_no_presentation() {
         .match_indices('#')
         .map(|(i, _)| &src[i + 1..])
         .filter(|rest| {
-            let digits = rest
-                .chars()
-                .take_while(|c| c.is_ascii_hexdigit())
-                .count();
+            let digits = rest.chars().take_while(|c| c.is_ascii_hexdigit()).count();
             matches!(digits, 3 | 6 | 8)
         })
         .collect();
@@ -213,7 +263,8 @@ let node = l0_unsupported("Hologram")
 node
 "#
     );
-    let tree = splash_render::build(&src, |_vm| {}).expect("the marker evaluates");
+    let tree =
+        splash_render::build(&src, register_missing_capabilities).expect("the marker evaluates");
 
     fn words(n: &splash_render::UiNode, out: &mut String) {
         if let Some(t) = n.attrs.text.as_deref() {
@@ -247,21 +298,31 @@ fn the_data_visualisations_reach_the_tree_as_themselves() {
     let mut out = Vec::new();
     kinds(&build(WEATHER, weather_data()), &mut out);
     for expected in ["TempBar", "SunArc", "MoonPhase", "AqiContour"] {
-        assert!(out.iter().any(|k| k == expected), "{expected} missing: {out:?}");
+        assert!(
+            out.iter().any(|k| k == expected),
+            "{expected} missing: {out:?}"
+        );
     }
     let mut out = Vec::new();
     let mut store = splash_ui_l0::InstanceStore::default();
     splash_ui_l0::dispatch_with(
-        STOCK, &mut store, "root", "open_quote",
-        Some(&serde_json::Value::String("NVDA".into())));
-    let report = splash_ui_l0::realize_with_state(
-        STOCK, &stock_data(), &store, RealizeLimits::default());
+        STOCK,
+        &mut store,
+        "root",
+        "open_quote",
+        Some(&serde_json::Value::String("NVDA".into())),
+    );
+    let report =
+        splash_ui_l0::realize_with_state(STOCK, &stock_data(), &store, RealizeLimits::default());
     let src = format!("{}\n{}", kit(), kit::lower(&report.root.expect("root")));
     kinds(
-        &splash_render::build(&src, |_vm| {}).expect("detail evaluates"),
+        &splash_render::build(&src, register_missing_capabilities).expect("detail evaluates"),
         &mut out,
     );
-    assert!(out.iter().any(|k| k == "StockPlot"), "StockPlot missing: {out:?}");
+    assert!(
+        out.iter().any(|k| k == "StockPlot"),
+        "StockPlot missing: {out:?}"
+    );
 }
 
 /// Every widget name this backend emits must be one the kit DEFINES.
@@ -326,7 +387,7 @@ fn an_l1_coefficient_is_not_rounded_on_its_way_to_the_backend() {
         state amount { shape: number, initial: 42 }\n\
         state factor { shape: number, initial: 0.621371 }\n\
         view root Surface { TextHero(value: amount * factor) }\n";
-    let report = realize(card, &serde_json::json!({}), RealizeLimits::default());
+    let report = realize(card, &serde_json::json!({"amount":42}), RealizeLimits::default());
     assert!(report.diagnostics.is_empty(), "{:#?}", report.diagnostics);
     let lowered = kit::lower(&report.root.expect("root"));
     assert!(
@@ -335,7 +396,16 @@ fn an_l1_coefficient_is_not_rounded_on_its_way_to_the_backend() {
     );
     // And a whole number must not grow a decimal point on the way through.
     assert!(
-        lowered.contains("42 *"),
+        lowered.contains(r#"sys.l0_math("*", 42, 0.621371)"#),
         "an integer operand should stay an integer:\n{lowered}"
     );
+}
+
+#[test]
+fn authored_selected_chip_tokens_survive_realization_and_native_lowering() {
+    let tree = build("# level: L0\nview root Surface { Chip(text: \"All\", active: .on) Chip(text: \"Today\", active: .off) }", serde_json::json!({}));
+    assert_ne!(tree.children[0].attrs.bg, tree.children[1].attrs.bg);
+    let ui = splash_makepad::to_makepad_l0_ui(&tree);
+    assert!(ui.contains("text: \"All\""));
+    assert!(ui.contains("text: \"Today\""));
 }

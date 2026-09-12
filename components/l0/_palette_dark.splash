@@ -82,6 +82,7 @@ let l0_bar_rail   = argb( 41, 255, 255, 255)   // #ffffff29 faint rail on a dark
 // emoji dropped into the card; recoloured to the text ink it reads as the
 // card's own iconography.
 let icon_mono     = 1
+let l0_font_src   = ""
 // A floating pane's side inset; 0 = the classic full-bleed panel.
 let panel_inset   = 0
 // One line per list row, with an ellipsis. 0 would mean unlimited.

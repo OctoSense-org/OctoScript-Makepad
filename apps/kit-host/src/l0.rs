@@ -22,10 +22,10 @@ use splash_ui_l0::{kit, realize, RealizeLimits};
 /// The theme. Every L0 route is this plus one lowered card.
 const KIT: &str = include_str!("../../../components/l0/_kit.splash");
 
-const NEWS: &str = include_str!("../../../../Splash/crates/splash-ui-l0/tests/fixtures/news.card");
-const STOCK: &str = include_str!("../../../../Splash/crates/splash-ui-l0/tests/fixtures/stock.card");
+const NEWS: &str = include_str!("../../../../splash/crates/splash-ui-l0/tests/fixtures/news.card");
+const STOCK: &str = include_str!("../../../../splash/crates/splash-ui-l0/tests/fixtures/stock.card");
 const WEATHER: &str =
-    include_str!("../../../../Splash/crates/splash-ui-l0/tests/fixtures/weather.card");
+    include_str!("../../../../splash/crates/splash-ui-l0/tests/fixtures/weather.card");
 
 const NEWS_DATA: &str = include_str!("data/news.json");
 const STOCK_DATA: &str = include_str!("data/stock.json");
@@ -62,9 +62,9 @@ pub fn source_for(route: &str) -> String {
         Err(e) => return failed(&format!("data did not parse: {e}")),
     };
     let report = realize(card, &data, RealizeLimits::default());
-    let Some(root) = report.root else {
-        let why: Vec<String> = report.diagnostics.iter().map(|d| d.message.clone()).collect();
-        return failed(&why.join("; "));
+    let root = match report.complete_root() {
+        Ok(root) => root,
+        Err(why) => return failed(&why),
     };
     format!("{KIT}\n{}", kit::lower(&root))
 }

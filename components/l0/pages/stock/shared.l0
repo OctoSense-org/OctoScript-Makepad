@@ -1,0 +1,61 @@
+view watch_controls Col {
+             Row(align: .center, gap: 8) {
+               TextCaption(text: copy.watch_hd, width: .fill)
+               Chip(text: copy.plus, on_tap: add_sym, value: "1")
+             }
+             when editing == .add {
+               Panel {
+                 Row(align: .center, gap: 10) {
+                   Field(text: query, placeholder: copy.watch_hd, on_commit: preview,
+                         on_change: typing, width: .fill)
+                   Chip(text: "×", on_tap: close_add)
+                 }
+                 when query != "" {
+                   # Row taps PREVIEW the quote; only the Add chip beside a
+                   # result stores it (chip as sibling — a row's hit target
+                   # covers its children, measured).
+                   for f, i in found key f.ticker {
+                     Row(align: .center, gap: 10) {
+                       Row(align: .center, gap: 10, width: .fill, on_tap: preview, value: f.ticker) {
+                         TextRow(text: f.ticker, width: .label)
+                         TextCaption(text: f.name, width: .fill)
+                       }
+                       Chip(text: copy.add_lbl, on_tap: confirm_add, value: f.ticker)
+                     }
+                   }
+                 }
+               }
+             }
+             for w, i in watch key w.ticker {
+               # Swipe THIS row left and ITS red Remove appears beside it;
+               # swipe right puts it away. `Reveal` is widget visibility, not
+               # card state — no other row moves, nothing re-realizes, and
+               # the swipe fires instead of the tap so a drag cannot also
+               # open the quote.
+               Row(align: .center, gap: 8) {
+                 Row(align: .center, gap: 8, width: .fill, on_tap: open_quote, value: w.ticker) {
+                   TextRow(text: w.ticker, width: .fill)
+                   TextValue(value: w.last, format: .money)
+                   TextValue(value: w.pct, format: .signed_pct)
+                 }
+                 Reveal {
+                   Chip(text: copy.unstar, on_tap: forget, value: w.ticker, tone: .danger, width: .fit)
+                 }
+               }
+             }
+}
+view quote_controls Col {
+               Row(align: .center, gap: 8) {
+                 Row(align: .center, width: .fill, on_tap: back) { TextRow(text: copy.back_lbl) }
+                 when kept.has == "1" {
+                   TextCaption(text: copy.added_lbl)
+                   Chip(text: copy.unstar, on_tap: forget, value: selected, tone: .danger, width: .fit)
+                 }
+                 when kept.has != "1" {
+                   when last_act == .removed { TextCaption(text: copy.removed_lbl) }
+                   Chip(text: copy.add_lbl, on_tap: keep, value: selected)
+                 }
+               }
+               when quote.$state == .pending { TextBody(text: copy.loading) }
+               when quote.$state == .failed  { TextBody(text: copy.offline) }
+}

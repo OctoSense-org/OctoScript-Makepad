@@ -87,6 +87,10 @@ pub struct PlotView {
     pub draw_vector: DrawVector,
     #[live]
     pub draw_text: DrawText,
+    /// Embedded source designs may intentionally paint strokes beyond their
+    /// geometric frame. Standalone charts keep their existing clipping.
+    #[live(true)]
+    pub clip_plot: bool,
 
     // Titles & labels
     #[live]
@@ -127,6 +131,9 @@ pub struct PlotView {
     // Interaction
     #[live(false)]
     pub interactive: bool,
+    /// Extra space when fitting data; measured UI charts can request exact domains.
+    #[live(0.05)]
+    pub data_padding: f64,
 
     #[live]
     pub plot_margin: Inset,
@@ -271,8 +278,8 @@ impl PlotView {
                 metrics: Metrics::default(),
             },
             Layout {
-                clip_x: true,
-                clip_y: true,
+                clip_x: self.clip_plot,
+                clip_y: self.clip_plot,
                 padding: self.plot_margin,
                 ..Layout::default()
             },
@@ -313,8 +320,8 @@ impl PlotView {
         let tx_max = self.x_scale.transform(x_max);
         let ty_min = self.y_scale.transform(y_min);
         let ty_max = self.y_scale.transform(y_max);
-        let x_pad = (tx_max - tx_min).abs().max(1e-9) * 0.05;
-        let y_pad = (ty_max - ty_min).abs().max(1e-9) * 0.05;
+        let x_pad = (tx_max - tx_min).abs().max(1e-9) * self.data_padding;
+        let y_pad = (ty_max - ty_min).abs().max(1e-9) * self.data_padding;
         self.viewport = PlotViewport {
             x_min: tx_min - x_pad,
             x_max: tx_max + x_pad,
@@ -731,6 +738,30 @@ impl PlotView {
         }
         self.draw_vector.close();
         self.draw_vector.fill();
+    }
+
+    /// Filled polygon in pixel space
+    pub fn fill_polygon_gradient(&mut self, xs: &[f64], ys: &[f64], color: Vec4) {
+        use makepad_widgets::makepad_draw::vector::{GradientStop, VectorPaint};
+        let count=xs.len().min(ys.len());
+        if count<3 {return;}
+        let top=self.plot_rect.pos.y as f32;
+        let bottom=(self.plot_rect.pos.y+self.plot_rect.size.y) as f32;
+        let stops=vec![
+            GradientStop{offset:0.,color:[color.x*color.w,color.y*color.w,color.z*color.w,color.w],straight_rgb:None},
+            GradientStop{offset:1.,color:[0.;4],straight_rgb:None},
+        ];
+        self.draw_vector.cur_gradient_row_v=self.draw_vector.add_gradient_row(&stops);
+        self.draw_vector.set_paint(VectorPaint::linear_gradient(0.,top,0.,bottom,stops));
+        let (px,py)=self.data_to_px(xs[0],ys[0]);
+        self.draw_vector.move_to(px,py);
+        for i in 1..count {
+            let (px,py)=self.data_to_px(xs[i],ys[i]);
+            self.draw_vector.line_to(px,py);
+        }
+        self.draw_vector.close();
+        self.draw_vector.fill();
+        self.draw_vector.cur_gradient_row_v=-1.0;
     }
 
     /// Filled polygon in pixel space

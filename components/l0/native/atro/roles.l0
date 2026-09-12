@@ -1,0 +1,234 @@
+component AtroButtonControl(instance: text, text: text, enabled: bool) {
+  view Kit(component: "AtroButtonb90a204cbe", instance: instance, text: text, enabled: enabled)
+}
+component AtroCheckbox(instance: text, checked: bool, enabled: bool) {
+  view Kit(component: "AtroCheckbox5fd1c41028", instance: instance, checked: checked, enabled: enabled)
+}
+component AtroChip(instance: text) {
+  view Kit(component: "AtroChip79662957f2", instance: instance) { slot }
+}
+component AtroField(instance: text, text: text, placeholder: text, focused: bool, password: bool, enabled: bool) {
+  view Kit(component: "AtroField1c205d18bd", instance: instance, text: text, placeholder: placeholder, focused: focused, password: password, enabled: enabled)
+}
+component AtroGlassGroup(instance: text) {
+  view Kit(component: "AtroGlassGroup1bce1a9ed5", instance: instance) { slot }
+}
+component AtroGlassSurface(instance: text) {
+  view Kit(component: "AtroGlassSurface4e8bf8c44f", instance: instance)
+}
+component AtroGroup(instance: text) {
+  view Kit(component: "AtroGroup30a667b63a", instance: instance) { slot }
+}
+component AtroImage(instance: text) {
+  view Kit(component: "AtroImage1d6cf08bc3", instance: instance)
+}
+component AtroKitButton(instance: text) {
+  view Kit(component: "AtroKitButtonfc8d1cc419", instance: instance) { slot }
+}
+component AtroKitFormField(instance: text) {
+  view Kit(component: "AtroKitFormField75db0d3aa7", instance: instance) { slot }
+}
+component AtroKitTabBar(instance: text, index: number) {
+  view Kit(component: "AtroKitTabBara3c64e36b6", instance: instance, index: index) { slot }
+}
+component AtroPanel(instance: text) {
+  view Kit(component: "AtroPanel14a7896211", instance: instance) { slot }
+}
+component AtroProgress(instance: text, value: number) {
+  view Kit(component: "AtroProgress3d5edd9c3d", instance: instance, value: value)
+}
+component AtroRadio(instance: text, checked: bool, enabled: bool) {
+  view Kit(component: "AtroRadiobce72c1222", instance: instance, checked: checked, enabled: enabled)
+}
+component AtroRangeSlider(instance: text, value: number, enabled: bool, value2: number) {
+  view Kit(component: "AtroRangeSlider3d87eb67d3", instance: instance, value: value, enabled: enabled, value2: value2)
+}
+component AtroStockplot(instance: text) {
+  view Kit(component: "AtroStockplotdfc9d186ba", instance: instance)
+}
+component AtroSurface(instance: text) {
+  view Kit(component: "AtroSurface1df4b97e5a", instance: instance)
+}
+component AtroTextBody(instance: text, text: text) {
+  view Kit(component: "AtroTextBody8ddeedcc16", instance: instance, text: text)
+}
+component AtroTextCaption(instance: text, text: text) {
+  view Kit(component: "AtroTextCaption0481776fce", instance: instance, text: text)
+}
+component AtroTextTitle(instance: text, text: text) {
+  view Kit(component: "AtroTextTitlec5cf253352", instance: instance, text: text)
+}
+component AtroVector(instance: text) {
+  view Kit(component: "AtroVector9c120757f2", instance: instance)
+}
+component AtroButton(instance: text, label: text, subtitle: text, enabled: bool) {
+  state internal_9_text { shape: text, initial: "" }
+  view Kit(component: "AtroKitButton552960c7a9", instance: instance, part: "p0") {
+  Kit(component: "AtroSurfaceedef504a77", instance: instance, part: "p1")
+  Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p2") {
+    Kit(component: "AtroImage1d6cf08bc3", instance: instance, part: "p3")
+  }
+  Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p4") {
+    Kit(component: "AtroSurface1df4b97e5a", instance: instance, part: "p5")
+  }
+  Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p6") {
+    Kit(component: "AtroTextCaption087ed9e8c7", instance: instance, part: "p7", text: label)
+  }
+  Kit(component: "AtroTextTitlec5cf253352", instance: instance, part: "p8", text: subtitle)
+  Kit(component: "AtroButtonb90a204cbe", instance: instance, part: "p9", text: internal_9_text, enabled: enabled)
+}
+}
+component AtroFormField(instance: text, value: text, placeholder: text, focused: bool, password: bool, enabled: bool) {
+  view Kit(component: "AtroKitFormFieldde1364dd07", instance: instance, part: "p0") {
+  Kit(component: "AtroField1c205d18bd", instance: instance, part: "p1", text: value, placeholder: placeholder, focused: focused, password: password, enabled: enabled)
+}
+}
+component AtroTabBar(instance: text, selected_index: number, label: text, subtitle: text, detail_1: text, detail_2: text, detail_3: text, detail_4: text) {
+  state internal_17_checked { shape: bool, initial: false }
+  state internal_17_enabled { shape: bool, initial: true }
+  state internal_32_checked { shape: bool, initial: false }
+  state internal_32_enabled { shape: bool, initial: true }
+  state internal_55_checked { shape: bool, initial: false }
+  state internal_55_enabled { shape: bool, initial: true }
+  state internal_72_checked { shape: bool, initial: false }
+  state internal_72_enabled { shape: bool, initial: true }
+  state internal_89_checked { shape: bool, initial: false }
+  state internal_89_enabled { shape: bool, initial: true }
+  view Kit(component: "AtroKitTabBara3c64e36b6", instance: instance, part: "p0", index: selected_index) {
+  Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p1") {
+    Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p2") {
+      Kit(component: "AtroSurface1f48e26363", instance: instance, part: "p3")
+      Kit(component: "AtroSurface1f48e26363", instance: instance, part: "p4")
+      Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p5") {
+        Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p6") {
+          Kit(component: "AtroTextCaption937dfde009", instance: instance, part: "p7", text: label)
+        }
+        Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p8") {
+          Kit(component: "AtroSurfaceaabef15557", instance: instance, part: "p9")
+          Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p10") {
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p11") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p12")
+            }
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p13") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p14")
+            }
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p15") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p16")
+            }
+          }
+        }
+      }
+    }
+    Kit(component: "AtroRadiobce72c1222", instance: instance, part: "p17", checked: internal_17_checked, enabled: internal_17_enabled)
+  }
+  Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p18") {
+    Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p19") {
+      Kit(component: "AtroSurface1f48e26363", instance: instance, part: "p20")
+      Kit(component: "AtroSurface1f48e26363", instance: instance, part: "p21")
+      Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p22") {
+        Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p23") {
+          Kit(component: "AtroTextCaption937dfde009", instance: instance, part: "p24", text: subtitle)
+        }
+        Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p25") {
+          Kit(component: "AtroSurfaceaabef15557", instance: instance, part: "p26")
+          Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p27") {
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p28") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p29")
+            }
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p30") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p31")
+            }
+          }
+        }
+      }
+    }
+    Kit(component: "AtroRadiobce72c1222", instance: instance, part: "p32", checked: internal_32_checked, enabled: internal_32_enabled)
+  }
+  Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p33") {
+    Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p34") {
+      Kit(component: "AtroSurface1f48e26363", instance: instance, part: "p35")
+      Kit(component: "AtroSurface1f48e26363", instance: instance, part: "p36")
+      Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p37") {
+        Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p38") {
+          Kit(component: "AtroTextCaption937dfde009", instance: instance, part: "p39", text: detail_1)
+        }
+        Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p40") {
+          Kit(component: "AtroSurfaceaabef15557", instance: instance, part: "p41")
+          Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p42") {
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p43") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p44")
+            }
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p45") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p46")
+            }
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p47") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p48")
+            }
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p49") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p50")
+            }
+          }
+        }
+      }
+      Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p51") {
+        Kit(component: "AtroSurface9abe59c50b", instance: instance, part: "p52")
+        Kit(component: "AtroSurface649b702f8e", instance: instance, part: "p53")
+        Kit(component: "AtroTextCaption6cbed2197a", instance: instance, part: "p54", text: detail_2)
+      }
+    }
+    Kit(component: "AtroRadiobce72c1222", instance: instance, part: "p55", checked: internal_55_checked, enabled: internal_55_enabled)
+  }
+  Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p56") {
+    Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p57") {
+      Kit(component: "AtroSurface1f48e26363", instance: instance, part: "p58")
+      Kit(component: "AtroSurface1f48e26363", instance: instance, part: "p59")
+      Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p60") {
+        Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p61") {
+          Kit(component: "AtroTextCaption937dfde009", instance: instance, part: "p62", text: detail_3)
+        }
+        Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p63") {
+          Kit(component: "AtroSurfaceaabef15557", instance: instance, part: "p64")
+          Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p65") {
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p66") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p67")
+            }
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p68") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p69")
+            }
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p70") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p71")
+            }
+          }
+        }
+      }
+    }
+    Kit(component: "AtroRadiobce72c1222", instance: instance, part: "p72", checked: internal_72_checked, enabled: internal_72_enabled)
+  }
+  Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p73") {
+    Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p74") {
+      Kit(component: "AtroSurface1f48e26363", instance: instance, part: "p75")
+      Kit(component: "AtroSurface1f48e26363", instance: instance, part: "p76")
+      Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p77") {
+        Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p78") {
+          Kit(component: "AtroTextCaption937dfde009", instance: instance, part: "p79", text: detail_4)
+        }
+        Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p80") {
+          Kit(component: "AtroSurfaceaabef15557", instance: instance, part: "p81")
+          Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p82") {
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p83") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p84")
+            }
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p85") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p86")
+            }
+            Kit(component: "AtroGroup30a667b63a", instance: instance, part: "p87") {
+              Kit(component: "AtroVector9c120757f2", instance: instance, part: "p88")
+            }
+          }
+        }
+      }
+    }
+    Kit(component: "AtroRadiobce72c1222", instance: instance, part: "p89", checked: internal_89_checked, enabled: internal_89_enabled)
+  }
+}
+}
