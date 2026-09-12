@@ -4,6 +4,8 @@ pub use makepad_widgets;
 use makepad_widgets::*;
 
 pub mod charts;
+pub mod chart_paint;
+pub use chart_paint::ChartPaint;
 pub mod plot_view;
 pub mod script_util;
 pub mod types;

@@ -1,0 +1,28 @@
+view root Photo(src: scene, pad: .page) {
+  page_header
+  saved
+  when now.$state == .pending { TextBody(text: copy.loading) }
+  when now.$state == .failed { TextBody(text: copy.offline) }
+  forecast
+  Card {
+    Row(align: .center, gap: 12) {
+      WeatherIcon(cond: now.cond, size: .hero)
+      Col(width: .fill, gap: 6) {
+        TextCaption(text: now.cond)
+        TextHero(value: now.temp, unit: units, on_tap: toggle_units)
+        Row(gap: 8) {
+          TextCaption(glyph: "↑", value: now.hi, unit: units)
+          TextCaption(glyph: "↓", value: now.lo, unit: units)
+        }
+      }
+    }
+  }
+  sunmoon
+  details
+  cloudfield
+  airfield
+}
+view page_header Row(align: .center, gap: 12) {
+  TextTitle(text: place.name, width: .fill)
+  Chip(text: copy.plus, on_tap: add_city, value: "1")
+}

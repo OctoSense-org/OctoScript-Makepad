@@ -1,0 +1,32 @@
+view topic_controls Col(gap: 8) {
+               TextCaption(text: copy.topics_hd)
+               Row(gap: 8) {
+                 Chip(text: copy.t_ai,     on_tap: follow, value: "ai")
+                 Chip(text: copy.t_nba,    on_tap: follow, value: "nba")
+                 Chip(text: copy.t_soccer, on_tap: follow, value: "soccer")
+                 Chip(text: copy.t_crypto, on_tap: follow, value: "crypto")
+               }
+               for t, i in topics key t.name {
+                 # Chip beside the tappable part (its own hit target would be
+                 # covered inside the row); the row opens the topic's current
+                 # top story by the id the search answered just now.
+                 Row(align: .center, gap: 8) {
+                   Row(align: .center, gap: 8, width: .fill, on_tap: open_story, value: t.top_id) {
+                     TextCaption(text: t.name, width: .label)
+                     TextRow(text: t.top_title, width: .fill)
+                   }
+                   Chip(text: copy.drop_lbl, on_tap: unfollow, value: t.name)
+                 }
+               }
+               for b, i in saved key b.id {
+                 # Chip beside the tappable part, never inside it — a row's hit
+                 # target covers its content and eats the chip's tap, measured.
+                 Row(align: .center, gap: 8) {
+                   Row(align: .center, gap: 8, width: .fill, on_tap: open_story, value: b.id) {
+                     TextCaption(text: copy.saved_hd, width: .label)
+                     TextRow(text: b.title, width: .fill)
+                   }
+                   Chip(text: copy.drop_lbl, on_tap: drop_story, value: b.id)
+                 }
+               }
+}

@@ -81,18 +81,34 @@ Building + running the `kit-host` against upstream surfaced exactly **one** thin
 
 ## Relationship to makepad
 
-Upstream `makepad/makepad` (branch `dev`) already ships everything this needs — the `makepad-script` VM (`platform/script`) and the `Splash` runtime-mount widget. Nothing here requires a makepad fork:
-
-- The **core crates** depend on `makepad-script` by git.
-- **`splash-widgets`** and the kit apps depend on upstream **`makepad-widgets`** by git. (Keep the transitive `makepad-script` rev aligned with `splash-render`'s.)
+The workspace uses the checked-out sibling `../makepad`: `splash-render` takes
+`platform/script`, and the native widget crates and apps take `widgets`. Keep that checkout
+at the parent repository's pinned revision; the bounded evaluator also uses its
+`ScriptVm::eval_checked` API. The L0 integration tests use sibling `../splash`.
 
 ## Build
 
+### L0 design-kit validation
+
+The lab's `splash-beauty-host` Studio runnable mounts L0 cards through
+`l0::prepare` and `to_makepad_l0_ui`. This preserves the L0 kit's resolved
+Card/Chip presentation; `to_makepad_ui` remains the Material semantic entry
+point. The preview uses a standalone native window so Studio's pane size
+cannot change the design frame. HTTP image resources and host fixture data
+are exercised by the pipeline, alongside checked native widget construction.
+
+See [the Taskplan runbook](../lab/sketch/TASKPLAN-VALIDATION.md) for commands,
+capture hashes, fill/vision judgments and known fidelity limits. The new
+runnable is independent of the older Material catalog shell.
+
+With the `makepad`, `splash` and `splash-makepad` checkouts present:
+
 ```sh
-cargo test            # builds + tests the portable core (splash-render, splash-makepad)
+cargo test --release -p splash-render -p splash-makepad
 ```
 
-`splash-widgets` is excluded from the default workspace build (it needs the full upstream-makepad build); wire it into an app's makepad workspace to use it — call `splash_widgets::widgets_mod(vm)` in place of `makepad_widgets::widgets_mod(vm)`.
+This tests the portable renderer and translator without building the native applications.
+The native applications are workspace members and have separate platform build requirements.
 
 ## Status
 

@@ -20,6 +20,8 @@ pub enum NodeKind {
     Swiper,
     Text,
     Image,
+    /// Source SVG geometry, rendered with a native vector widget.
+    Svg,
     Button,
     Toggle,
     Checkbox,
@@ -150,6 +152,7 @@ impl NodeKind {
             "swiper" => Self::Swiper,
             "text" => Self::Text,
             "image" => Self::Image,
+            "svg" => Self::Svg,
             "button" => Self::Button,
             "toggle" => Self::Toggle,
             "checkbox" => Self::Checkbox,
@@ -217,9 +220,15 @@ impl NodeKind {
 /// `on` means checkbox-select vs toggle-value depending on the kind).
 #[derive(Clone, Default, Debug)]
 pub struct Attrs {
+    /// Validated semantic widget contract: native type and child index paths.
+    pub kit: Option<String>,
+    pub kit_index: Option<i32>,
     pub text: Option<String>,
     pub label: Option<String>,
     pub placeholder: Option<String>,
+    /// Initial keyboard focus and password masking for native input fields.
+    pub focused: Option<i32>,
+    pub password: Option<i32>,
     /// Makepad widget id (`name := Widget{…}`) so the widget is addressable
     /// (e.g. a signal Label the host reads, or a target of `ui.<id>.set_text`).
     pub id: Option<String>,
@@ -228,6 +237,9 @@ pub struct Attrs {
     pub tapto: Option<String>,
     /// Image source: a resource ref or an `https://` URL.
     pub src: Option<String>,
+    /// Decoded raster dimensions, independent of logical layout size.
+    pub image_width: Option<f32>,
+    pub image_height: Option<f32>,
     /// ObjectFit-style enum for images.
     pub fit: Option<i32>,
     pub w: Option<f32>,
@@ -285,6 +297,11 @@ pub struct Attrs {
     /// backend owns which face answers it at each weight, exactly as the
     /// backend already owns Roboto-Thin versus Roboto-Bold.
     pub family: Option<String>,
+    /// Explicit font resource and line height for source-measured designs.
+    pub font_src: Option<String>,
+    pub font_asc: Option<f32>,
+    pub font_desc: Option<f32>,
+    pub line_height: Option<f32>,
     /// Letter spacing, in ems. The text stack has always had `letter_spacing`
     /// in its shaper; nothing above ever reached it, so the eyebrow role fakes
     /// tracking by inserting thin spaces into the STRING — which cannot work on
@@ -316,6 +333,8 @@ pub struct Attrs {
     /// horizontal / 6dp vertical padding that a uniform `pad` can't express.
     pub padx: Option<f32>,
     pub pady: Option<f32>,
+    /// Explicit leading inset for source-measured native text fields.
+    pub padleft: Option<f32>,
     /// Asymmetric vertical padding, where `pady` cannot say it.
     ///
     /// A page's top padding clears the status bar and its bottom clears the
@@ -401,6 +420,8 @@ pub struct Attrs {
     /// thumb when on.
     pub markcolor: Option<u32>,
     pub value: Option<f32>,
+    /// Background blur radius in logical pixels for measured native designs.
+    pub blur: Option<f32>,
     pub total: Option<f32>,
     pub align: Option<i32>,
     /// Child alignment within a container, 0.0..=1.0 on each axis.

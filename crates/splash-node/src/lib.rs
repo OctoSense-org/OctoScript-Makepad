@@ -18,5 +18,11 @@
 
 mod node;
 pub mod state;
+pub mod units;
 
 pub use node::{Attrs, NodeKind, UiNode};
+
+/// Bounds for a complete kit tree. A failed child invalidates the whole tree.
+pub const MAX_TREE_DEPTH: usize = 128;
+pub const MAX_TREE_NODES: usize = 65_536;
+pub const MAX_EVAL_INSTRUCTIONS: usize = 2_000_000;

@@ -36,6 +36,10 @@ pub struct LinePlot {
     #[rust]
     pub fill_regions: Vec<FillRegion>,
     #[rust]
+    pub fill_paints: Vec<Option<crate::ChartPaint>>,
+    #[rust]
+    pub series_paints: Vec<Option<crate::ChartPaint>>,
+    #[rust]
     pub annotations: Vec<TextAnnotation>,
     #[rust]
     pub arrow_annotations: Vec<ArrowAnnotation>,
@@ -62,6 +66,8 @@ pub struct LinePlot {
     pub line_width: f64,
     #[live(true)]
     pub demo_data: bool,
+    #[live(false)]
+    pub gradient_fill: bool,
 
     #[rust]
     fitted: bool,
@@ -78,6 +84,7 @@ impl LinePlot {
     pub fn clear(&mut self) {
         self.series.clear();
         self.fill_regions.clear();
+        self.fill_paints.clear();self.series_paints.clear();
         self.annotations.clear();
         self.arrow_annotations.clear();
         self.vlines.clear();
@@ -263,7 +270,15 @@ impl LinePlot {
             let color = s.color.unwrap_or_else(|| cycle_color(si));
             let width = s.line_width.unwrap_or(self.line_width) as f32;
 
-            if s.line_style != LineStyle::Solid || true {
+            if let Some(Some(paint))=self.series_paints.get(si) {
+                let pts:Vec<_>=s.x.iter().zip(&s.y).map(|(&x,&y)|self.plot_view.data_to_px(x,y)).collect();
+                let pr=*self.plot_view.plot_rect();
+                let d=&mut self.plot_view.draw_vector;
+                d.path.clear();
+                for (i,&(x,y)) in pts.iter().enumerate() {if i==0 {d.move_to(x,y)}else{d.line_to(x,y)}}
+                paint.apply(d,pr.pos.x as f32,pr.pos.y as f32,pr.size.x as f32,pr.size.y as f32);
+                d.stroke(width);
+            } else {
                 // Step interpolation if requested
                 match s.step_style {
                     StepStyle::None => {
@@ -395,7 +410,7 @@ impl Widget for LinePlot {
 
         // Fill regions (under lines)
         let fills = self.fill_regions.clone();
-        for f in fills {
+        for (index,f) in fills.into_iter().enumerate() {
             let n = f.x.len().min(f.y1.len()).min(f.y2.len());
             if n >= 2 {
                 let mut xs = Vec::with_capacity(n * 2);
@@ -408,7 +423,20 @@ impl Widget for LinePlot {
                     xs.push(f.x[i]);
                     ys.push(f.y2[i]);
                 }
-                self.plot_view.fill_polygon_data(&xs, &ys, f.color);
+                if let Some(Some(paint))=self.fill_paints.get(index) {
+                    let pr=*self.plot_view.plot_rect();
+                    paint.apply(&mut self.plot_view.draw_vector,pr.pos.x as f32,pr.pos.y as f32,pr.size.x as f32,pr.size.y as f32);
+                    for i in 0..xs.len() {
+                        let (px,py)=self.plot_view.data_to_px(xs[i],ys[i]);
+                        if i==0 {self.plot_view.draw_vector.move_to(px,py);}else{self.plot_view.draw_vector.line_to(px,py);}
+                    }
+                    self.plot_view.draw_vector.close();self.plot_view.draw_vector.fill();
+                    self.plot_view.draw_vector.cur_gradient_row_v=-1.;
+                } else if self.gradient_fill {
+                    self.plot_view.fill_polygon_gradient(&xs, &ys, f.color);
+                } else {
+                    self.plot_view.fill_polygon_data(&xs, &ys, f.color);
+                }
             }
         }
 

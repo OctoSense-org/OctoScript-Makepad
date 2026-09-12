@@ -292,7 +292,8 @@ fn the_default_tokens_are_the_numbers_the_kit_used_to_hardcode() {
     }
     for (name, want) in [
         ("pad_page_x", 20.0),
-        ("pad_page_top", 54.0),
+        // c4e7262 removed the second status-bar clearance.
+        ("pad_page_top", 36.0),
         ("pad_page_bot", 24.0),
         ("pad_panel_x", 14.0),
         ("pad_panel_y", 12.0),

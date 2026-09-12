@@ -141,6 +141,21 @@ impl BarGroup {
     }
 }
 
+/// An interval on a numerical categorical axis, including floating/stacked bars.
+#[derive(Clone, Debug)]
+pub struct BarInterval {
+    pub x: f64,
+    pub width: f64,
+    pub low: f64,
+    pub high: f64,
+    pub color: Vec4,
+    pub paint: Option<crate::ChartPaint>,
+    pub radius: f32,
+    /// Isometric face depth in logical units; zero selects a flat bar.
+    pub depth: f32,
+    pub side_colors: Option<(Vec4,Vec4)>,
+}
+
 #[derive(Script, ScriptHook, Widget)]
 pub struct BarPlot {
     #[source]
@@ -155,6 +170,8 @@ pub struct BarPlot {
     #[rust]
     pub groups: Vec<BarGroup>,
     #[rust]
+    pub intervals: Vec<BarInterval>,
+    #[rust]
     bar_color: Option<Vec4>,
 
     #[live(0.8)]
@@ -167,12 +184,44 @@ pub struct BarPlot {
     pub show_bar_labels: bool,
     #[live(true)]
     pub demo_data: bool,
+    #[live(true)]
+    pub show_category_labels: bool,
+    #[live(true)]
+    pub show_value_ticks: bool,
 
     #[rust]
     fitted: bool,
 }
 
 impl BarPlot {
+    pub fn set_intervals(&mut self, intervals: Vec<BarInterval>, domain: [f64;4]) {
+        self.intervals=intervals;
+        self.values.clear(); self.groups.clear();
+        self.plot_view.set_viewport(domain[0],domain[1],domain[2],domain[3]);
+        self.fitted=true;
+    }
+
+    fn draw_intervals(&mut self) {
+        for bar in &self.intervals {
+            let (x0,y0)=self.plot_view.data_to_px(bar.x-bar.width*0.5,bar.high);
+            let (x1,y1)=self.plot_view.data_to_px(bar.x+bar.width*0.5,bar.low);
+            let (x,y,w,h)=(x0.min(x1),y0.min(y1),(x1-x0).abs(),(y1-y0).abs());
+            if w<=0. || h<=0. {continue;}
+            if bar.depth>0. {
+                let d=bar.depth;let mid=x+w*0.5;
+                let (left,right)=bar.side_colors.unwrap_or((bar.color,bar.color));
+                self.plot_view.fill_polygon_px(&[(x,y+d),(mid,y+2.*d),(mid,y+h),(x,y+h-d)],left);
+                self.plot_view.fill_polygon_px(&[(mid,y+2.*d),(x+w,y+d),(x+w,y+h-d),(mid,y+h)],right);
+                self.plot_view.fill_polygon_px(&[(x,y+d),(mid,y),(x+w,y+d),(mid,y+2.*d)],bar.color);
+            } else {
+                self.plot_view.set_color(bar.color);
+                if let Some(paint)=&bar.paint {paint.apply(&mut self.plot_view.draw_vector,x,y,w,h);}
+                self.plot_view.draw_vector.rounded_rect(x,y,w,h,bar.radius.min(w*0.5).min(h*0.5));
+                self.plot_view.draw_vector.fill();
+                self.plot_view.draw_vector.cur_gradient_row_v=-1.;
+            }
+        }
+    }
     // ---- Rust-side API (mirrors the 1.0 library surface) ----
 
     /// Set bar data (simple mode - single series)
@@ -441,6 +490,7 @@ impl BarPlot {
     }
 
     fn draw_bars(&mut self, cx: &mut Cx2d) {
+        if !self.intervals.is_empty() {self.draw_intervals();return;}
         if !self.groups.is_empty() {
             if self.stacked {
                 self.draw_stacked_bars(cx);
@@ -459,7 +509,7 @@ impl Widget for BarPlot {
     }
 
     fn draw_walk(&mut self, cx: &mut Cx2d, _scope: &mut Scope, walk: Walk) -> DrawStep {
-        if self.values.is_empty() && self.groups.is_empty() && self.demo_data {
+        if self.values.is_empty() && self.groups.is_empty() && self.intervals.is_empty() && self.demo_data {
             self.make_demo_data();
         }
         if !self.fitted {
@@ -470,16 +520,15 @@ impl Widget for BarPlot {
 
         // Manual value-axis grid + tick labels (numeric ticks are disabled in
         // the prototype since one axis is categorical).
-        if self.horizontal {
-            draw_value_ticks_x(&mut self.plot_view, cx);
-        } else {
-            draw_value_ticks_y(&mut self.plot_view, cx);
+        if self.show_value_ticks {
+            if self.horizontal {draw_value_ticks_x(&mut self.plot_view, cx);}
+            else {draw_value_ticks_y(&mut self.plot_view, cx);}
         }
 
         self.plot_view.draw_axes(cx); // border + title + axis labels
 
         self.draw_bars(cx);
-        self.draw_category_labels(cx);
+        if self.show_category_labels {self.draw_category_labels(cx);}
 
         // Legend for grouped bars
         let entries: Vec<(String, Vec4)> = self

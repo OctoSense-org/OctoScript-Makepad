@@ -57,14 +57,14 @@
 // pairing in the whole corpus, and one family token cannot express it.
 fn l0_txt(s, size, weight, color) {
     return {t: "text", text: s, size: size, weight: weight, color: color, fith: 1,
-            family: l0_family, tracking: l0_tracking}
+             family: l0_family, tracking: l0_tracking, font_src: l0_font_src}
 }
 
 // Text that may wrap. `fillw` is what lets it, and forcing it on a short hero
 // wrapped "Top Movers" one character per line on device — so it is opt-in.
 fn l0_para(s, size, weight, color) {
     return {t: "text", text: s, size: size, weight: weight, color: color,
-            fillw: 1, fith: 1, family: l0_family, tracking: l0_tracking}
+            fillw: 1, fith: 1, family: l0_family, tracking: l0_tracking, font_src: l0_font_src}
 }
 
 fn l0_gap(px)   { return {t: "column", h: px} }
@@ -244,7 +244,8 @@ fn l0_surface(kids) {
 // A page whose background is a photo, with a scrim so text stays legible over
 // whatever the image turns out to be.
 fn l0_surface_photo(src, kids) {
-    return {t: "stack", fillw: 1, fillh: 1, c: [
+    // A missing or pending photo must expose the kit's page, not the host black.
+    return {t: "stack", fillw: 1, fillh: 1, bg: l0_base, c: [
         {t: "image", src: src, fit: 2, fillw: 1, fillh: 1},
         // Two stops, not one wash: bright sky at the top, near-black under
         // the content. The L1 immersive exemplar this mood was ported from had
@@ -320,6 +321,14 @@ fn l0_mapchip(s) {
     return {t: "column", w: 38, h: 38, radius: 19, bg: l0_sheet,
             alignx: 0.5, aligny: 0.5, c: [l0_txt(s, 11, 600, l0_text)]}
 }
+
+// Functions close over bindings that exist at declaration time.
+fn l0_mapbtn(glyph, act) {
+    return {t: "column", w: 38, h: 38, alignx: 0.5, aligny: 0.5, action: act,
+            c: [l0_title(glyph)]}
+}
+
+fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
 
 fn l0_mapcontrols(which, sidekids, hasside) {
     let ring = {t: "column", fitw: 1, fith: 1, bg: l0_sheet, radius: 19, c: [
@@ -579,7 +588,6 @@ fn l0_avatar(s) {
             c: [ l0_txt(s, font_caption, weight_semi, l0_ondark) ]}
 }
 
-fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
 
 // A labelled value — the unit a detail grid is made of.
 // A calendar day: a fixed SQUARE cell — flat sheet, hairline border, the
@@ -830,11 +838,6 @@ fn l0_tap_fit(target, node) {
 // the frame before the first fix lands.
 // One control on a map: a fixed square that carries a glyph and an ACTION the
 // backend turns into a call on the map. The card never names the call.
-fn l0_mapbtn(glyph, act) {
-    return {t: "column", w: 38, h: 38, alignx: 0.5, aligny: 0.5, action: act,
-            c: [l0_title(glyph)]}
-}
-
 fn l0_map(mode, zoom, lat, lon, poly, pins, badge) {
     // `pins` stands the trip's own endpoints on the route: green origin, blue
     // stops, red destination. Derived from the SAME coordinates as `poly`, so a
@@ -907,7 +910,8 @@ fn l0_aqicontour(lat, lon, span) {
 
 // A price series. Likewise: the card names WHICH series and over what window.
 fn l0_stockplot(symbol, range) {
-    return {t: "stockplot", fillw: 1, h: 180, symbol: symbol, range: range}
+    return {t: "stockplot", fillw: 1, h: 180, symbol: symbol, range: range,
+            color: l0_dim}
 }
 
 // Several countries on one axis. The card names them and the indicator; the
