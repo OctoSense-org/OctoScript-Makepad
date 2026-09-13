@@ -9,6 +9,20 @@ use makepad_script::traits::*;
 use makepad_script::*;
 use octoscript_node::{Attrs, NodeKind, UiNode};
 
+/// Evaluate a complete document under an instruction budget, rejecting it if
+/// evaluation raised any error — even one a later expression recovered from.
+/// Native calls and parsing are outside the budget. This is `ScriptVm::eval_checked`
+/// from the makepad lineage the L0 work was written against, expressed with the
+/// APIs the workspace's pinned makepad revision has (`with_instruction_limit` and
+/// the captured-error sink), so both stay usable from one call site.
+pub fn eval_checked(vm: &mut ScriptVm, script_mod: ScriptMod, limit: usize) -> Option<ScriptValue> {
+    let previous_sink = vm.bx.captured_errors.replace(Vec::new());
+    let value = vm.with_instruction_limit(limit, |vm| vm.eval(script_mod));
+    let errors = vm.take_errors();
+    vm.bx.captured_errors = previous_sink;
+    (!value.is_nil() && !value.is_err() && errors.is_empty()).then_some(value)
+}
+
 /// Evaluate Octoscript `src` and walk it into a `UiNode` tree.
 ///
 /// `register` runs against the fresh VM *before* evaluation so the host can
@@ -17,11 +31,10 @@ use octoscript_node::{Attrs, NodeKind, UiNode};
 /// Returns `None` for evaluation errors, exhausted execution/tree budgets or any
 /// malformed node. A failed child invalidates the entire tree.
 pub fn build(src: &str, register: impl FnOnce(&mut ScriptVm)) -> Option<UiNode> {
-    let mut std_slot = 0;
-    let mut host = 0;
+    // No host state and no std slot: the renderer only needs the VM itself.
+    let mut host = ScriptVmHost::new((), ());
     let vm = &mut ScriptVm {
         host: &mut host,
-        std: &mut std_slot,
         bx: Box::new(ScriptVmBase::new()),
     };
 
@@ -43,7 +56,8 @@ pub fn build(src: &str, register: impl FnOnce(&mut ScriptVm)) -> Option<UiNode> 
     crate::l0_helpers::install(vm, sys);
     vm.set_injected_global(id!(sys), sys.into());
 
-    let value = vm.eval_checked(
+    let value = eval_checked(
+        vm,
         ScriptMod {
             cargo_manifest_path: String::new(),
             module_path: String::from("octoscript"),
