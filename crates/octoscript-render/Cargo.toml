@@ -8,7 +8,7 @@ description = "Backend-agnostic Octoscript DSL renderer core: makepad-script VM 
 serde_json = "1"
 # The Octoscript VM only. Renderer-free by construction — no makepad-platform, no
 # draw, no widgets. Backends turn the resulting UiNode tree into their widgets.
-makepad-script = { path = "../../../makepad/platform/script" }
+makepad-script = { workspace = true }
 # The node model, which needs no VM. Split out so a host that already has a
 # VM can take the branch point without taking this crate's lineage.
 octoscript-node = { path = "../octoscript-node" }

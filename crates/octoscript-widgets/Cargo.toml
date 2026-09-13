@@ -15,4 +15,4 @@ description = "Themed native-widget kits for makepad (M3 / iOS / liquid-glass) a
 serde_json = "1"
 # Upstream makepad — fork-free. The makepad-script rev pulled transitively here
 # must match the one octoscript-render pins (align both when wiring an app).
-makepad-widgets = { path = "../../../makepad/widgets" }
+makepad-widgets = { workspace = true }
