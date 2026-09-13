@@ -116,8 +116,7 @@ impl App {
             values: Vec::new(),
         };
         let view = cx.with_vm(|vm| {
-            let value = vm
-                .eval_checked(sm, 2_000_000)
+            let value = octoscript_render::eval_checked(vm, sm, 2_000_000)
                 .ok_or("native VM rejected the widget tree")?;
             Ok::<_, String>(View::script_from_value(vm, value))
         })?;

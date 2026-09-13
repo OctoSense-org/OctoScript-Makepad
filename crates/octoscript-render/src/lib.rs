@@ -15,7 +15,7 @@
 mod eval;
 mod l0_helpers;
 
-pub use eval::{add_global_fn, build, num_prop, prop, string_prop};
+pub use eval::{add_global_fn, build, eval_checked, num_prop, prop, string_prop};
 
 /// The node model, re-exported.
 ///
