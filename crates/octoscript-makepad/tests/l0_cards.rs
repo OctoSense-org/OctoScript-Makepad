@@ -23,6 +23,46 @@ const WEATHER: &str = include_str!("../../../../Octoscript/crates/octoscript-ui-
 const NEWS: &str = include_str!("../../../../Octoscript/crates/octoscript-ui-l0/tests/fixtures/news.card");
 const STOCK: &str = include_str!("../../../../Octoscript/crates/octoscript-ui-l0/tests/fixtures/stock.card");
 
+/// Evaluate `src` in a VM that has a `sys` the cards can call and get nothing from.
+///
+/// Every reference card reads its live values through `sys.*` — `sys.news(0,
+/// "title")`, `sys.geocodenum("", "lat")`, and the kit's own `sys.satellite` —
+/// and the engine now holds Octoscript's contract that an uncaught error ends a
+/// plain evaluation. A bare VM has no `sys`, so the first call is "variable sys
+/// not found" and the whole card evaluates to nil. These tests are about the
+/// SHAPE the kit produces, not the values a backend fetches, so `sys` here is
+/// an object with one function per `sys.<name>(` the source mentions, each
+/// answering empty: `0` for the two that are numeric by name, since their
+/// result feeds arithmetic in the kit, and `""` for the rest.
+fn build_with_sys_stub(src: &str) -> Option<octoscript_render::UiNode> {
+    use octoscript_render::makepad_script::makepad_live_id::*;
+    use octoscript_render::makepad_script::ScriptValue;
+
+    let mut names: Vec<&str> = src
+        .match_indices("sys.")
+        .map(|(i, _)| &src[i + 4..])
+        .filter_map(|rest| {
+            let end = rest.find(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))?;
+            (end > 0 && rest[end..].starts_with('(')).then(|| &rest[..end])
+        })
+        .collect();
+    names.sort();
+    names.dedup();
+
+    octoscript_render::build(src, move |vm| {
+        let sys = vm.bx.heap.new_object();
+        for name in names {
+            let f = if matches!(name, "num" | "geocodenum") {
+                octoscript_render::add_global_fn(vm, &[], |_, _| ScriptValue::from_f64(0.0))
+            } else {
+                octoscript_render::add_global_fn(vm, &[], |vm, _| vm.bx.heap.new_string_from_str(""))
+            };
+            vm.bx.heap.set_value_def(sys, LiveId::from_str(name).into(), f);
+        }
+        vm.set_injected_global(id!(sys), sys.into());
+    })
+}
+
 fn build(card: &str, data: serde_json::Value) -> octoscript_render::UiNode {
     let report = realize(card, &data, RealizeLimits::default());
     assert!(
@@ -33,7 +73,7 @@ fn build(card: &str, data: serde_json::Value) -> octoscript_render::UiNode {
     let root = report.root.expect("a realized tree");
     // The tail is a bare VARIABLE, not a call — `fn f() {…}` then `f()` is nil.
     let src = format!("{KIT}\n{}", kit::lower(&root));
-    octoscript_render::build(&src, |_vm| {})
+    build_with_sys_stub(&src)
         .unwrap_or_else(|| panic!("the lowered card evaluated to nil:\n{}", kit::lower(&root)))
 }
 
@@ -243,7 +283,7 @@ fn the_data_visualisations_reach_the_tree_as_themselves() {
         STOCK, &stock_data(), &store, RealizeLimits::default());
     let src = format!("{KIT}\n{}", kit::lower(&report.root.expect("root")));
     kinds(
-        &octoscript_render::build(&src, |_vm| {}).expect("detail evaluates"),
+        &build_with_sys_stub(&src).expect("detail evaluates"),
         &mut out,
     );
     assert!(out.iter().any(|k| k == "StockPlot"), "StockPlot missing: {out:?}");
