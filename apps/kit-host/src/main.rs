@@ -1,7 +1,7 @@
-//! kit-host — a generic app shell that renders a Splash **component kit** as
+//! kit-host — a generic app shell that renders a Octoscript **component kit** as
 //! native makepad widgets, against **upstream** makepad. It bakes one kit's
-//! `.splash` (Material 3 here) and mounts it via the splash pipeline; native
-//! controls are themed fork-free by `splash_widgets` (no makepad fork).
+//! `.octoscript` (Material 3 here) and mounts it via the octoscript pipeline; native
+//! controls are themed fork-free by `octoscript_widgets` (no makepad fork).
 //!
 //! Swap the baked kit (or push to the device path) to render iOS / liquid-glass.
 
@@ -14,7 +14,7 @@ mod screens;
 app_main!(App);
 
 // The route file the sweep writes, and the DSL override for hot-reload.
-const DEVICE_PATH: &str = "/data/local/tmp/kit_host.splash";
+const DEVICE_PATH: &str = "/data/local/tmp/kit_host.octoscript";
 const ROUTE_PATH: &str = "/data/local/tmp/kit_host.route";
 
 /// Toolbar height. Paired with the 20dp inset above it: the two sum to the
@@ -24,7 +24,7 @@ const BAR_H: f32 = 39.6;
 /// Adapter: the isolate hook takes a plain `fn(&mut ScriptVm)`, while a
 /// `script_mod!` block returns a `ScriptValue`.
 fn register_tap_mod(vm: &mut ScriptVm) {
-    splash_widgets::tap::script_mod(vm);
+    octoscript_widgets::tap::script_mod(vm);
 }
 
 /// A slider the host drives: its state slot, the DSL's range, and the value
@@ -39,8 +39,8 @@ pub struct SliderBind {
 }
 
 /// Collect every keyed slider in a semantic tree.
-fn collect_sliders(node: &splash_render::UiNode, out: &mut Vec<SliderBind>) {
-    if node.kind == splash_render::NodeKind::Slider {
+fn collect_sliders(node: &octoscript_render::UiNode, out: &mut Vec<SliderBind>) {
+    if node.kind == octoscript_render::NodeKind::Slider {
         if let Some(k) = node.attrs.key.as_deref() {
             let lo = node.attrs.min.unwrap_or(0.0);
             let hi = node.attrs.max.unwrap_or(1.0);
@@ -139,11 +139,11 @@ impl App {
     /// higher than the reference's on every single route, which is most of the
     /// residual difference between the two even where the content matches.
     fn with_toolbar(
-        body: splash_render::UiNode,
-        r: &splash_makepad::material::Roles,
+        body: octoscript_render::UiNode,
+        r: &octoscript_makepad::material::Roles,
         route: &str,
-    ) -> splash_render::UiNode {
-        use splash_render::{Attrs, NodeKind, UiNode};
+    ) -> octoscript_render::UiNode {
+        use octoscript_render::{Attrs, NodeKind, UiNode};
         let n = |kind| UiNode { kind, attrs: Attrs::default(), children: Vec::new() };
         // The reference's own screen titles.
         let title = l0::title_of(route).unwrap_or_else(|| screens::title_of(route));
@@ -274,10 +274,10 @@ impl App {
     /// This is that host half — without it the triggers are inert and the
     /// modal-hosting screens are pictures of buttons.
     fn with_modal(
-        screen: splash_render::UiNode,
-        r: &splash_makepad::material::Roles,
-    ) -> splash_render::UiNode {
-        use splash_render::{Attrs, NodeKind, UiNode};
+        screen: octoscript_render::UiNode,
+        r: &octoscript_makepad::material::Roles,
+    ) -> octoscript_render::UiNode {
+        use octoscript_render::{Attrs, NodeKind, UiNode};
         let n = |kind| UiNode { kind, attrs: Attrs::default(), children: Vec::new() };
         let text = |s: &str, size: f32, w: i32, c: u32| {
             let mut t = n(NodeKind::Text);
@@ -430,7 +430,7 @@ impl App {
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
             // Desktop has no /data/local/tmp; the env var is its route file.
-            .or_else(|| std::env::var("SPLASH_ROUTE").ok())
+            .or_else(|| std::env::var("OCTOSCRIPT_ROUTE").ok())
             .unwrap_or_else(|| "button".to_string())
     }
 
@@ -460,7 +460,7 @@ impl App {
     }
 
     /// Translate + mount the active screen: inject app state as one `st = {…}`
-    /// object, run the splash pipeline, feed makepad's dialect into the host.
+    /// object, run the octoscript pipeline, feed makepad's dialect into the host.
     fn mount(&mut self, cx: &mut Cx) {
         let src = self.current_source();
         let route = if self.screen.is_empty() {
@@ -488,11 +488,11 @@ impl App {
         if state_get("win_class").is_empty() {
             state_set("win_class", "Compact (384dp)");
         }
-        // Deterministic state for screenshots: `SPLASH_SEED=k=v;k=v` writes the
+        // Deterministic state for screenshots: `OCTOSCRIPT_SEED=k=v;k=v` writes the
         // store before the first mount, so a sweep can photograph a screen in a
         // chosen state with no input driver at all. The QA loop's other half:
         // the route file picks the screen, this picks the state.
-        if let Ok(seed) = std::env::var("SPLASH_SEED") {
+        if let Ok(seed) = std::env::var("OCTOSCRIPT_SEED") {
             for pair in seed.split(';').filter(|p| p.contains('=')) {
                 let (k, v) = pair.split_once('=').unwrap();
                 if state_get(k.trim()).is_empty() {
@@ -500,13 +500,13 @@ impl App {
                 }
             }
         }
-        if let Some(node) = splash_render::build(&full, register_state) {
+        if let Some(node) = octoscript_render::build(&full, register_state) {
             // Every reference screen is rooted in its own `scroll`. This shell
             // already provides one, and the mounted `Splash` is height:Fit — so a
             // nested Fill scroll resolves to zero height and the screen renders
             // blank. Unwrap it and let the shell's scroller do the scrolling.
             let node = match node.kind {
-                splash_render::NodeKind::Scroll if node.children.len() == 1 => {
+                octoscript_render::NodeKind::Scroll if node.children.len() == 1 => {
                     node.children.into_iter().next().unwrap()
                 }
                 _ => node,
@@ -520,15 +520,15 @@ impl App {
             // reference screens carry no background of their own. Here the shell
             // is that theme: wrap the mount in the surface role, or every screen
             // draws its ink onto makepad's default grey.
-            let roles = splash_makepad::material::Roles::reference_dark();
+            let roles = octoscript_makepad::material::Roles::reference_dark();
             // Toolbar *outside* the padded page, modal outside that. Applying the
             // page's 16dp above the bar pushed it 39px below the reference's
             // (title at y106 against y67) while squeezing the bar-to-content gap
             // to 74px against 101 — two errors that partly cancelled and left
             // every screen's content 12px low.
-            let mut page = splash_render::UiNode {
-                kind: splash_render::NodeKind::Column,
-                attrs: splash_render::Attrs::default(),
+            let mut page = octoscript_render::UiNode {
+                kind: octoscript_render::NodeKind::Column,
+                attrs: octoscript_render::Attrs::default(),
                 children: vec![node],
             };
             // Keep the wrapper's own padding and rhythm. Removing it on the
@@ -574,9 +574,9 @@ impl App {
             // layer is given the viewport height explicitly and the content sits
             // on top — otherwise every short screen showed makepad's grey below
             // the last widget where the reference shows unbroken surface.
-            let mut backing = splash_render::UiNode {
-                kind: splash_render::NodeKind::Column,
-                attrs: splash_render::Attrs::default(),
+            let mut backing = octoscript_render::UiNode {
+                kind: octoscript_render::NodeKind::Column,
+                attrs: octoscript_render::Attrs::default(),
                 children: Vec::new(),
             };
             backing.attrs.bg = Some(roles.surface);
@@ -586,19 +586,19 @@ impl App {
             // toolbar kept titling the index "Button".
             let page = Self::with_toolbar(page, &roles, route);
             let page = Self::with_modal(page, &roles);
-            let mut stack = splash_render::UiNode {
-                kind: splash_render::NodeKind::Stack,
-                attrs: splash_render::Attrs::default(),
+            let mut stack = octoscript_render::UiNode {
+                kind: octoscript_render::NodeKind::Stack,
+                attrs: octoscript_render::Attrs::default(),
                 children: vec![backing, page],
             };
             stack.attrs.fillw = Some(1);
             let node = stack;
-            let ui = splash_makepad::to_makepad_ui(&node);
+            let ui = octoscript_makepad::to_makepad_ui(&node);
             // Mount on the app's MAIN VM.
             //
             // `Splash::set_text` allocates an isolate that only ever receives
             // makepad's own `script_mod`, which is why this crate's Roboto could
-            // not resolve (every label blanked) and why splash-widgets' M3
+            // not resolve (every label blanked) and why octoscript-widgets' M3
             // control theming never applied. Evaluating here with `cx.with_vm`
             // and handing the built `View` to the host widget keeps both in
             // reach. Taps survive because the handler now calls the `NAV` global
@@ -668,27 +668,27 @@ fn take_tap() -> Option<String> {
 
 /// `S(key)` -> the slot as a string (""" when unset); `N(key, dflt)` -> its number.
 fn register_state(vm: &mut ScriptVm) {
-    let f_s = splash_render::add_global_fn(vm, &[(live_id!(k), ScriptValue::NIL)], |vm, a| {
-        let k = splash_render::string_prop(vm, a, live_id!(k)).unwrap_or_default();
+    let f_s = octoscript_render::add_global_fn(vm, &[(live_id!(k), ScriptValue::NIL)], |vm, a| {
+        let k = octoscript_render::string_prop(vm, a, live_id!(k)).unwrap_or_default();
         let v = state_get(&k);
         vm.bx.heap.new_string_from_str(&v)
     });
     vm.set_injected_global(live_id!(S), f_s);
 
-    let f_n = splash_render::add_global_fn(
+    let f_n = octoscript_render::add_global_fn(
         vm,
         &[(live_id!(k), ScriptValue::NIL), (live_id!(d), ScriptValue::NIL)],
         |vm, a| {
-            let k = splash_render::string_prop(vm, a, live_id!(k)).unwrap_or_default();
-            let d = splash_render::num_prop(vm, a, live_id!(d)).unwrap_or(0.0);
+            let k = octoscript_render::string_prop(vm, a, live_id!(k)).unwrap_or_default();
+            let d = octoscript_render::num_prop(vm, a, live_id!(d)).unwrap_or(0.0);
             let v = state_get(&k);
             ScriptValue::from_f64(v.trim().parse::<f64>().unwrap_or(d))
         },
     );
     vm.set_injected_global(live_id!(N), f_n);
 
-    let f_nav = splash_render::add_global_fn(vm, &[(live_id!(t), ScriptValue::NIL)], |vm, a| {
-        let t = splash_render::string_prop(vm, a, live_id!(t)).unwrap_or_default();
+    let f_nav = octoscript_render::add_global_fn(vm, &[(live_id!(t), ScriptValue::NIL)], |vm, a| {
+        let t = octoscript_render::string_prop(vm, a, live_id!(t)).unwrap_or_default();
         if let Ok(mut q) = TAPS.lock() {
             q.push(t);
         }
@@ -701,7 +701,7 @@ impl MatchEvent for App {
     /// Drive the drawn track from the invisible native slider under it.
     ///
     /// The value arrives as `<index>.<fraction>`: a widget inside a mounted
-    /// Splash body cannot be found by id from out here -- `widget_flood` returns
+    /// Octoscript body cannot be found by id from out here -- `widget_flood` returns
     /// nothing -- but its actions do escape, so the Material lowering gives each
     /// slider its own unit band and the index rides out in the one field that
     /// travels. See `sl_native`.
@@ -776,7 +776,7 @@ impl AppMain for App {
             mod.theme = mod.themes.dark
         });
         // Fork-free themed widgets (Material 3), against upstream makepad.
-        splash_widgets::widgets_mod(vm);
+        octoscript_widgets::widgets_mod(vm);
         // `S`/`N`/`NAV` on the **app** VM as well as the build VM. The mounted
         // body evaluates here (`cx.with_vm`), so without this its `on_click`
         // handlers raise "variable NAV not found in scope" and every tap in the
@@ -794,21 +794,21 @@ impl AppMain for App {
             // Match the reference's own scheme, not the M3 baseline: that device
             // runs Material You, so a baseline-purple render can only ever be
             // compared structurally.
-            // Put `SplashTap` in reach of every mounted body. A Splash isolate
+            // Put `OctoscriptTap` in reach of every mounted body. A Octoscript isolate
             // receives makepad's own script mods and nothing else, so a widget
             // type defined out here is invisible to a body -- which is why the
             // tap target had to be a `Button`, and why a tappable row starved
             // the scroll: `Button::handle_event` captures the finger on
-            // touch-down. `SplashTap` never calls `event.hits`, so the scroll
+            // touch-down. `OctoscriptTap` never calls `event.hits`, so the scroll
             // sees the whole gesture. Must run before the first mount, since an
             // isolate takes its mods at allocation.
             makepad_widgets::widget_async::register_splash_isolate_mod(register_tap_mod);
-            splash_makepad::set_scheme(splash_makepad::material::Roles::reference_dark());
+            octoscript_makepad::set_scheme(octoscript_makepad::material::Roles::reference_dark());
             // The width a wrapping row packs into. Left at its 340dp default the
             // flow wrapped a row early — the content is 354dp here (measured:
             // x45-1034), and the shortfall is what made the button screen drop
             // its third button to a second line whenever the buttons widened.
-            splash_makepad::material::set_flow_width(354.0);
+            octoscript_makepad::material::set_flow_width(354.0);
             // The sweep's route, not `home` -- which was never a route at all, so
             // `source_for` fell through to the first screen and drew `adaptive`
             // under the literal title "home".

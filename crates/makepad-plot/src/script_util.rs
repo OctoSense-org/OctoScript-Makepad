@@ -1,4 +1,4 @@
-// Helpers for parsing Splash ScriptValue arguments in widget script_call methods
+// Helpers for parsing Octoscript ScriptValue arguments in widget script_call methods
 
 use makepad_widgets::*;
 

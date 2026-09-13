@@ -5,7 +5,7 @@ use makepad_plot::{LinePlot,ScatterPlot,DonutArcStyle,DonutChart,DonutSlice,BarP
 use serde_json::{Value,json};
 use sha2::{Digest,Sha256};
 use std::{collections::BTreeMap,path::{Path,PathBuf}};
-use splash_widgets::progress::DesignProgressBar;
+use octoscript_widgets::progress::DesignProgressBar;
 
 #[derive(Default)]
 pub struct Session {

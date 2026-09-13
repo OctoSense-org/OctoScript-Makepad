@@ -2,7 +2,7 @@
 
 Taskplan, Atro and Camo have registered token catalogs, typed L0 component
 libraries, and source-linked screen instances. The native Makepad implementation
-is shared in `splash-widgets::design` and `splash-widgets::kit`; register both
+is shared in `octoscript-widgets::design` and `octoscript-widgets::kit`; register both
 `script_mod` functions after the base widgets when hosting these packs.
 
 Each theme directory contains:
@@ -74,8 +74,8 @@ L0 ledger + host data
   → checked realization of component props, state and slots
   → theme registry + token resolution + checked placement bindings
   → portable native widget tree
-  → splash-makepad design translator
-  → splash-widgets native controls, views, labels, SVG and images
+  → octoscript-makepad design translator
+  → octoscript-widgets native controls, views, labels, SVG and images
 ```
 
 Unknown components/tokens/props, mismatched placements, duplicate instance IDs,
@@ -83,7 +83,7 @@ and unsupported theme-axis overrides fail the entire card. Standard L0 roles
 such as `TextBody` also receive the imported theme's source font and measured
 type scale through the file-backed L0 loader.
 
-Use `splash_makepad::l0::prepare(card, data, kit_dir)` and select the native design
+Use `octoscript_makepad::l0::prepare(card, data, kit_dir)` and select the native design
 translator when `PreparedCard.native_components` is true. The beauty host and
 the `beauty_check` example exercise this path. The legacy direct L0-to-widget
 dialect has no pack registry and reports that a registered kit host is required.

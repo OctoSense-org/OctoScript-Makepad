@@ -1,0 +1,14 @@
+// Axis delta: ground .indigo — nine seeds; `_derive_color.octoscript`
+// computes the palette from them in-kit. The VIVID brand-blue page the Atro
+// kit paints whole screens with; violet is its quiet sibling.
+// Ink 6.19:1 on this ground.
+let seed_on       = 1
+let seed_ground_r = 64
+let seed_ground_g = 72
+let seed_ground_b = 239
+let seed_ink_r    = 255
+let seed_ink_g    = 255
+let seed_ink_b    = 255
+let seed_accent_r = 255
+let seed_accent_g = 255
+let seed_accent_b = 255

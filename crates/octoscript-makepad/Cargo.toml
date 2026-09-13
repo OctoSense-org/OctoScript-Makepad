@@ -1,0 +1,29 @@
+[package]
+name = "octoscript-makepad"
+version = "0.1.0"
+edition = "2021"
+description = "makepad render backend for Octoscript: shared UiNode -> makepad UI dialect"
+
+[dependencies]
+# Only the shared render core — the UiNode -> makepad translation is pure and
+# needs no makepad-platform/draw/widgets to build or test. A host app that puts
+# the output on screen pulls in makepad-widgets itself (see the Android app).
+octoscript-render = { path = "../octoscript-render" }
+octoscript-ui-l0 = { path = "../../../octoscript/crates/octoscript-ui-l0" }
+serde_json = "1"
+
+[[example]]
+name = "translate"
+path = "examples/translate.rs"
+
+[[example]]
+name = "assemble"
+path = "examples/assemble.rs"
+
+[dev-dependencies]
+# The L0 profile, to verify its KIT LOWERING against the renderer that consumes
+# it. Safe as a dependency only because the profile was extracted from
+# octoscript-core: it depends on serde_json alone, so it drags in neither makepad
+# lineage and cannot collide with this workspace's in the lockfile.
+octoscript-ui-l0 = { path = "../../../octoscript/crates/octoscript-ui-l0" }
+serde_json  = "1"

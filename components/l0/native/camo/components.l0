@@ -1485,12 +1485,12 @@ component CamoActionAdventureddc5cfb4(p0: text, p0_text: text, p1: text, p1_text
   CamoTextBody7982ca5750(instance: p3, text: p3_text)
 }
 }
-component CamoActionSplashb388d3d0(p0: text, p1: text, p1_text: text) {
+component CamoActionOctoscriptb388d3d0(p0: text, p1: text, p1_text: text) {
   view CamoClip47177b2fe0(instance: p0) {
   CamoTextBody7c23e7a4df(instance: p1, text: p1_text)
 }
 }
-component CamoActionSplashf2f89213(p0: text, p0_text: text, p1: text, p2: text, p2_text: text) {
+component CamoActionOctoscriptf2f89213(p0: text, p0_text: text, p1: text, p2: text, p2_text: text) {
   view CamoRichTexte9c2aa9616(instance: p0, text: p0_text) {
   CamoClip47177b2fe0(instance: p1) {
     CamoTextBody7c23e7a4df(instance: p2, text: p2_text)

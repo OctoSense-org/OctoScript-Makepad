@@ -61,14 +61,14 @@ pub mod layout;
 pub mod render3d;
 pub mod scale;
 pub mod shape;
-pub mod splash;
+pub mod octoscript;
 
-/// Register the `d3` Splash script module: chart widgets under `d3.*`
+/// Register the `d3` Octoscript script module: chart widgets under `d3.*`
 /// plus the 3D drawing shader types.
 ///
 /// Call this from your app's `AppMain::script_mod`, after
 /// `makepad_widgets::script_mod(vm)` (the `d3` module is also injected
-/// into the widgets prelude, so Splash bodies that open with
+/// into the widgets prelude, so Octoscript bodies that open with
 /// `use mod.prelude.widgets.*` can write `d3.BarChart{...}` directly):
 ///
 /// ```rust,ignore
@@ -83,24 +83,24 @@ pub mod splash;
 /// ```
 pub fn script_mod(vm: &mut makepad_widgets::ScriptVm) {
     // Creates the `mod.d3` namespace — must run before the registrations.
-    let _ = splash::script_mod(vm);
+    let _ = octoscript::script_mod(vm);
     // 3D shader types (mod.d3.DrawSurface3D, ...).
     let _ = render3d::draw::script_mod(vm);
-    // Sandboxed splash-body host (mod.d3.Splash).
-    let _ = splash::host::script_mod(vm);
+    // Sandboxed octoscript-body host (mod.d3.Octoscript).
+    let _ = octoscript::host::script_mod(vm);
     // Chart widgets (mod.d3.BarChart, ...) + widgets-prelude injection.
-    let _ = splash::charts::script_mod(vm);
+    let _ = octoscript::charts::script_mod(vm);
     // Statistical charts (mod.d3.Histogram, Heatmap, RadarChart, BoxPlot).
-    let _ = splash::charts_stat::script_mod(vm);
+    let _ = octoscript::charts_stat::script_mod(vm);
     // Hierarchy charts (mod.d3.Treemap, Sunburst, CirclePack, TreeChart).
-    let _ = splash::charts_hier::script_mod(vm);
+    let _ = octoscript::charts_hier::script_mod(vm);
     // Flow charts (mod.d3.Sankey, ChordDiagram, ArcDiagram).
-    let _ = splash::charts_flow::script_mod(vm);
+    let _ = octoscript::charts_flow::script_mod(vm);
     // Network/density/geo charts (mod.d3.ForceGraph, Hexbin, Ridgeline,
     // Horizon, Contour, Globe).
-    let _ = splash::charts_net::script_mod(vm);
+    let _ = octoscript::charts_net::script_mod(vm);
     // 3D charts (mod.d3.Surface3D, Scatter3D, Bar3D).
-    let _ = splash::charts_3d::script_mod(vm);
+    let _ = octoscript::charts_3d::script_mod(vm);
 }
 
 /// Prelude module for convenient imports

@@ -1,0 +1,37 @@
+// _palette_glass.octoscript — the `glass` mood, as a DELTA over `_palette_dark`.
+// See `_palette_light.octoscript` for the delta contract.
+//
+// Values from the shipped glass weather style (a2app/apps/weather/exemplars/
+// style-glass.octoscript). That style's page is a three-stop blue→violet GRADIENT;
+// `l0_base` is one colour, so the page takes the gradient's midpoint. A gradient
+// is presentation a kit could offer as its own token later — it is not something
+// the card gets to ask for.
+
+let l0_base     = argb(255,  42,  61, 102)   // #2a3d66 page — the gradient's middle
+let l0_scrim    = argb( 68,   0,   0,   0)   // #00000044 lighter; glass is already dim
+let l0_sheet    = argb(255,  32,  46,  78)   // #202e4e over a map — opaque
+// The whole point of this mood: a frosted pane is a MUCH heavier white than the
+// base's 7%, because it has to read as a surface over a saturated page.
+let l0_fill     = argb( 38, 255, 255, 255)   // #ffffff26 panel fill
+let l0_active   = argb( 85, 255, 255, 255)   // #ffffff55 selected chip
+let l0_hairline = argb( 51, 255, 255, 255)   // #ffffff33 divider
+let l0_soft     = argb(204, 255, 255, 255)   // #ffffffcc secondary
+let l0_up       = argb(255, 126, 255, 168)   // #7effa8 lifted to carry over blue
+let l0_down     = argb(255, 255, 138, 148)   // #ff8a94 a fall
+let l0_go       = argb(255,  58, 123, 213)   // #3a7bd5 the action a screen is for
+let l0_ondark   = argb(255, 255, 255, 255)   // #ffffff text on a lit fill
+let l0_danger   = argb(255, 176,  48,  64)   // #b03040 destructive fill
+let l0_danger_i = argb(255, 255, 235, 235)   // #ffebeb its ink
+
+// A frosted surface wants a softer corner than a flat one. The ONE size this
+// mood touches, and it is dialled rather than restated: 12 → 18, 14 → 21.
+let radius_factor = 1.5
+
+// Glass keeps its navy but deepens downward, so the frosted panels sit in front
+// of something rather than on top of a single tone.
+let l0_base_2 = argb(255,  10,  16,  34)   // #0a1022
+
+// The base's indigo measures 1.76:1 against this mood's navy panel — the
+// "accent bars clash" a judge named. A bar has to separate from the surface it
+// sits on, and on navy that means going lighter, not sideways in hue.
+let l0_bar = argb(255, 159, 216, 255)   // #9fd8ff  2.76:1 on the glass panel

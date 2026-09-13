@@ -1,6 +1,6 @@
 // 3D charts: View3D projection helper, Surface3D, Scatter3D, Line3D
 //
-// Ported from the Makepad 1.0 plot library to Makepad 2.0 / Splash.
+// Ported from the Makepad 1.0 plot library to Makepad 2.0 / Octoscript.
 // These are non-cartesian widgets: the PlotView is used only as a canvas
 // (background, title via draw_axes, pixel-space vector helpers) and all 3D
 // geometry is projected manually into plot_rect pixel space.
