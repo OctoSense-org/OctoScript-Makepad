@@ -276,6 +276,7 @@ impl PlotView {
                 height: Size::Fixed(self.rect.size.y),
                 margin: Inset::default(),
                 metrics: Metrics::default(),
+                ..Walk::default()
             },
             Layout {
                 clip_x: self.clip_plot,

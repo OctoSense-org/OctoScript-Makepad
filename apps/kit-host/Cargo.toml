@@ -8,12 +8,12 @@ description = "Generic app shell rendering a Octoscript component kit as native 
 # The L0 profile, so this host can realize and lower a card at runtime. Depends
 # on serde_json alone — it carries no makepad lineage, which is what makes it
 # safe here and is why it was extracted from octoscript-core.
-octoscript-ui-l0 = { path = "../../../octoscript/crates/octoscript-ui-l0" }
+octoscript-ui-l0 = { workspace = true }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 sha2 = "0.10"
 makepad-plot = { path = "../../crates/makepad-plot" }
 
-makepad-widgets = { path = "../../../makepad/widgets" }
+makepad-widgets = { workspace = true }
 octoscript-widgets = { path = "../../crates/octoscript-widgets" }
 octoscript-render = { path = "../../crates/octoscript-render" }
 octoscript-makepad = { path = "../../crates/octoscript-makepad" }

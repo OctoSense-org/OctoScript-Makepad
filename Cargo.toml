@@ -15,6 +15,15 @@ members = [
     "apps/flutter-samples",
 ]
 
+# One makepad lineage for every crate here: the OctoSense-org/makepad fork, so octosense
+# and the kits never carry two copies of makepad-widgets / makepad-script. This rev is the
+# former guofoo/makepad pin, unchanged, hosted at refs/heads/pin/octoscript-makepad-beb3857a.
+[workspace.dependencies]
+makepad-widgets = { git = "https://github.com/OctoSense-org/makepad.git", rev = "8c23d5779f643228004fd27e651ae19be9b14ab4" }
+makepad-script = { git = "https://github.com/OctoSense-org/makepad.git", rev = "8c23d5779f643228004fd27e651ae19be9b14ab4" }
+# The VM-independent Octoscript node model, from the Octoscript repo itself.
+octoscript-ui-l0 = { git = "https://github.com/OctoSense-org/Octoscript.git", branch = "rename/fix-language-review-20260904" }
+
 [profile.release]
 opt-level = 3
 lto = true
