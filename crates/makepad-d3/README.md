@@ -2,13 +2,13 @@
 
 A D3.js-compatible data visualization library for [Makepad](https://github.com/makepad/makepad)'s GPU-accelerated rendering.
 
-> **Makepad 2.0 / Splash status (2026-07):** This library now targets
-> **Makepad 2.0**, whose Script/**Splash** runtime replaced the old Live
+> **Makepad 2.0 / Octoscript status (2026-07):** This library now targets
+> **Makepad 2.0**, whose Script/**Octoscript** runtime replaced the old Live
 > system (`live_design!`). makepad-d3 registers a scriptable **`d3.*`
-> widget namespace** into the Splash VM, so charts can be written directly
-> in Splash DSL — including inside sandboxed `runsplash`-style mini apps
-> via the `d3.Splash` host widget. Design + migration record:
-> [`docs/SPLASH_INTEGRATION_DESIGN.md`](docs/SPLASH_INTEGRATION_DESIGN.md).
+> widget namespace** into the Octoscript VM, so charts can be written directly
+> in Octoscript DSL — including inside sandboxed `runsplash`-style mini apps
+> via the `d3.Octoscript` host widget. Design + migration record:
+> [`docs/OCTOSCRIPT_INTEGRATION_DESIGN.md`](docs/OCTOSCRIPT_INTEGRATION_DESIGN.md).
 
 ## Quick Run
 
@@ -16,21 +16,21 @@ Makepad 2.0 is consumed as a **sibling path dependency** (its repo vendors a
 pre-2.0 crate copy under `old/`, which makes git dependencies ambiguous):
 
 ```bash
-# NOTE: this crate now lives in the Splash-Makepad workspace, which supplies
-# makepad at ../../../makepad-splash. The standalone instructions below are kept
+# NOTE: this crate now lives in the Octoscript-Makepad workspace, which supplies
+# makepad at ../../../makepad-octoscript. The standalone instructions below are kept
 # for building it outside that workspace.
 git clone https://github.com/makepad/makepad.git --branch dev   # sibling checkout
 git clone https://github.com/mofa-org/makepad-d3.git
 cd makepad-d3
-cargo run --example splash_demo
+cargo run --example octoscript_demo
 ```
 
-This opens a dashboard whose entire UI is Splash DSL: `d3.BarChart`,
+This opens a dashboard whose entire UI is Octoscript DSL: `d3.BarChart`,
 `d3.PieChart`, `d3.LineChart`, `d3.ScatterChart` with declarative `data:`,
 script-driven `ui.chart.set_data(...)` buttons, `on_click`/`on_hover`
-closures, and a sandboxed `d3.Splash` isolate running its own splash body.
+closures, and a sandboxed `d3.Octoscript` isolate running its own octoscript body.
 
-## Using d3 charts from Splash DSL
+## Using d3 charts from Octoscript DSL
 
 ### 1. Register the `d3.*` namespace (one line of Rust)
 
@@ -64,7 +64,7 @@ scope that starts with `use mod.prelude.widgets.*` (which includes every
 
 Every chart shares the same contract — declarative props, script methods,
 and event closures. The full per-widget reference (data shapes, props,
-methods, events) is **[`docs/d3-splash.md`](docs/d3-splash.md)**; the
+methods, events) is **[`docs/d3-octoscript.md`](docs/d3-octoscript.md)**; the
 namespace at a glance:
 
 | Category | Widgets |
@@ -76,7 +76,7 @@ namespace at a glance:
 | Networks / density | `d3.ForceGraph` `d3.Hexbin` `d3.Ridgeline` `d3.Horizon` `d3.Contour` |
 | Geographic | `d3.Globe` (drag to rotate) |
 | 3D | `d3.Surface3D` `d3.Scatter3D` `d3.Bar3D` (drag to orbit, scroll to zoom) |
-| Sandbox host | `d3.Splash` |
+| Sandbox host | `d3.Octoscript` |
 
 Shared props: `width`/`height`, `plot_margin: Inset{...}`, `grid_color`,
 `label_color`. A chart with no `data:` renders a small demo dataset.
@@ -92,16 +92,16 @@ Shared props: `width`/`height`, `plot_margin: Inset{...}`, `grid_color`,
 
 **Events** — closures receive the mark index:
 
-```splash
+```octoscript
 d3.BarChart{
     on_click: |i| ui.status.set_text("clicked bar " + i)
     on_hover: |i| ui.status.set_text("hovering " + i)
 }
 ```
 
-### 3. A complete Splash snippet
+### 3. A complete Octoscript snippet
 
-```splash
+```octoscript
 View{ width: Fill height: Fit flow: Down spacing: 10
     chart := d3.BarChart{
         height: 300
@@ -119,21 +119,21 @@ View{ width: Fill height: Fit flow: Down spacing: 10
 }
 ```
 
-### 4. Sandboxed splash apps (`d3.Splash`)
+### 4. Sandboxed octoscript apps (`d3.Octoscript`)
 
-Stock `runsplash` sandboxes only see the built-in widgets. `d3.Splash` is a
+Stock `runsplash` sandboxes only see the built-in widgets. `d3.Octoscript` is a
 drop-in host that evaluates a body string in an **isolated script VM with
 `d3.*` registered** — feed it from Rust exactly like the Markdown widget
 streams ```` ```runsplash ```` fences:
 
-```splash
-host := d3.Splash{ width: Fill height: Fit }
+```octoscript
+host := d3.Octoscript{ width: Fill height: Fit }
 ```
 
 ```rust
 // e.g. in MatchEvent::handle_startup, or as a markdown code-block template
 if let Some(mut host) = self.ui.widget(cx, ids!(host))
-    .borrow_mut::<makepad_d3::splash::D3Splash>()
+    .borrow_mut::<makepad_d3::octoscript::D3Octoscript>()
 {
     host.set_text(cx, "flow: Right spacing: 12 \
         d3.PieChart{width: 240 height: 180 data: [4 3 2 1]} \
@@ -157,7 +157,7 @@ doc §8.3/§14); networking is off; the body is prefixed with
   render on the current makepad dev tip — the built-in `mod.widgets` charts
   have the same behavior; grids, marks, and `Label` widgets are unaffected.
 - The pre-2.0 Chart Zoo (40+ charts) is the porting backlog and does not
-  compile against 2.0 yet (`docs/SPLASH_INTEGRATION_DESIGN.md` §11 Phase 4).
+  compile against 2.0 yet (`docs/OCTOSCRIPT_INTEGRATION_DESIGN.md` §11 Phase 4).
 
 ## Features
 

@@ -1,0 +1,14 @@
+// Axis delta: ground .wine — nine seeds; `_derive_color.octoscript`
+// computes the palette from them in-kit. Compare `gen_accent_axes.py`,
+// which had to ship 48 solved files because nothing could compute.
+// Ink 11.50:1 on this ground.
+let seed_on       = 1
+let seed_ground_r = 74
+let seed_ground_g = 21
+let seed_ground_b = 38
+let seed_ink_r    = 242
+let seed_ink_g    = 223
+let seed_ink_b    = 224
+let seed_accent_r = 224
+let seed_accent_g = 130
+let seed_accent_b = 115

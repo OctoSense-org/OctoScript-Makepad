@@ -1,7 +1,7 @@
 # makepad-plot
 
-Matplotlib-style plotting library for **Makepad 2.0 (Splash)** — 32 chart widgets,
-all declarable and scriptable from the Splash DSL.
+Matplotlib-style plotting library for **Makepad 2.0 (Octoscript)** — 32 chart widgets,
+all declarable and scriptable from the Octoscript DSL.
 
 ![gallery](resources/gallery.png)
 
@@ -15,7 +15,7 @@ all declarable and scriptable from the Splash DSL.
 `SubplotGrid`/`SubplotRow`
 
 Every chart renders built-in demo data out of the box, so a bare `LinePlot{}` in a
-Splash script shows something immediately. Cartesian charts support pan/zoom
+Octoscript script shows something immediately. Cartesian charts support pan/zoom
 (`interactive: true`); 3D charts support drag-rotate and scroll-zoom.
 
 ## Usage
@@ -63,9 +63,9 @@ impl AppMain for App {
 }
 ```
 
-Feed data at runtime from Splash (e.g. in an `on_click`):
+Feed data at runtime from Octoscript (e.g. in an `on_click`):
 
-```splash
+```octoscript
 ui.line.set_title("LinePlot (scripted)")
 ui.line.add_series("script", [0 1 2 3 4 5], [0 2 1 3 2.5 4])
 ui.bar.set_data(["Q1" "Q2" "Q3" "Q4"], [12 19 8 15])
@@ -73,7 +73,7 @@ ui.gauge.set_value(42)
 ui.heatmap.set_colormap("Plasma")
 ```
 
-Each widget's Splash methods (`set_data`, `add_series`, `set_title`, `set_xlim`, …)
+Each widget's Octoscript methods (`set_data`, `add_series`, `set_title`, `set_xlim`, …)
 are implemented via `Widget::script_call` — see the chart modules under `src/charts/`.
 
 ## Demo
@@ -84,6 +84,6 @@ cargo run    # opens the full widget gallery (examples/plot_demo.rs)
 
 ## Design & porting notes
 
-See [SPLASH_PORT.md](SPLASH_PORT.md) for the architecture and the Makepad 2.0 engine
+See [OCTOSCRIPT_PORT.md](OCTOSCRIPT_PORT.md) for the architecture and the Makepad 2.0 engine
 findings discovered during the port (draw-order/depth rules for text over vector
-geometry, wrap-flow limitations, Splash array parsing, etc.).
+geometry, wrap-flow limitations, Octoscript array parsing, etc.).

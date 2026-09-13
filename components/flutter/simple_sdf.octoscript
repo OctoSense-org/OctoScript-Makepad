@@ -1,0 +1,94 @@
+// simple_sdf — flutter/samples/simple_sdf
+//
+// sdHeart, evaluated in the DSL and drawn with native nodes.
+//
+// A signed distance field is arithmetic — fold on x, branch on p.y + p.x > 1,
+// take the distance to the lobe or the cusp, sign it — and the DSL has
+// arithmetic once it has sqrt, min and sign (see `_kit.octoscript`). So the field
+// is computed here per cell and coloured exactly as the sample colours it:
+// mix(pink, black, smoothstep(0.01, 0.02, d)).
+//
+// makepad would draw this per-pixel with Sdf2d, and that route is built; it
+// does not resolve in the Octoscript isolate yet. This one runs on both backends.
+
+// Resolution, stepped. The whole point of the screen is that the field is
+// arithmetic rather than a picture, and nothing shows that like recomputing it
+// at a different sampling rate: 264 is 22x12dp, and the others divide it
+// exactly so no row lands mid-pixel and seams.
+let sdf_res = [11, 22, 33, 44]
+let sdf_n = sdf_res[sget("sdf_res", 1)]
+
+fn sd_heart(px, py) {
+    let x = absn(px)
+    if py + x > 1.0 {
+        let ax = x - 0.25
+        let ay = py - 0.75
+        return sqrtn(ax * ax + ay * ay) - 1.41421356 / 4.0
+    }
+    let bx = x
+    let by = py - 1.0
+    let d1 = bx * bx + by * by
+    let m = maxn(x + py, 0.0) * 0.5
+    let cx = x - m
+    let cy = py - m
+    let d2 = cx * cx + cy * cy
+    return sqrtn(minn(d1, d2)) * signn(x - py)
+}
+
+fn sd_cell(ix, iy) {
+    let pink = argb(255, 255, 105, 180)
+    let black = argb(255, 0, 0, 0)
+    // st = (uv - 0.5) * 2 ; st.y -= 0.5 ; st.y *= -1
+    let sx = ((ix + 0.5) / sdf_n - 0.5) * 2.0
+    let sy = 0.0 - (((iy + 0.5) / sdf_n - 0.5) * 2.0 - 0.5)
+    let d = sd_heart(sx, sy)
+    return lerp_argb(pink, black, smoothstepn(0.01, 0.02, d))
+}
+
+fn sd_grid() {
+    let rows = []
+    let j = 0
+    while j < sdf_n {
+        let cells = []
+        let i = 0
+        while i < sdf_n { cells.push({t: "column", fillw: 1, fillh: 1, bg: sd_cell(i, j)})  i = i + 1 }
+        rows.push({t: "row", fillw: 1, fillh: 1, c: cells})
+        j = j + 1
+    }
+    // 264 = 22 rows of 12dp, and 12dp is a whole number of physical pixels at
+    // this display's density. Weight alone is not enough: a row height that
+    // lands mid-pixel rounds, and the leftover fraction accumulates into a
+    // visible seam every few rows. The width needs no such care — the cells
+    // share one row and ArkUI absorbs the remainder there.
+    return {t: "column", fillw: 1, h: 264, radius: 12, bg: argb(255, 0, 0, 0), c: rows}
+}
+
+fn screen_simple_sdf() {
+    return page(m_surface, [
+        m_appbar("Simple SDF", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            sd_grid(),
+            {t: "row", fillw: 1, radius: 8, bg: m_pri_cont, padx: 12, pady: 10,
+             spacing: 8, aligny: 0.5, tapto: act_cycle("sdf_res", 4), c: [
+                icon(ic_bolt, 13, m_on_pri_cont),
+                txt(sdf_n + "x" + sdf_n + " cells — tap to resample",
+                    13, 500, m_on_pri_cont),
+            ]},
+            m_section("What this is", [
+                para("sdHeart from the sample's GLSL, evaluated per cell: fold "
+                     + "on x, branch on p.y + p.x > 1, take the distance to the "
+                     + "lobe or to the cusp, and sign it. Coloured the way the "
+                     + "sample colours it, mix(pink, black, smoothstep(0.01, "
+                     + "0.02, d)).", 13, 400, m_on_surf_var),
+                para("The VM has no sqrt, min or sign, so those are in the kit — "
+                     + "sqrt by Newton's method.", 13, 400, m_on_surf_var),
+            ]),
+            m_section("What the GPU would still do better", [
+                para("Per-pixel instead of per-cell. makepad draws its own "
+                     + "widgets this way with Sdf2d, and FlutterSdf is compiled "
+                     + "and waiting; it does not resolve in the Octoscript isolate "
+                     + "yet.", 13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}

@@ -1,14 +1,14 @@
 //! L0 cards, as routes this host can render.
 //!
 //! This is what "the kit is wired on this backend" means, and it was the missing
-//! piece: `components/l0/_kit.splash` existed, `kit::lower` emitted calls to it,
-//! `splash_render` evaluated them and `to_makepad_ui` mapped them — and nothing
+//! piece: `components/l0/_kit.octoscript` existed, `kit::lower` emitted calls to it,
+//! `octoscript_render` evaluated them and `to_makepad_ui` mapped them — and nothing
 //! anywhere mounted the result. The whole path was tested and unrenderable.
 //!
 //! Every reference card becomes a route:
 //!
 //! ```text
-//!   l0/news  ->  realize  ->  kit::lower  ->  _kit.splash  ->  splash_render
+//!   l0/news  ->  realize  ->  kit::lower  ->  _kit.octoscript  ->  octoscript_render
 //! ```
 //!
 //! **The data is baked and static.** These are the same blobs the profile's own
@@ -17,15 +17,15 @@
 //! seeded value. That is a real difference from octos-one and it is why the two
 //! are not expected to look identical.
 
-use splash_ui_l0::{kit, realize, RealizeLimits};
+use octoscript_ui_l0::{kit, realize, RealizeLimits};
 
 /// The theme. Every L0 route is this plus one lowered card.
-const KIT: &str = include_str!("../../../components/l0/_kit.splash");
+const KIT: &str = include_str!("../../../components/l0/_kit.octoscript");
 
-const NEWS: &str = include_str!("../../../../splash/crates/splash-ui-l0/tests/fixtures/news.card");
-const STOCK: &str = include_str!("../../../../splash/crates/splash-ui-l0/tests/fixtures/stock.card");
+const NEWS: &str = include_str!("../../../../octoscript/crates/octoscript-ui-l0/tests/fixtures/news.card");
+const STOCK: &str = include_str!("../../../../octoscript/crates/octoscript-ui-l0/tests/fixtures/stock.card");
 const WEATHER: &str =
-    include_str!("../../../../splash/crates/splash-ui-l0/tests/fixtures/weather.card");
+    include_str!("../../../../octoscript/crates/octoscript-ui-l0/tests/fixtures/weather.card");
 
 const NEWS_DATA: &str = include_str!("data/news.json");
 const STOCK_DATA: &str = include_str!("data/stock.json");
@@ -89,7 +89,7 @@ mod tests {
     fn every_l0_route_builds_a_tree() {
         for (route, title) in super::ROUTES {
             let src = super::source_for(route);
-            let tree = splash_render::build(&src, |_vm| {})
+            let tree = octoscript_render::build(&src, |_vm| {})
                 .unwrap_or_else(|| panic!("{route} ({title}) evaluated to nil"));
             assert!(
                 tree.count() > 10,
@@ -103,9 +103,9 @@ mod tests {
     #[test]
     fn a_card_that_does_not_realize_says_why() {
         let src = super::failed("the reason");
-        let tree = splash_render::build(&src, |_vm| {}).expect("the failure card evaluates");
+        let tree = octoscript_render::build(&src, |_vm| {}).expect("the failure card evaluates");
         let mut text = String::new();
-        fn words(n: &splash_render::UiNode, out: &mut String) {
+        fn words(n: &octoscript_render::UiNode, out: &mut String) {
             if let Some(t) = n.attrs.text.as_deref() {
                 out.push_str(t);
             }
@@ -124,10 +124,10 @@ mod tests {
     /// about `UiNode` being the branch point.
     #[test]
     fn the_visualisations_reach_this_backends_tree() {
-        let tree = splash_render::build(&super::source_for("l0/weather"), |_vm| {})
+        let tree = octoscript_render::build(&super::source_for("l0/weather"), |_vm| {})
             .expect("weather evaluates");
         let mut kinds = Vec::new();
-        fn walk(n: &splash_render::UiNode, out: &mut Vec<String>) {
+        fn walk(n: &octoscript_render::UiNode, out: &mut Vec<String>) {
             out.push(format!("{:?}", n.kind));
             for c in &n.children {
                 walk(c, out);

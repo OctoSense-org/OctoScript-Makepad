@@ -1,11 +1,11 @@
 # Makepad Plot - Matplotlib Demo Development Plan
 
-> **2026-07-14 — Makepad 2.0 Splash port.** The library was ported from Makepad 1.0
-> (`live_design!`, wyeworks rev `53b2e5c84`) to **Makepad 2.0 Splash**: all chart
+> **2026-07-14 — Makepad 2.0 Octoscript port.** The library was ported from Makepad 1.0
+> (`live_design!`, wyeworks rev `53b2e5c84`) to **Makepad 2.0 Octoscript**: all chart
 > widgets below are now `#[derive(Script, ScriptHook, Widget)]` types registered
-> under `mod.plot`, declarable from the Splash DSL and scriptable at runtime via
+> under `mod.plot`, declarable from the Octoscript DSL and scriptable at runtime via
 > `script_call` methods (`ui.line.add_series(...)`, `ui.gauge.set_value(42)`, …).
-> See [README.md](README.md) for usage and [SPLASH_PORT.md](SPLASH_PORT.md) for the
+> See [README.md](README.md) for usage and [OCTOSCRIPT_PORT.md](OCTOSCRIPT_PORT.md) for the
 > port architecture and engine findings. The matplotlib gallery-coverage analysis
 > below still reflects chart feature parity; the 1.0 API method names carry over,
 > with LaTeX annotations rendered as plain text and shader gradients as solid fills.
@@ -295,7 +295,7 @@
 
 ---
 
-## Files Structure (Makepad 2.0 Splash)
+## Files Structure (Makepad 2.0 Octoscript)
 
 ```
 src/
@@ -303,7 +303,7 @@ src/
 ├── types.rs          # Series, scales, colormaps, style enums (Script-derived)
 ├── plot_view.rs      # PlotView core: viewport/ticks/grid/legend/pan-zoom +
 │                     # DrawVector helpers (styled lines, markers, polygons, arcs)
-├── script_util.rs    # Splash script_call argument parsing (arrays, numbers, strings)
+├── script_util.rs    # Octoscript script_call argument parsing (arrays, numbers, strings)
 └── charts/
     ├── line.rs       # LinePlot (exemplar)
     ├── line2.rs      # StemPlot, AreaChart, StepPlot
@@ -316,16 +316,16 @@ src/
     ├── field.rs      # HeatmapChart (+Heatmap alias), ContourPlot, QuiverPlot
     ├── three_d.rs    # Surface3D, Scatter3D, Line3D (drag-rotate, scroll-zoom)
     ├── hierarchy.rs  # Treemap, SankeyDiagram
-    └── grid.rs       # SubplotGrid / SubplotRow (pure Splash prototypes)
+    └── grid.rs       # SubplotGrid / SubplotRow (pure Octoscript prototypes)
 
 examples/
-└── plot_demo.rs      # Splash-declared gallery: all widgets + script_call demo button
+└── plot_demo.rs      # Octoscript-declared gallery: all widgets + script_call demo button
 ```
 
 ## Demo App
 
-The demo app (`cargo run`) is a Splash-declared gallery ("plot zoo"): a scrollable
+The demo app (`cargo run`) is a Octoscript-declared gallery ("plot zoo"): a scrollable
 grid of all 30 chart widgets, each showing built-in demo data. LinePlot/ScatterPlot
 support pan & zoom; the 3D charts support drag-rotate and scroll-zoom. The
 "Feed data via script_call" button pushes data into charts at runtime through
-Splash `ui.<id>.method(...)` calls.
+Octoscript `ui.<id>.method(...)` calls.

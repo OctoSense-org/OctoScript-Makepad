@@ -1,14 +1,14 @@
 # The semantic widget vocabulary — what a generator may write
 
 The contract for authoring a catalog screen. Derived from what the renderers
-actually read (`splash-makepad/src/material.rs`, Splash-Android `Builder.java`),
+actually read (`octoscript-makepad/src/material.rs`, Octoscript-Android `Builder.java`),
 not from what they could. **Anything not listed here is silently dropped — an
 unknown `t:` produces no node, an unknown attribute is ignored, an unknown
 variant falls back to a default. Nothing warns. Stay inside this page.**
 
 ## The model
 
-A screen is one Splash-DSL expression evaluating to a tree of plain objects:
+A screen is one Octoscript-DSL expression evaluating to a tree of plain objects:
 
     {t:"<kind>", <attrs>, c:[ <children> ]}
 

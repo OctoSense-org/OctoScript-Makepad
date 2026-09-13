@@ -28009,8 +28009,8 @@
       ],
       "semantic": false
     },
-    "CamoActionSplashf2f89213": {
-      "definition": "component CamoActionSplashf2f89213(p0: text, p0_text: text, p1: text, p2: text, p2_text: text) {\n  view CamoRichTexte9c2aa9616(instance: p0, text: p0_text) {\n  CamoClip47177b2fe0(instance: p1) {\n    CamoTextBody7c23e7a4df(instance: p2, text: p2_text)\n  }\n}\n}\n",
+    "CamoActionOctoscriptf2f89213": {
+      "definition": "component CamoActionOctoscriptf2f89213(p0: text, p0_text: text, p1: text, p2: text, p2_text: text) {\n  view CamoRichTexte9c2aa9616(instance: p0, text: p0_text) {\n  CamoClip47177b2fe0(instance: p1) {\n    CamoTextBody7c23e7a4df(instance: p2, text: p2_text)\n  }\n}\n}\n",
       "pattern": [
         "CamoRichTexte9c2aa9616",
         [
@@ -28032,8 +28032,8 @@
       ],
       "semantic": false
     },
-    "CamoActionSplashb388d3d0": {
-      "definition": "component CamoActionSplashb388d3d0(p0: text, p1: text, p1_text: text) {\n  view CamoClip47177b2fe0(instance: p0) {\n  CamoTextBody7c23e7a4df(instance: p1, text: p1_text)\n}\n}\n",
+    "CamoActionOctoscriptb388d3d0": {
+      "definition": "component CamoActionOctoscriptb388d3d0(p0: text, p1: text, p1_text: text) {\n  view CamoClip47177b2fe0(instance: p0) {\n  CamoTextBody7c23e7a4df(instance: p1, text: p1_text)\n}\n}\n",
       "pattern": [
         "CamoClip47177b2fe0",
         [

@@ -1,4 +1,4 @@
-// Shared plotting types for makepad-plot (Makepad 2.0 / Splash)
+// Shared plotting types for makepad-plot (Makepad 2.0 / Octoscript)
 
 use makepad_widgets::*;
 
@@ -438,7 +438,7 @@ pub struct TextAnnotation {
     pub y: f64,
     pub color: Vec4,
     pub font_size: f64,
-    pub is_math: bool, // Rendered as plain text in the Splash port
+    pub is_math: bool, // Rendered as plain text in the Octoscript port
 }
 
 /// Arrow annotation pointing from one location to another
@@ -545,7 +545,7 @@ impl Default for Colormap {
 }
 
 impl Colormap {
-    /// Look up a named colormap (used by Splash-side `colormap: "Viridis"` props)
+    /// Look up a named colormap (used by Octoscript-side `colormap: "Viridis"` props)
     pub fn from_name(name: &str) -> Self {
         match name.to_ascii_lowercase().as_str() {
             "viridis" => Colormap::Viridis,
