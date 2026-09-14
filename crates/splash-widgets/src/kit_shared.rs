@@ -397,14 +397,13 @@ pub fn retire_overlay(cx: &mut Cx, widget: &WidgetRef) {
     macro_rules! clear {($($t:ty),*)=>{$(
         if let Some(w)=widget.borrow::<$t>() {
             if let Some(list)=&w.controller.draw_list {
-                // Upstream's retained draw lists key recording and uniform
-                // reuse on generation counters; a clear takes fresh ones so
-                // nothing re-attaches to the cleared content.
+                // The build-tool lane's retained draw lists are cleared by
+                // redraw id alone. (port/appcard-on-octoscript keys recording
+                // and uniform reuse on generation counters and takes two extra
+                // generations from `Cx::next_uniform_gen` here.)
                 let list_id = list.id();
-                let recording_gen = cx.next_uniform_gen();
-                let uniforms_gen = cx.next_uniform_gen();
                 let redraw_id = cx.redraw_id;
-                cx.draw_lists[list_id].clear_draw_items(redraw_id, recording_gen, uniforms_gen);
+                cx.draw_lists[list_id].clear_draw_items(redraw_id);
             }
         }
     )*};}
