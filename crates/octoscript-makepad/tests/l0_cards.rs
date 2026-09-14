@@ -15,13 +15,78 @@
 //! possible only because it was extracted from `octoscript-core` and depends on
 //! `serde_json` alone.
 
+use octoscript_render::makepad_script::*;
 use octoscript_ui_l0::{kit, realize, RealizeLimits};
 
-const KIT: &str = include_str!("../../../components/l0/_kit.octoscript");
+/// The kit body plus the default palette. A theme is a palette prefix (see
+/// `_palette_dark.splash`); these tests assert structure, not colour, so they
+/// assemble the default and `l0_kit.rs` covers the moods.
+const KIT_BODY: &str = include_str!("../../../components/l0/_kit.octoscript");
+const BASE: &str = include_str!("../../../components/l0/_palette_dark.octoscript");
+const DERIVE: &str = include_str!("../../../components/l0/_derive.octoscript");
 
-const WEATHER: &str = include_str!("../../../../Octoscript/crates/octoscript-ui-l0/tests/fixtures/weather.card");
+#[test]
+fn inspection_ids_and_selected_state_survive_native_translation() {
+    let mut tree = build("theme dark\nview root Surface { Chip(text: \"Selected\", active: .on) }", serde_json::json!({}));
+    let mut again = tree.clone();
+    let first = octoscript_makepad::l0::inspectable(&mut tree);
+    assert_eq!(first, octoscript_makepad::l0::inspectable(&mut again));
+    assert_eq!(first.len(), tree.count());
+    let ui = octoscript_makepad::to_makepad_l0_ui(&tree);
+    assert!(ui.contains("selected: true"), "{ui}");
+    for node in first {
+        assert!(ui.contains(&format!("{} :=", node["id"].as_str().unwrap())));
+    }
+}
+
+/// Base, then the derivation, then the body — the default mood's assembly. Omit
+/// `_derive.splash` and every SIZE is an undefined name, which is 0: the tree
+/// still builds and every padding, radius and font size is gone.
+fn kit() -> String {
+    format!("{BASE}\n{DERIVE}\n{KIT_BODY}")
+}
+
+const WEATHER: &str =
+    include_str!("../../../../Octoscript/crates/octoscript-ui-l0/tests/fixtures/weather.card");
 const NEWS: &str = include_str!("../../../../Octoscript/crates/octoscript-ui-l0/tests/fixtures/news.card");
-const STOCK: &str = include_str!("../../../../Octoscript/crates/octoscript-ui-l0/tests/fixtures/stock.card");
+const STOCK: &str =
+    include_str!("../../../../Octoscript/crates/octoscript-ui-l0/tests/fixtures/stock.card");
+
+fn register_missing_capabilities(vm: &mut ScriptVm) {
+    let sys = vm.new_module(id!(sys));
+    // Deterministic missing-data adapters. Live calls remain in kit lowering,
+    // so structural tests must register their capabilities even with seed data.
+    for name in [
+        "news",
+        "stock",
+        "movers",
+        "geocode",
+        "geocodenum",
+        "weather",
+        "weathercond",
+        "photo",
+        "daylight",
+        "dayname",
+        "moonphase",
+        "weekmin",
+        "weekmax",
+        "gps",
+        "route",
+        "nav",
+        "cities",
+        "airquality",
+        "aqinum",
+        "satellite",
+    ] {
+        vm.add_method(
+            sys,
+            LiveId::from_str(name),
+            script_args_def!(a = NIL, b = NIL, c = NIL, d = NIL, e = NIL),
+            |vm, _| vm.bx.heap.new_string_from_str("—"),
+        );
+    }
+    vm.set_injected_global(id!(sys), sys.into());
+}
 
 /// Evaluate `src` in a VM that has a `sys` the cards can call and get nothing from.
 ///
@@ -70,10 +135,10 @@ fn build(card: &str, data: serde_json::Value) -> octoscript_render::UiNode {
         "card did not realize cleanly: {:#?}",
         report.diagnostics
     );
-    let root = report.root.expect("a realized tree");
+    let root = report.complete_root().expect("a complete realized tree");
     // The tail is a bare VARIABLE, not a call — `fn f() {…}` then `f()` is nil.
-    let src = format!("{KIT}\n{}", kit::lower(&root));
-    build_with_sys_stub(&src)
+    let src = format!("{}\n{}", kit(), kit::lower(&root));
+    octoscript_render::build(&src, register_missing_capabilities)
         .unwrap_or_else(|| panic!("the lowered card evaluated to nil:\n{}", kit::lower(&root)))
 }
 
@@ -169,7 +234,7 @@ fn a_card_carries_its_text_through_the_kit() {
     // The card's OWN words, from its `copy` declarations. A seeded headline used
     // to be checked here too and is not any more: `sys.news` is answered live, so
     // a story title lowers to the CALL rather than to the blob this test hands in,
-    // and a bare VM has no `sys` to run it. What this test guards is that words
+    // and the fixture adapters return missing. What this test guards is that words
     // survive the kit at all — a right-sized tree of empty nodes would pass the
     // count check beside it — and the card's own copy proves that without
     // depending on a value the backend now fetches.
@@ -206,10 +271,7 @@ fn the_lowered_card_names_roles_and_no_presentation() {
         .match_indices('#')
         .map(|(i, _)| &src[i + 1..])
         .filter(|rest| {
-            let digits = rest
-                .chars()
-                .take_while(|c| c.is_ascii_hexdigit())
-                .count();
+            let digits = rest.chars().take_while(|c| c.is_ascii_hexdigit()).count();
             matches!(digits, 3 | 6 | 8)
         })
         .collect();
@@ -234,11 +296,15 @@ fn the_lowered_card_names_roles_and_no_presentation() {
 /// silently short card.
 #[test]
 fn a_role_with_no_kit_answer_is_visible_rather_than_absent() {
-    let src = format!(r#"{KIT}
+    let kit = kit();
+    let src = format!(
+        r#"{kit}
 let node = l0_unsupported("Hologram")
 node
-"#);
-    let tree = octoscript_render::build(&src, |_vm| {}).expect("the marker evaluates");
+"#
+    );
+    let tree =
+        octoscript_render::build(&src, register_missing_capabilities).expect("the marker evaluates");
 
     fn words(n: &octoscript_render::UiNode, out: &mut String) {
         if let Some(t) = n.attrs.text.as_deref() {
@@ -272,21 +338,31 @@ fn the_data_visualisations_reach_the_tree_as_themselves() {
     let mut out = Vec::new();
     kinds(&build(WEATHER, weather_data()), &mut out);
     for expected in ["TempBar", "SunArc", "MoonPhase", "AqiContour"] {
-        assert!(out.iter().any(|k| k == expected), "{expected} missing: {out:?}");
+        assert!(
+            out.iter().any(|k| k == expected),
+            "{expected} missing: {out:?}"
+        );
     }
     let mut out = Vec::new();
     let mut store = octoscript_ui_l0::InstanceStore::default();
     octoscript_ui_l0::dispatch_with(
-        STOCK, &mut store, "root", "open_quote",
-        Some(&serde_json::Value::String("NVDA".into())));
-    let report = octoscript_ui_l0::realize_with_state(
-        STOCK, &stock_data(), &store, RealizeLimits::default());
-    let src = format!("{KIT}\n{}", kit::lower(&report.root.expect("root")));
+        STOCK,
+        &mut store,
+        "root",
+        "open_quote",
+        Some(&serde_json::Value::String("NVDA".into())),
+    );
+    let report =
+        octoscript_ui_l0::realize_with_state(STOCK, &stock_data(), &store, RealizeLimits::default());
+    let src = format!("{}\n{}", kit(), kit::lower(&report.root.expect("root")));
     kinds(
-        &build_with_sys_stub(&src).expect("detail evaluates"),
+        &octoscript_render::build(&src, register_missing_capabilities).expect("detail evaluates"),
         &mut out,
     );
-    assert!(out.iter().any(|k| k == "StockPlot"), "StockPlot missing: {out:?}");
+    assert!(
+        out.iter().any(|k| k == "StockPlot"),
+        "StockPlot missing: {out:?}"
+    );
 }
 
 /// Every widget name this backend emits must be one the kit DEFINES.
@@ -333,4 +409,43 @@ fn every_emitted_widget_name_is_defined_in_the_kit() {
         emitted.iter().any(|w| w.starts_with("L0")),
         "no L0 widget was emitted, so this asserted nothing: {emitted:?}"
     );
+}
+
+/// An L1 coefficient reaches the backend at FULL precision.
+///
+/// `trim_num` is a display rule — one decimal, because a temperature reads as
+/// 21.4 and not 21.437 — and it was also being used to emit an arithmetic
+/// OPERAND. Rounding an operand silently changes the result: a converter card
+/// declaring `factor 0.621371` lowered to `(42 * 0.6)` and drew 42 km as 25.2
+/// miles instead of 26.1, on device, with the checker accepting the card. The
+/// card was right and the number on screen was wrong, which is exactly the
+/// failure §1.1 exists to prevent — and no test could see it, because both the
+/// realized tree and the built widget tree were structurally perfect.
+#[test]
+fn an_l1_coefficient_is_not_rounded_on_its_way_to_the_backend() {
+    let card = "# level: L1\n\
+        state amount { shape: number, initial: 42 }\n\
+        state factor { shape: number, initial: 0.621371 }\n\
+        view root Surface { TextHero(value: amount * factor) }\n";
+    let report = realize(card, &serde_json::json!({"amount":42}), RealizeLimits::default());
+    assert!(report.diagnostics.is_empty(), "{:#?}", report.diagnostics);
+    let lowered = kit::lower(&report.root.expect("root"));
+    assert!(
+        lowered.contains("0.621371"),
+        "the coefficient was rounded on the way out:\n{lowered}"
+    );
+    // And a whole number must not grow a decimal point on the way through.
+    assert!(
+        lowered.contains(r#"sys.l0_math("*", 42, 0.621371)"#),
+        "an integer operand should stay an integer:\n{lowered}"
+    );
+}
+
+#[test]
+fn authored_selected_chip_tokens_survive_realization_and_native_lowering() {
+    let tree = build("# level: L0\nview root Surface { Chip(text: \"All\", active: .on) Chip(text: \"Today\", active: .off) }", serde_json::json!({}));
+    assert_ne!(tree.children[0].attrs.bg, tree.children[1].attrs.bg);
+    let ui = octoscript_makepad::to_makepad_l0_ui(&tree);
+    assert!(ui.contains("text: \"All\""));
+    assert!(ui.contains("text: \"Today\""));
 }

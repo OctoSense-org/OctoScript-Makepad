@@ -5,3 +5,6 @@ Cargo.lock
 
 # Visual-QA screenshots (regenerate with tools/visual-qa.sh)
 tools/qa-shots/
+
+# makepad studio state
+.makepad/

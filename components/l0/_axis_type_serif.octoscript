@@ -1,0 +1,12 @@
+// Axis delta: type .serif — serif throughout, headline and body.
+//
+// Mood-INdependent: a typeface is not solved against a ground the way a hue
+// is, so one file serves every palette.
+//
+// `l0_display_family` is separate from `l0_family` on purpose. A serif
+// headline over a sans body is the commonest pairing in the corpus, and a
+// single family token cannot say it — which is why `serif_display` and
+// `font_pair` were counted as two gaps and are answered by one axis.
+let l0_family         = "serif"
+let l0_display_family = "serif"
+let l0_tracking       = 0

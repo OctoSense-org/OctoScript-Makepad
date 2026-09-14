@@ -1,0 +1,1323 @@
+{
+  "atro": {
+    "button": {
+      "widget": "KitButton",
+      "source_role": "AtroButton",
+      "source_composition": "AtroButtond7fe98b2",
+      "source_component": "AtroKitButton0d8f6637f3",
+      "source_screens": [
+        "Chat_Dialer",
+        "Unlock_Passcode"
+      ],
+      "source_kit_sha256": "69e81ec096cf87b062a37555a655e4023c56495f28d3932b2e937d9cf03dd29a",
+      "parts": {
+        "control": {
+          "component": "AtroButtonb90a204cbe",
+          "style": {
+            "t": "button"
+          }
+        },
+        "label": {
+          "component": "AtroTextCaption087ed9e8c7",
+          "style": {
+            "t": "text",
+            "size": 9.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 11.700000000000001,
+            "alignx": 0.5,
+            "color": 2583691263,
+            "variant": "single_line",
+            "font_asc": -0.023555555555556662,
+            "font_desc": -0.10455555555555684,
+            "tracking": 1.5
+          }
+        },
+        "subtitle": {
+          "component": "AtroTextTitlec5cf253352",
+          "style": {
+            "t": "text",
+            "size": 24.0,
+            "weight": 600,
+            "font_src": "self:resources/atro/Montserrat-SemiBold.ttf",
+            "line_height": 25.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": -0.1034166666666666,
+            "font_desc": 0.07391666666666666,
+            "tracking": -0.4266666665
+          }
+        }
+      },
+      "surfaces": [],
+      "selection": {}
+    },
+    "field": {
+      "widget": "KitFormField",
+      "source_role": "AtroFormField",
+      "source_composition": "AtroFormField7438d4b7",
+      "source_component": "AtroKitFormFieldde1364dd07",
+      "source_screens": [
+        "Search_Results_1",
+        "Search_Results_2",
+        "Search_Results_3"
+      ],
+      "source_kit_sha256": "69e81ec096cf87b062a37555a655e4023c56495f28d3932b2e937d9cf03dd29a",
+      "parts": {
+        "input": {
+          "component": "AtroField1c205d18bd",
+          "style": {
+            "t": "input",
+            "size": 12.5,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0,
+            "color": 4279440149,
+            "font_asc": -0.20799999999999996,
+            "font_desc": 0.211,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [],
+      "selection": {}
+    },
+    "tabs": {
+      "widget": "KitTabBar",
+      "source_role": "AtroTabBar",
+      "source_composition": "AtroTabBar31b46ede",
+      "source_component": "AtroKitTabBara3c64e36b6",
+      "source_screens": [
+        "Alerts_View_2",
+        "Alerts_View_3",
+        "Alerts_View_4",
+        "Photo_Gallery",
+        "Stats_Data_visualization_5",
+        "Stats_Data_visualization_7"
+      ],
+      "source_kit_sha256": "69e81ec096cf87b062a37555a655e4023c56495f28d3932b2e937d9cf03dd29a",
+      "parts": {
+        "detail_1": {
+          "component": "AtroTextCaption937dfde009",
+          "style": {
+            "t": "text",
+            "size": 10.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": -0.118,
+            "font_desc": 0.101,
+            "tracking": 0.0
+          }
+        },
+        "detail_2": {
+          "component": "AtroTextCaption6cbed2197a",
+          "style": {
+            "t": "text",
+            "size": 9.0,
+            "weight": 600,
+            "font_src": "self:resources/atro/Montserrat-SemiBold.ttf",
+            "line_height": 9.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": -0.1346666666666666,
+            "font_desc": 0.08433333333333334,
+            "tracking": 1.0
+          }
+        },
+        "detail_3": {
+          "component": "AtroTextCaption937dfde009",
+          "style": {
+            "t": "text",
+            "size": 10.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": -0.118,
+            "font_desc": 0.101,
+            "tracking": 0.0
+          }
+        },
+        "detail_4": {
+          "component": "AtroTextCaption937dfde009",
+          "style": {
+            "t": "text",
+            "size": 10.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": -0.118,
+            "font_desc": 0.101,
+            "tracking": 0.0
+          }
+        },
+        "label": {
+          "component": "AtroTextCaption937dfde009",
+          "style": {
+            "t": "text",
+            "size": 10.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": -0.118,
+            "font_desc": 0.101,
+            "tracking": 0.0
+          }
+        },
+        "subtitle": {
+          "component": "AtroTextCaption937dfde009",
+          "style": {
+            "t": "text",
+            "size": 10.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": -0.118,
+            "font_desc": 0.101,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [
+        {
+          "component": "AtroSurface649b702f8e",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4283212218,
+            "radius": 4.0
+          }
+        }
+      ],
+      "selection": {
+        "active_color": 4283195375,
+        "inactive_color": 4294967295
+      }
+    }
+  },
+  "atro_light": {
+    "button": {
+      "widget": "KitButton",
+      "source_role": "AtroButton",
+      "source_composition": "AtroButtone63b9eda",
+      "source_component": "AtroKitButtone46863901c",
+      "source_screens": [
+        "Shop_View_3",
+        "Social_Contacts_2",
+        "Social_Feed_3"
+      ],
+      "source_kit_sha256": "69d338a9a5bd18b7715f4c1b094cdb93ba39f739590088a93d502e1f9d2822bc",
+      "parts": {
+        "control": {
+          "component": "AtroButtonb90a204cbe",
+          "style": {
+            "t": "button"
+          }
+        },
+        "label": {
+          "component": "AtroTextCaption4a50e08c46",
+          "style": {
+            "t": "text",
+            "size": 9.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 11.700000000000001,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": -0.023555555555555552,
+            "font_desc": -0.10455555555555568,
+            "tracking": 1.5
+          }
+        }
+      },
+      "surfaces": [
+        {
+          "component": "AtroSurface8d004b9af2",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4283195375,
+            "radius": 50.0
+          }
+        }
+      ],
+      "selection": {}
+    },
+    "tabs": {
+      "widget": "KitTabBar",
+      "source_role": "AtroTabBar",
+      "source_composition": "AtroTabBar7fc2c2d5",
+      "source_component": "AtroKitTabBar8e175c466d",
+      "source_screens": [
+        "Alerts_View_1",
+        "Alerts_View_5",
+        "Alerts_View_6",
+        "Alerts_View_7",
+        "Profile_View_6",
+        "Skeleton_Preloader_2",
+        "Skeleton_Preloader_3",
+        "Skeleton_Preloader_4",
+        "Social_Contacts_2"
+      ],
+      "source_kit_sha256": "69d338a9a5bd18b7715f4c1b094cdb93ba39f739590088a93d502e1f9d2822bc",
+      "parts": {
+        "detail_1": {
+          "component": "AtroTextCaption4a4fb277e8",
+          "style": {
+            "t": "text",
+            "size": 10.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0.5,
+            "color": 4285299594,
+            "variant": "single_line",
+            "font_asc": -0.118,
+            "font_desc": 0.101,
+            "tracking": 0.0
+          }
+        },
+        "detail_2": {
+          "component": "AtroTextCaption6cbed2197a",
+          "style": {
+            "t": "text",
+            "size": 9.0,
+            "weight": 600,
+            "font_src": "self:resources/atro/Montserrat-SemiBold.ttf",
+            "line_height": 9.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": -0.1346666666666666,
+            "font_desc": 0.08433333333333334,
+            "tracking": 1.0
+          }
+        },
+        "detail_3": {
+          "component": "AtroTextCaption4a4fb277e8",
+          "style": {
+            "t": "text",
+            "size": 10.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0.5,
+            "color": 4285299594,
+            "variant": "single_line",
+            "font_asc": -0.118,
+            "font_desc": 0.101,
+            "tracking": 0.0
+          }
+        },
+        "detail_4": {
+          "component": "AtroTextCaption4a4fb277e8",
+          "style": {
+            "t": "text",
+            "size": 10.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0.5,
+            "color": 4285299594,
+            "variant": "single_line",
+            "font_asc": -0.118,
+            "font_desc": 0.101,
+            "tracking": 0.0
+          }
+        },
+        "label": {
+          "component": "AtroTextCaption4a4fb277e8",
+          "style": {
+            "t": "text",
+            "size": 10.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0.5,
+            "color": 4285299594,
+            "variant": "single_line",
+            "font_asc": -0.118,
+            "font_desc": 0.101,
+            "tracking": 0.0
+          }
+        },
+        "subtitle": {
+          "component": "AtroTextCaption4a4fb277e8",
+          "style": {
+            "t": "text",
+            "size": 10.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0.5,
+            "color": 4285299594,
+            "variant": "single_line",
+            "font_asc": -0.118,
+            "font_desc": 0.101,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [
+        {
+          "component": "AtroSurface649b702f8e",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4283212218,
+            "radius": 4.0
+          }
+        }
+      ],
+      "selection": {
+        "active_color": 4283195375,
+        "inactive_color": 4285299594
+      }
+    },
+    "field": {
+      "widget": "KitFormField",
+      "source_role": "AtroFormField",
+      "source_composition": "AtroFormFielda50606f0",
+      "source_component": "AtroKitFormField0c05bbb806",
+      "source_screens": [
+        "Shop_View_17",
+        "Shop_View_19"
+      ],
+      "source_kit_sha256": "69d338a9a5bd18b7715f4c1b094cdb93ba39f739590088a93d502e1f9d2822bc",
+      "parts": {
+        "input": {
+          "component": "AtroFielda1a5eeb16d",
+          "style": {
+            "t": "input",
+            "size": 10.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 10.0,
+            "alignx": 0,
+            "color": 4285299594,
+            "font_asc": -0.118,
+            "font_desc": 0.101,
+            "tracking": 0.0
+          }
+        },
+        "label": {
+          "component": "AtroTextCaption8994630469",
+          "style": {
+            "t": "text",
+            "size": 9.0,
+            "weight": 500,
+            "font_src": "self:resources/atro/Montserrat-Medium.ttf",
+            "line_height": 9.0,
+            "alignx": 0,
+            "color": 4285299594,
+            "variant": "single_line",
+            "font_asc": -0.1346666666666666,
+            "font_desc": 0.08433333333333334,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [
+        {
+          "component": "AtroSurface53b85174c5",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4294244089,
+            "radius": 7.5
+          }
+        }
+      ],
+      "selection": {}
+    }
+  },
+  "camo": {
+    "field": {
+      "widget": "KitFormField",
+      "source_role": "CamoFormField",
+      "source_composition": "CamoFormFielda49051f3",
+      "source_component": "CamoKitFormField8d6ce9d14d",
+      "source_screens": [
+        "Dark_Finance_Chats",
+        "Dark_Finance_More",
+        "Dark_Finance_Payments",
+        "Dark_Finance_Payments_My_Contacts",
+        "Dark_Finance_Services",
+        "Dark_Finance_Services_Details",
+        "Dark_Food_Delivery_Search",
+        "Dark_Music_Search",
+        "Dark_Taxi_Help_Center",
+        "Dark_Video_Search"
+      ],
+      "source_kit_sha256": "9d9377a107c9f94244d8662f65c6d49b3faf33a12ac4fe8a83e72d96c1332e19",
+      "parts": {
+        "input": {
+          "component": "CamoFieldbceb21d98b",
+          "style": {
+            "t": "input",
+            "size": 14.0,
+            "weight": 500,
+            "font_src": "self:resources/camo/DMSans-Medium.ttf",
+            "line_height": 24.0,
+            "alignx": 0,
+            "color": 1728053247,
+            "font_asc": 0.2222857142857142,
+            "font_desc": -0.19,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [
+        {
+          "component": "CamoSurface6ff9c20735",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 234881023,
+            "radius": 34.0
+          }
+        }
+      ],
+      "selection": {}
+    },
+    "button": {
+      "widget": "KitButton",
+      "source_role": "CamoButton",
+      "source_composition": "CamoButton739d0b38",
+      "source_component": "CamoKitButton72b9f6e0d5",
+      "source_screens": [
+        "Dark_Finance_Payments_My_Appeals",
+        "Dark_Finance_Payments_Transfer",
+        "Dark_Finance_Payments_Transfer_-_Done",
+        "Dark_Finance_Services_Movie_Details_-_Scroll",
+        "Dark_Finance_Services_Select_Seats",
+        "Dark_Food_Delivery_Adress",
+        "Dark_Food_Delivery_Carts",
+        "Dark_Food_Delivery_Confirm_Order_-_Scroll",
+        "Dark_Food_Delivery_Payment",
+        "Dark_Food_Delivery_Select_Adress",
+        "Dark_Food_Delivery_Successful_order",
+        "Dark_Medical_Doctor_-_Change_Date",
+        "Dark_Medical_Doctor_-_Details",
+        "Dark_Medical_Doctor_-_List",
+        "Dark_Medical_Heart",
+        "Dark_Medical_Medication",
+        "Dark_Onboarding_Onboarding_2",
+        "Dark_Onboarding_Onboarding_3",
+        "Dark_Onboarding_Onboarding_4",
+        "Dark_Onboarding_Sign_in_1",
+        "Dark_Onboarding_Sign_in_2",
+        "Dark_Onboarding_Sign_up_1",
+        "Dark_Onboarding_Sign_up_2",
+        "Dark_Onboarding_Verify_Phone_Number",
+        "Dark_Taxi_Add_Card",
+        "Dark_Taxi_Add_Payment_Method",
+        "Dark_Taxi_Choose_Payment",
+        "Dark_Taxi_Details",
+        "Dark_Taxi_Rate",
+        "Dark_Video_Filter_-Genre",
+        "Dark_Video_Profile_Setting",
+        "Dark_Video_TV_Series_-_Details_Season"
+      ],
+      "source_kit_sha256": "9d9377a107c9f94244d8662f65c6d49b3faf33a12ac4fe8a83e72d96c1332e19",
+      "parts": {
+        "control": {
+          "component": "CamoButtonb90a204cbe",
+          "style": {
+            "t": "button"
+          }
+        },
+        "label": {
+          "component": "CamoTextBody000c2400ce",
+          "style": {
+            "t": "text",
+            "size": 16.0,
+            "weight": 700,
+            "font_src": "self:resources/camo/DMSans-Bold.ttf",
+            "line_height": 26.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": 0.16425,
+            "font_desc": -0.15875,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [
+        {
+          "component": "CamoSurface7860fd424d",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4278220799,
+            "radius": 32.0
+          }
+        }
+      ],
+      "selection": {}
+    },
+    "tabs": {
+      "widget": "KitTabBar",
+      "source_role": "CamoTabBar",
+      "source_composition": "CamoTabBarfa70f5f7",
+      "source_component": "CamoKitTabBara6a772a1fd",
+      "source_screens": [
+        "Dark_Food_Delivery_Payment",
+        "Dark_Medical_Doctor_-_Details",
+        "Dark_Music_Search",
+        "Dark_Taxi_Promotion",
+        "Dark_Video_Category_Details_-_Agenda",
+        "Dark_Video_Category_Details_-_Grid",
+        "Dark_Video_Search"
+      ],
+      "source_kit_sha256": "9d9377a107c9f94244d8662f65c6d49b3faf33a12ac4fe8a83e72d96c1332e19",
+      "parts": {
+        "label": {
+          "component": "CamoTextBody720fd41063",
+          "style": {
+            "t": "text",
+            "size": 14.0,
+            "weight": 700,
+            "font_src": "self:resources/camo/DMSans-Bold.ttf",
+            "line_height": 24.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": 0.2222857142857142,
+            "font_desc": -0.19,
+            "tracking": 0.0
+          }
+        },
+        "subtitle": {
+          "component": "CamoTextBody720fd41063",
+          "style": {
+            "t": "text",
+            "size": 14.0,
+            "weight": 700,
+            "font_src": "self:resources/camo/DMSans-Bold.ttf",
+            "line_height": 24.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": 0.2222857142857142,
+            "font_desc": -0.19,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [
+        {
+          "component": "CamoSurfacea411405a9c",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4278220799,
+            "radius": 16.0
+          }
+        }
+      ],
+      "selection": {
+        "active_color": 4294967295,
+        "inactive_color": 4294967295,
+        "active_surface": 4278220799,
+        "inactive_surface": 0
+      }
+    },
+    "row": {
+      "widget": "CamoTrackRow",
+      "source_role": "CamoTrackRow",
+      "source_composition": "CamoTrackRow96c04695",
+      "source_component": "CamoCamoTrackRow5e7468209d",
+      "source_screens": [
+        "Dark_Music_Collections_-_Details",
+        "Dark_Music_Library_-_Playlists_Details",
+        "Dark_Music_Library_-_Shuffle",
+        "Dark_Music_Library_-_Songs"
+      ],
+      "source_kit_sha256": "9d9377a107c9f94244d8662f65c6d49b3faf33a12ac4fe8a83e72d96c1332e19",
+      "parts": {
+        "artist": {
+          "component": "CamoTextCaption4e415e68a3",
+          "style": {
+            "t": "text",
+            "size": 12.0,
+            "weight": 400,
+            "font_src": "self:resources/camo/DMSans-Regular.ttf",
+            "line_height": 16.0,
+            "alignx": 0,
+            "color": 1728053247,
+            "variant": "single_line",
+            "font_asc": 0.008000000000000007,
+            "font_desc": -0.023333333333333317,
+            "tracking": 0.0
+          }
+        },
+        "control": {
+          "component": "CamoButtonb90a204cbe",
+          "style": {
+            "t": "button"
+          }
+        },
+        "title": {
+          "component": "CamoTextBody17390f4f89",
+          "style": {
+            "t": "text",
+            "size": 18.0,
+            "weight": 400,
+            "font_src": "self:resources/camo/DMSans-Regular.ttf",
+            "line_height": 28.0,
+            "alignx": 0,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": 0.14688888888888885,
+            "font_desc": -0.10666666666666669,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [],
+      "selection": {}
+    }
+  },
+  "camo_light": {
+    "field": {
+      "widget": "KitFormField",
+      "source_role": "CamoFormField",
+      "source_composition": "CamoFormField435b0961",
+      "source_component": "CamoKitFormField8d6ce9d14d",
+      "source_screens": [
+        "Light_Finance_Chats",
+        "Light_Finance_More",
+        "Light_Finance_Payments",
+        "Light_Finance_Payments_My_Contacts",
+        "Light_Finance_Services",
+        "Light_Finance_Services_Details",
+        "Light_Food_Delivery_Search",
+        "Light_Music_Search",
+        "Light_Taxi_Help_Center",
+        "Light_Video_Search"
+      ],
+      "source_kit_sha256": "3617bf252d2342319a5f651f0f472b30956a4d170507659e761ee73487e235ce",
+      "parts": {
+        "input": {
+          "component": "CamoFieldcd8ddb925a",
+          "style": {
+            "t": "input",
+            "size": 14.0,
+            "weight": 500,
+            "font_src": "self:resources/camo/DMSans-Medium.ttf",
+            "line_height": 24.0,
+            "alignx": 0,
+            "color": 1711276032,
+            "font_asc": 0.2222857142857142,
+            "font_desc": -0.19,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [],
+      "selection": {}
+    },
+    "button": {
+      "widget": "KitButton",
+      "source_role": "CamoButton",
+      "source_composition": "CamoButton739d0b38",
+      "source_component": "CamoKitButton72b9f6e0d5",
+      "source_screens": [
+        "Light_Finance_Payments_My_Appeals",
+        "Light_Finance_Payments_Transfer",
+        "Light_Finance_Payments_Transfer_-_Done",
+        "Light_Finance_Services_Movie_Details_-_Scroll",
+        "Light_Finance_Services_Select_Seats",
+        "Light_Food_Delivery_Adress",
+        "Light_Food_Delivery_Carts",
+        "Light_Food_Delivery_Confirm_Order_-_Scroll",
+        "Light_Food_Delivery_Payment",
+        "Light_Food_Delivery_Select_Adress",
+        "Light_Food_Delivery_Successful_order",
+        "Light_Medical_Doctor_-_Change_Date",
+        "Light_Medical_Doctor_-_Details",
+        "Light_Medical_Doctor_-_List",
+        "Light_Medical_Heart",
+        "Light_Medical_Medication",
+        "Light_Onboarding_Onboarding_2",
+        "Light_Onboarding_Onboarding_3",
+        "Light_Onboarding_Onboarding_4",
+        "Light_Onboarding_Sign_in_1",
+        "Light_Onboarding_Sign_in_2",
+        "Light_Onboarding_Sign_up_1",
+        "Light_Onboarding_Sign_up_2",
+        "Light_Onboarding_Verify_Phone_Number",
+        "Light_Taxi_Add_Card",
+        "Light_Taxi_Add_Payment_Method",
+        "Light_Taxi_Choose_Payment",
+        "Light_Taxi_Details",
+        "Light_Taxi_Rate",
+        "Light_Video_Filter_-Genre",
+        "Light_Video_Profile_Setting",
+        "Light_Video_TV_Series_-_Details_Season"
+      ],
+      "source_kit_sha256": "3617bf252d2342319a5f651f0f472b30956a4d170507659e761ee73487e235ce",
+      "parts": {
+        "control": {
+          "component": "CamoButtonb90a204cbe",
+          "style": {
+            "t": "button"
+          }
+        },
+        "label": {
+          "component": "CamoTextBody000c2400ce",
+          "style": {
+            "t": "text",
+            "size": 16.0,
+            "weight": 700,
+            "font_src": "self:resources/camo/DMSans-Bold.ttf",
+            "line_height": 26.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": 0.16425,
+            "font_desc": -0.15875,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [
+        {
+          "component": "CamoSurface7860fd424d",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4278220799,
+            "radius": 32.0
+          }
+        }
+      ],
+      "selection": {}
+    },
+    "tabs": {
+      "widget": "KitTabBar",
+      "source_role": "CamoTabBar",
+      "source_composition": "CamoTabBarfa61bcc8",
+      "source_component": "CamoKitTabBare5ef89ec55",
+      "source_screens": [
+        "Light_Food_Delivery_Payment",
+        "Light_Medical_Doctor_-_Details",
+        "Light_Music_Search",
+        "Light_Taxi_Promotion",
+        "Light_Video_Category_Details_-_Agenda",
+        "Light_Video_Category_Details_-_Grid",
+        "Light_Video_Search"
+      ],
+      "source_kit_sha256": "3617bf252d2342319a5f651f0f472b30956a4d170507659e761ee73487e235ce",
+      "parts": {
+        "label": {
+          "component": "CamoTextBody720fd41063",
+          "style": {
+            "t": "text",
+            "size": 14.0,
+            "weight": 700,
+            "font_src": "self:resources/camo/DMSans-Bold.ttf",
+            "line_height": 24.0,
+            "alignx": 0.5,
+            "color": 4294967295,
+            "variant": "single_line",
+            "font_asc": 0.2222857142857142,
+            "font_desc": -0.19,
+            "tracking": 0.0
+          }
+        },
+        "subtitle": {
+          "component": "CamoTextBodye13aa195f1",
+          "style": {
+            "t": "text",
+            "size": 14.0,
+            "weight": 700,
+            "font_src": "self:resources/camo/DMSans-Bold.ttf",
+            "line_height": 24.0,
+            "alignx": 0.5,
+            "color": 4278190080,
+            "variant": "single_line",
+            "font_asc": 0.2222857142857142,
+            "font_desc": -0.19,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [
+        {
+          "component": "CamoSurfacea411405a9c",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4278220799,
+            "radius": 16.0
+          }
+        }
+      ],
+      "selection": {
+        "active_color": 4294967295,
+        "inactive_color": 4278190080,
+        "active_surface": 4278220799,
+        "inactive_surface": 0
+      }
+    },
+    "row": {
+      "widget": "CamoTrackRow",
+      "source_role": "CamoTrackRow",
+      "source_composition": "CamoTrackRow986fa79f",
+      "source_component": "CamoCamoTrackRow5e7468209d",
+      "source_screens": [
+        "Light_Music_Collections_-_Details",
+        "Light_Music_Library_-_Playlists_Details",
+        "Light_Music_Library_-_Shuffle",
+        "Light_Music_Library_-_Songs"
+      ],
+      "source_kit_sha256": "3617bf252d2342319a5f651f0f472b30956a4d170507659e761ee73487e235ce",
+      "parts": {
+        "artist": {
+          "component": "CamoTextCaptionf901ca0191",
+          "style": {
+            "t": "text",
+            "size": 12.0,
+            "weight": 400,
+            "font_src": "self:resources/camo/DMSans-Regular.ttf",
+            "line_height": 16.0,
+            "alignx": 0,
+            "color": 1711276032,
+            "variant": "single_line",
+            "font_asc": 0.008000000000000007,
+            "font_desc": -0.023333333333333317,
+            "tracking": 0.0
+          }
+        },
+        "control": {
+          "component": "CamoButtonb90a204cbe",
+          "style": {
+            "t": "button"
+          }
+        },
+        "title": {
+          "component": "CamoTextBody1f79b34c8b",
+          "style": {
+            "t": "text",
+            "size": 18.0,
+            "weight": 400,
+            "font_src": "self:resources/camo/DMSans-Regular.ttf",
+            "line_height": 28.0,
+            "alignx": 0,
+            "color": 4278190080,
+            "variant": "single_line",
+            "font_asc": 0.14688888888888885,
+            "font_desc": -0.10666666666666669,
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [],
+      "selection": {}
+    }
+  },
+  "taskplan_light": {
+    "button": {
+      "widget": "KitButton",
+      "source_role": "TaskplanButton",
+      "source_composition": "TaskplanButton35c58a3c",
+      "source_component": "TaskplanKitButtonfae5516b7e",
+      "source_screens": [
+        "3_0_10_Add_Attachments",
+        "3_0_11_Add_Task",
+        "3_0_12_Add_Task_filled",
+        "3_0_13_Set_Due_Date",
+        "3_0_1_Project_Details",
+        "3_0_1_Project_Details_long",
+        "3_0_5_Project_Details_More",
+        "3_0_6_Delete_Project",
+        "3_0_8_Delete_Attachments",
+        "3_0_9_Edit_project",
+        "3_1_4_Add_new_project",
+        "3_1_5_Add_new_project_long",
+        "3_1_6_Add_new_category",
+        "3_1_7_Add_new_category",
+        "3_1_8_Add_new_project_fill"
+      ],
+      "source_kit_sha256": "9aa13e2746ea33aa404c477798069472e2d0cee95eec2f68687ab80a94ce5041",
+      "parts": {
+        "control": {
+          "component": "TaskplanButtonb90a204cbe",
+          "style": {
+            "t": "button"
+          }
+        },
+        "label": {
+          "component": "TaskplanTextCaption7db636abf2",
+          "style": {
+            "t": "text",
+            "size": 12.0,
+            "weight": 700,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 19.0,
+            "alignx": 0.5,
+            "color": 4280192698,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [],
+      "selection": {}
+    },
+    "field": {
+      "widget": "KitFormField",
+      "source_role": "TaskplanFormField",
+      "source_composition": "TaskplanFormFieldee867500",
+      "source_component": "TaskplanKitFormField56bc6b430c",
+      "source_screens": [
+        "1_1_1_Login_Focus",
+        "1_1_2_Login_Error",
+        "1_1_3_Login_Filled",
+        "1_1_4_Forgot_Password",
+        "1_1_5_Forgot_Password_focus",
+        "1_2_1_Register_focus",
+        "1_2_2_Register_Filled",
+        "1_3_1_Create_workspace_focus",
+        "1_3_2_Create_workspace_Filled",
+        "3_0_10_Add_Attachments",
+        "3_0_11_Add_Task",
+        "3_0_12_Add_Task_filled",
+        "3_0_13_Set_Due_Date",
+        "3_0_4_Task_edit",
+        "3_0_9_Edit_project",
+        "3_1_3_Create_task_dropdown",
+        "3_1_7_Add_new_category",
+        "3_1_8_Add_new_project_fill",
+        "6_0_4_Add_new_team_filled",
+        "6_1_1_Edit_Profile_8424cb02",
+        "6_1_1_Edit_Profile_ac615417"
+      ],
+      "source_kit_sha256": "9aa13e2746ea33aa404c477798069472e2d0cee95eec2f68687ab80a94ce5041",
+      "parts": {
+        "input": {
+          "component": "TaskplanFieldd9b92bbdf1",
+          "style": {
+            "t": "input",
+            "size": 14.0,
+            "weight": 400,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 22.0,
+            "alignx": 0,
+            "color": 4279310631,
+            "tracking": 0.0
+          }
+        },
+        "label": {
+          "component": "TaskplanTextBody0678b109ba",
+          "style": {
+            "t": "text",
+            "size": 14.0,
+            "weight": 500,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 22.0,
+            "alignx": 0,
+            "color": 4279310631,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [],
+      "selection": {}
+    },
+    "card": {
+      "widget": "TaskplanProjectCard",
+      "source_role": "TaskplanProjectCard",
+      "source_composition": "TaskplanProjectCarde502902e",
+      "source_component": "TaskplanTaskplanProjectCard95d6363842",
+      "source_screens": [
+        "4_03_Project_Overview_Done",
+        "4_0_2_Project_Overview_All",
+        "4_0_4_Project_Activity"
+      ],
+      "source_kit_sha256": "9aa13e2746ea33aa404c477798069472e2d0cee95eec2f68687ab80a94ce5041",
+      "parts": {
+        "control": {
+          "component": "TaskplanButtonb90a204cbe",
+          "style": {
+            "t": "button"
+          }
+        },
+        "due_date": {
+          "component": "TaskplanTextBody6f4fdf713b",
+          "style": {
+            "t": "text",
+            "size": 14.0,
+            "weight": 600,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 22.0,
+            "alignx": 0,
+            "color": 4279310631,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        },
+        "due_label": {
+          "component": "TaskplanTextCaptionbbbf9b8917",
+          "style": {
+            "t": "text",
+            "size": 12.0,
+            "weight": 400,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 19.0,
+            "alignx": 0,
+            "color": 4285297535,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        },
+        "progress_text": {
+          "component": "TaskplanTextCaption2383016f9c",
+          "style": {
+            "t": "text",
+            "size": 12.0,
+            "weight": 600,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 19.0,
+            "alignx": 0.5,
+            "color": 4279310631,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        },
+        "start_date": {
+          "component": "TaskplanTextBody6f4fdf713b",
+          "style": {
+            "t": "text",
+            "size": 14.0,
+            "weight": 600,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 22.0,
+            "alignx": 0,
+            "color": 4279310631,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        },
+        "start_label": {
+          "component": "TaskplanTextCaptionbbbf9b8917",
+          "style": {
+            "t": "text",
+            "size": 12.0,
+            "weight": 400,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 19.0,
+            "alignx": 0,
+            "color": 4285297535,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        },
+        "status": {
+          "component": "TaskplanTextCaption04e7ea2d16",
+          "style": {
+            "t": "text",
+            "size": 12.0,
+            "weight": 600,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 19.0,
+            "alignx": 0,
+            "color": 4279792277,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        },
+        "task_count_text": {
+          "component": "TaskplanTextCaption7968ca6f07",
+          "style": {
+            "t": "text",
+            "variant": "single_line",
+            "size": 12.0,
+            "line_height": 19.0,
+            "alignx": 0,
+            "color": 4279310631,
+            "tracking": 0.0,
+            "weight": 400,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf"
+          }
+        },
+        "title": {
+          "component": "TaskplanTextBody105141a3a5",
+          "style": {
+            "t": "text",
+            "size": 16.0,
+            "weight": 600,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 26.0,
+            "alignx": 0,
+            "color": 4279310631,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [
+        {
+          "component": "TaskplanSurface94eddc2ac9",
+          "style": {
+            "t": "stack",
+            "variant": "ellipse",
+            "bg": 4292007643,
+            "radius": 0.0
+          }
+        },
+        {
+          "component": "TaskplanSurface6c97fd75b7",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4293523195,
+            "radius": 8.0
+          }
+        }
+      ],
+      "selection": {}
+    },
+    "tabs": {
+      "widget": "KitTabBar",
+      "source_role": "TaskplanTabBar",
+      "source_composition": "TaskplanTabBara3480f82",
+      "source_component": "TaskplanKitTabBar02875e4826",
+      "source_screens": [
+        "2_0_0_Home",
+        "2_0_1_Home_Full",
+        "3_0_0_Project_List",
+        "3_1_1_Home_add",
+        "3_1_2_Create_task_from_home",
+        "3_1_3_Create_task_dropdown",
+        "4_0_2_Project_Overview_All"
+      ],
+      "source_kit_sha256": "9aa13e2746ea33aa404c477798069472e2d0cee95eec2f68687ab80a94ce5041",
+      "parts": {
+        "detail_1": {
+          "component": "TaskplanTextCaption8cc2d652ad",
+          "style": {
+            "t": "text",
+            "size": 12.0,
+            "weight": 500,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 19.0,
+            "alignx": 0,
+            "color": 4283258721,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        },
+        "detail_2": {
+          "component": "TaskplanTextCaption8cc2d652ad",
+          "style": {
+            "t": "text",
+            "size": 12.0,
+            "weight": 500,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 19.0,
+            "alignx": 0,
+            "color": 4283258721,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        },
+        "label": {
+          "component": "TaskplanTextCaptionafe7375431",
+          "style": {
+            "t": "text",
+            "size": 12.0,
+            "weight": 600,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 19.0,
+            "alignx": 0,
+            "color": 4294967295,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        },
+        "subtitle": {
+          "component": "TaskplanTextCaption8cc2d652ad",
+          "style": {
+            "t": "text",
+            "size": 12.0,
+            "weight": 500,
+            "font_src": "self:resources/taskplan/PlusJakartaSans.ttf",
+            "line_height": 19.0,
+            "alignx": 0,
+            "color": 4283258721,
+            "variant": "single_line",
+            "tracking": 0.0
+          }
+        }
+      },
+      "surfaces": [
+        {
+          "component": "TaskplanSurfacedd4ee87f64",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4280232503,
+            "radius": 20.0
+          }
+        },
+        {
+          "component": "TaskplanSurfacef1a4553f64",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4293849074,
+            "radius": 20.0
+          }
+        },
+        {
+          "component": "TaskplanSurfacef1a4553f64",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4293849074,
+            "radius": 20.0
+          }
+        },
+        {
+          "component": "TaskplanSurfacef1a4553f64",
+          "style": {
+            "t": "stack",
+            "variant": "surface",
+            "bg": 4293849074,
+            "radius": 20.0
+          }
+        }
+      ],
+      "selection": {
+        "active_color": 4294967295,
+        "active_surface": 4280232503,
+        "inactive_color": 4283258721,
+        "inactive_surface": 4293849074
+      }
+    }
+  }
+}

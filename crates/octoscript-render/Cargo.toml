@@ -11,3 +11,4 @@ makepad-script = { workspace = true }
 # The node model, which needs no VM. Split out so a host that already has a
 # VM can take the branch point without taking this crate's lineage.
 octoscript-node = { path = "../octoscript-node" }
+serde_json = "1"

@@ -1,0 +1,9 @@
+// Axis delta: accent .cyan — one hue, bound into the roles that carry direction and emphasis
+// One coordinate of the theme, concatenated after the mood and before the
+// derive step so a factor change propagates. Identity values emit nothing.
+
+let l0_accent   = argb(255,  18, 181, 201)
+let l0_bar      = l0_accent
+let l0_bar_rail = argb( 38, 128, 128, 128)
+let l0_active   = argb( 72,  18, 181, 201)
+let l0_go       = l0_accent

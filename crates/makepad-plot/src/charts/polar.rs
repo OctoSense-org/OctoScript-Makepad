@@ -424,6 +424,18 @@ pub struct RadarChart {
     #[rust]
     pub axes: Vec<String>,
     #[rust]
+    pub axis_vectors: Vec<(f64,f64)>,
+    #[rust]
+    pub fill_paints: Vec<Option<crate::ChartPaint>>,
+    #[rust]
+    pub axis_center: (f64,f64),
+    #[live(2.0)]
+    pub polygon_width: f64,
+    #[live(true)]
+    pub show_spokes: bool,
+    #[live(4.0)]
+    pub vertex_radius: f64,
+    #[rust]
     pub series: Vec<RadarSeries>,
     #[rust]
     max_value: f64,
@@ -464,6 +476,7 @@ impl RadarChart {
 
     pub fn clear(&mut self) {
         self.series.clear();
+        self.fill_paints.clear();
     }
 
     fn compute_max(&self) -> f64 {
@@ -559,7 +572,7 @@ impl RadarChart {
         let axis_color = vec4(0.5, 0.5, 0.5, 1.0);
         let text_color = vec4(0.25, 0.25, 0.25, 1.0);
         let font_size = self.plot_view.tick_font_size.max(9.0);
-        for (i, axis_name) in axes.iter().enumerate() {
+        for (i, axis_name) in axes.iter().enumerate().filter(|_|self.show_spokes) {
             let a = Self::axis_angle(i, num_axes);
             let ex = cx + radius * a.cos();
             let ey = cy + radius * a.sin();
@@ -591,7 +604,7 @@ impl RadarChart {
 
         // Series polygons
         let series = self.series.clone();
-        for s in &series {
+        for (si,s) in series.iter().enumerate() {
             if s.values.len() != num_axes {
                 continue;
             }
@@ -600,6 +613,11 @@ impl RadarChart {
                 .iter()
                 .enumerate()
                 .map(|(i, &val)| {
+                    if let Some(&(ax,ay))=self.axis_vectors.get(i) {
+                        let pr=self.plot_view.plot_rect();let t=(val/max_val).min(1.0);
+                        return ((pr.pos.x+pr.size.x*(self.axis_center.0+ax*t)) as f32,
+                                (pr.pos.y+pr.size.y*(self.axis_center.1+ay*t)) as f32);
+                    }
                     let a = Self::axis_angle(i, num_axes);
                     let r = (val / max_val).min(1.0) * radius;
                     ((cx + r * a.cos()) as f32, (cy + r * a.sin()) as f32)
@@ -609,15 +627,21 @@ impl RadarChart {
             // Semi-transparent fill
             if s.fill_alpha > 0.0 {
                 let fill_color = vec4(s.color.x, s.color.y, s.color.z, s.fill_alpha as f32);
-                self.plot_view.fill_polygon_px(&pts, fill_color);
+                if let Some(Some(paint))=self.fill_paints.get(si) {
+                    let pr=*self.plot_view.plot_rect();
+                    let d=&mut self.plot_view.draw_vector;d.clear();
+                    paint.apply(d,pr.pos.x as f32,pr.pos.y as f32,pr.size.x as f32,pr.size.y as f32);
+                    for (i,&(x,y)) in pts.iter().enumerate() {if i==0 {d.move_to(x,y)}else{d.line_to(x,y)}}
+                    d.close();d.fill();d.cur_gradient_row_v=-1.;
+                }else{self.plot_view.fill_polygon_px(&pts, fill_color);}
             }
 
             // Outline
-            self.plot_view.stroke_polygon_px(&pts, s.color, 2.0);
+            if self.polygon_width>0. {self.plot_view.stroke_polygon_px(&pts, s.color, self.polygon_width as f32);}
 
             // Vertex points
             for &(px, py) in &pts {
-                self.plot_view.fill_circle_px(px, py, 4.0, s.color);
+                if self.vertex_radius>0. {self.plot_view.fill_circle_px(px, py, self.vertex_radius as f32, s.color);}
             }
         }
     }

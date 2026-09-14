@@ -62,9 +62,9 @@ pub fn source_for(route: &str) -> String {
         Err(e) => return failed(&format!("data did not parse: {e}")),
     };
     let report = realize(card, &data, RealizeLimits::default());
-    let Some(root) = report.root else {
-        let why: Vec<String> = report.diagnostics.iter().map(|d| d.message.clone()).collect();
-        return failed(&why.join("; "));
+    let root = match report.complete_root() {
+        Ok(root) => root,
+        Err(why) => return failed(&why),
     };
     format!("{KIT}\n{}", kit::lower(&root))
 }
