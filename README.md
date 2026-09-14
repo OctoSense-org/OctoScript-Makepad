@@ -82,9 +82,12 @@ Building + running the `kit-host` against upstream surfaced exactly **one** thin
 ## Relationship to makepad
 
 The workspace uses the checked-out sibling `../makepad`: `splash-render` takes
-`platform/script`, and the native widget crates and apps take `widgets`. Keep that checkout
-at the parent repository's pinned revision; the bounded evaluator also uses its
-`ScriptVm::eval_checked` API. The L0 integration tests use sibling `../splash`.
+`platform/script`, and the native widget crates and apps take `widgets`. That sibling is
+[OctoSense-org/makepad](https://github.com/OctoSense-org/makepad) on its build-tool lane
+(`feat/composer-flicker-fix`, the revision Octoscript-AppCard pins as its `makepad`
+submodule); the bounded evaluator uses its `ScriptVm::eval_checked`, the kits use
+`Widget::checked` and `GradientStop::straight_rgb`, and kit-host registers its widget
+mod with `register_splash_isolate_mod`. The L0 integration tests use sibling `../splash`.
 
 ## Build
 
