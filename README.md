@@ -90,6 +90,21 @@ Makepad ships everything this needs — the `makepad-script` VM (`platform/scrip
 
 ## Build
 
+### L0 design-kit validation
+
+The lab's `splash-beauty-host` Studio runnable mounts L0 cards through
+`l0::prepare` and `to_makepad_l0_ui`. This preserves the L0 kit's resolved
+Card/Chip presentation; `to_makepad_ui` remains the Material semantic entry
+point. The preview uses a standalone native window so Studio's pane size
+cannot change the design frame. HTTP image resources and host fixture data
+are exercised by the pipeline, alongside checked native widget construction.
+
+See [the Taskplan runbook](../lab/sketch/TASKPLAN-VALIDATION.md) for commands,
+capture hashes, fill/vision judgments and known fidelity limits. The new
+runnable is independent of the older Material catalog shell.
+
+With the `makepad`, `splash` and `octoscript-makepad` checkouts present:
+
 ```sh
 cargo test            # builds + tests the portable core (octoscript-render, octoscript-makepad)
 ```

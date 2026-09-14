@@ -1,0 +1,36 @@
+// wired — the promotion harness. Every control writes its own slot, and the
+// caption beside it RENDERS that slot, so a screenshot diff is a state diff.
+// A control is ✅ when tapping it changes its caption; ⛔ when it fires and the
+// caption holds. Two known-good anchors (chip, button) validate the harness
+// itself: if an anchor fails, blame the harness, not the widget.
+
+fn wrow(label, control, val) {
+  return {t:"row", spacing: 10, c:[
+    control,
+    {t:"text", variant:"titleMedium", text: label + " = " + val},
+  ]}
+}
+
+fn wired_kids() {
+  return [
+    {t:"text", variant:"titleMedium", text:"Wired-controls harness"},
+
+    // anchors — proven writers; if these do not move, the harness is broken
+    wrow("anchor_chip", {t:"chip", variant:"filter", text:"chip", key:"wc_ch", on: N("wc_ch", 0)}, N("wc_ch", 0)),
+    wrow("anchor_btn", {t:"button", variant:"tonal", label:"button", key:"wc_bt", tap: 1}, N("wc_bt", 0)),
+
+    // candidates
+    wrow("checkbox", {t:"checkbox", text:"cb", key:"wc_cb", on: N("wc_cb", 0)}, N("wc_cb", 0)),
+    wrow("radio", {t:"radio", text:"ra", key:"wc_ra", on: N("wc_ra", 0)}, N("wc_ra", 0)),
+    wrow("toggle", {t:"toggle", key:"wc_tg", on: N("wc_tg", 0)}, N("wc_tg", 0)),
+    wrow("fab", {t:"fab", variant:"small", icon:"add", key:"wc_fb", tap: 1}, N("wc_fb", 0)),
+    {t:"listitem", label:"switch row", supporting:"listitem action:switch", action:"switch", key:"wc_sw", on: N("wc_sw", 0)},
+    {t:"text", variant:"titleMedium", text:"switch = " + N("wc_sw", 0)},
+    wrow("slider", {t:"slider", key:"wc_sl", value: N("wc_sl", 0), min: 0, max: 10, step: 1}, N("wc_sl", 0)),
+    wrow("dropdown", {t:"dropdown", items:"A;B;C", key:"wc_dd", selected: N("wc_dd", 0)}, N("wc_dd", 0)),
+    {t:"progress", value: 50},
+    caption("progress drawn with value: 50 — bar or ring?"),
+  ]
+}
+
+{t:"col", pad: 16, spacing: 10, c: wired_kids()}

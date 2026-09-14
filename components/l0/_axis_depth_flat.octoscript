@@ -1,0 +1,19 @@
+// Axis delta: depth .flat — no shadow at all — the surface sits ON the page.
+//
+// Mood-INdependent WITHOUT a cross product, because the ink is bound to a
+// token the mood has already solved rather than to a literal. A hard shadow
+// in opaque black is invisible on a near-black page — the same ground
+// dependence that forced the accent axis into 48 generated files — but
+// `l0_text` is by construction the colour that READS on this mood's ground,
+// and `l0_accent` is the hue the card asked for. So the shape is stated here
+// and the colour is inherited, and one file serves every palette.
+// `panel_lift` is the elevation the kit passes; zeroing it removes the derived
+// soft shadow at its source. Suppressing it with a transparent ink would not
+// work — the backend falls back to the derived lift when the ink is clear,
+// which is exactly right for a mood with no opinion and wrong for one that
+// deliberately wants none.
+let panel_lift     = 0
+let l0_shadow_ink  = argb(0, 0, 0, 0)
+let l0_shadow_blur = 0
+let l0_shadow_dx   = 0
+let l0_shadow_dy   = 0

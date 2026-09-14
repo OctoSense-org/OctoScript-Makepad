@@ -1,0 +1,44 @@
+// Mood delta: vibrant — a saturated ground and one loud accent.
+//
+// 24 corpus cards declare `theme vibrant` and none of them could realize: L0
+// admitted four moods and this was not one, so the card was refused before it
+// reached a colour. The name is the whole brief — a card that commits to a hue
+// rather than defaulting to neutral dark.
+//
+// Concatenated after the base and before `_derive`, so a factor moved here
+// still propagates. Every value it does not name is inherited from dark.
+
+// A deep indigo, not black. The point of this mood is that the PAGE carries the
+// colour, which is the one thing an accent axis cannot do — accent reaches a
+// bar, a highlight and a button, and never a surface.
+let l0_base     = argb(255,  26,  20,  56)   // #1a1438
+let l0_base_2   = argb(255,  12,   9,  30)   // #0c091e deepens AWAY from the panel;
+                                             // a gradient ending on the card fill
+                                             // has separation zero.
+let l0_sheet    = argb(255,  34,  27,  70)   // #221b46 over a map — opaque
+
+// Panels lift by the same ratio every shipped mood uses — measured at 1.12:1
+// in both dark and light. Stated as an alpha so it self-scales to the ground.
+let l0_fill     = argb( 30, 255, 255, 255)   // #ffffff1e
+let l0_hairline = argb( 38, 255, 255, 255)   // #ffffff26
+let l0_active   = argb( 66, 255, 255, 255)   // #ffffff42
+
+// The loud part. One hue, used only where direction and emphasis live, so the
+// screen reads as committed rather than as a colour scheme.
+let l0_bar      = argb(255, 255, 122, 182)   // #ff7ab6
+let l0_bar_rail = argb( 41, 255, 255, 255)   // #ffffff29
+let l0_go       = argb(255, 255, 122, 182)   // #ff7ab6
+let l0_ondark   = argb(255,  22,  10,  30)   // #160a1e ink on a lit fill
+
+// Ink stays near-white: the ground is doing the colour work, and tinting the
+// text as well is how a vibrant mood turns into an unreadable one.
+//
+// `l0_text` is deliberately NOT overridden. `light` is the only mood allowed to
+// invert the ink, because the host's light-over-Photo substitution keys on
+// exactly that — a second mood setting a dark ink would render unreadable text
+// over a photograph with every automated check still passing. Inheriting dark's
+// white is also what this mood wants, so there is nothing to give up.
+let l0_soft     = argb(232, 255, 255, 255)   // #ffffffe8
+let l0_dim      = argb(158, 255, 255, 255)   // #ffffff9e
+
+let radius_factor = 1.2

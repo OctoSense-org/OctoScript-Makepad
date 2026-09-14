@@ -1,0 +1,43 @@
+// Mood delta: minimal — near-monochrome, hairlines, and air.
+//
+// 19 corpus cards declare `theme minimal` and none of them could realize.
+//
+// The brief is restraint, and the measurement this session says exactly what
+// that must NOT mean: the emptiest mockup in an eight-way blind comparison lost
+// all seven of its pairs, with the judges calling its space "void", "empty, not
+// a pause", "unmotivated". Restraint is a confident hierarchy with nothing
+// competing, not an absence of things. So this mood spends its budget on the
+// type scale and takes it out of colour — one near-neutral ground, no accent
+// hue at all, and dividers instead of fills.
+
+let l0_base     = argb(255,  16,  17,  19)   // #101113 a warm-neutral near-black
+let l0_base_2   = argb(255,   6,   7,   8)   // #060708 away from the panel
+let l0_sheet    = argb(255,  22,  23,  26)   // #16171a over a map — opaque
+
+// Panels barely lift; a rule does the separating instead of a fill. Still the
+// 1.12:1 the other moods land on, just carried by the hairline rather than
+// the surface.
+let l0_fill     = argb( 12, 255, 255, 255)   // #ffffff0c
+let l0_hairline = argb( 46, 255, 255, 255)   // #ffffff2e the load-bearing element
+let l0_stroke   = argb( 46, 255, 255, 255)   // #ffffff2e
+let l0_active   = argb( 40, 255, 255, 255)   // #ffffff28
+
+// No accent hue. Emphasis comes from weight and size, which `emphasis` and the
+// derive step already control — a mood that also shouted would be two knobs
+// fighting over the same job.
+let l0_bar      = argb(255, 235, 235, 238)   // #ebebee
+let l0_bar_rail = argb( 30, 255, 255, 255)   // #ffffff1e
+let l0_go       = argb(255, 235, 235, 238)   // #ebebee
+let l0_ondark   = argb(255,  16,  17,  19)   // #101113 ink on a lit fill
+
+// A wider ink range than dark: with colour withdrawn, the only thing left to
+// build a hierarchy out of is how bright each level is.
+//
+// `l0_text` is inherited, not restated. Only `light` may override it — the
+// host's light-over-Photo substitution depends on that being the single case —
+// and dark's white is already the value this mood would have written.
+let l0_soft     = argb(214, 255, 255, 255)   // #ffffffd6
+let l0_dim      = argb(130, 255, 255, 255)   // #ffffff82
+
+let radius_factor = 0.5
+let space_factor  = 1.15

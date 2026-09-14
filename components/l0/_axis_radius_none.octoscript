@@ -1,0 +1,5 @@
+// Axis delta: shape .square — hard corners; De Stijl, Swiss, brutalist
+// One coordinate of the theme, concatenated after the mood and before the
+// derive step so a factor change propagates. Identity values emit nothing.
+
+let radius_factor = 0

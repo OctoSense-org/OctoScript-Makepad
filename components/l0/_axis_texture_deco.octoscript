@@ -1,0 +1,9 @@
+// Axis delta: texture .deco — a geometric PATTERN rather than a grain.
+//
+// Same primitive as paper or linen; what separates a pattern from a grain
+// is only that its structure is meant to read, so it carries more alpha and
+// fewer repeats. That is why `pattern` cost nothing once `texture` existed,
+// and why it was worth counting them as one gap rather than two.
+let l0_texture   = "deco"
+let l0_texture_a = 0.1
+let l0_texture_s = 3

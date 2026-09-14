@@ -1,0 +1,6 @@
+// Axis delta: emphasis .poster — the hero IS the design
+// One coordinate of the theme, concatenated after the mood and before the
+// derive step so a factor change propagates. Identity values emit nothing.
+
+let hero_factor = 1.95
+let font_step   = 3
