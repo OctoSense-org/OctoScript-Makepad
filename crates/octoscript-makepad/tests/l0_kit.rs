@@ -7,7 +7,35 @@
 //! not exist. The repository that owns the profile has no dependency on this
 //! one, so nothing there can catch a drift. These tests can.
 
-const KIT: &str = include_str!("../../../components/l0/_kit.octoscript");
+/// The kit body, which defines no colours — a palette is concatenated before it.
+const KIT_BODY: &str = include_str!("../../../components/l0/_kit.octoscript");
+
+/// The base: every knob and every colour.
+const BASE: &str = include_str!("../../../components/l0/_palette_dark.octoscript");
+/// Every size, computed from the knobs — AFTER the mood's delta.
+const DERIVE: &str = include_str!("../../../components/l0/_derive.octoscript");
+
+/// Each mood's delta. `dark` is the base itself, so its delta is empty.
+const DELTAS: &[(&str, &str)] = &[
+    ("dark", ""),
+    ("light", include_str!("../../../components/l0/_palette_light.octoscript")),
+    ("glass", include_str!("../../../components/l0/_palette_glass.octoscript")),
+    ("photo", include_str!("../../../components/l0/_palette_photo.octoscript")),
+];
+
+/// The kit as a host assembles it: base, delta, derive, body — in that order.
+fn kit_with(theme: &str) -> String {
+    let (_, delta) = DELTAS
+        .iter()
+        .find(|(n, _)| *n == theme)
+        .unwrap_or_else(|| panic!("no palette for theme {theme:?}"));
+    format!("{BASE}\n{delta}\n{DERIVE}\n{KIT_BODY}")
+}
+
+/// The default assembly, for the role tests below.
+fn kit() -> String {
+    kit_with("dark")
+}
 
 /// Every role, and the call that exercises it.
 ///
@@ -45,7 +73,7 @@ const ROLES: &[(&str, &str)] = &[
 /// then `node`, and getting this wrong made all 21 roles report as dead on the
 /// first run.
 fn eval(call: &str) -> Option<octoscript_render::UiNode> {
-    let src = format!("{KIT}\nlet node = {call}\nnode\n");
+    let src = format!("{}\nlet node = {call}\nnode\n", kit());
     octoscript_render::build(&src, |_vm| {})
 }
 
@@ -154,4 +182,137 @@ fn an_unsupported_role_is_visible_rather_than_absent() {
         text.contains("TempBar"),
         "the marker must NAME the role it stands in for, got {text:?}"
     );
+}
+
+/// Every palette defines every name, and they are the names the kit reads.
+///
+/// A missing entry is NOT a default. An undefined name coerces to 0 — fully
+/// transparent — so the role that reads it renders as nothing and the card still
+/// looks complete. That is the §1.1 failure this whole file exists to catch, and
+/// with four palettes it is now four times as easy to make: adding a colour to
+/// the kit means adding it to all four.
+#[test]
+fn l0_palettes_agree() {
+    fn names(src: &str) -> std::collections::BTreeSet<String> {
+        src.lines()
+            .filter_map(|l| l.trim().strip_prefix("let "))
+            .filter_map(|l| l.split_whitespace().next())
+            .map(str::to_owned)
+            .collect()
+    }
+    let defined: std::collections::BTreeSet<String> =
+        names(BASE).union(&names(DERIVE)).cloned().collect();
+    assert!(
+        defined.len() >= 30,
+        "base + derive looks empty: {defined:?}"
+    );
+
+    // A DELTA may only restate a token the base or the derivation defines. A
+    // typo — `l0_dimm` — would otherwise bind a name nothing reads and change
+    // nothing, silently, which is the whole failure mode this file exists for.
+    for (theme, delta) in DELTAS {
+        for name in names(delta) {
+            assert!(
+                defined.contains(&name),
+                "delta {theme:?} defines {name:?}, which is not a token — typo?"
+            );
+        }
+    }
+
+    // And the kit must not read an `l0_*` colour nothing defines.
+    for line in KIT_BODY.lines() {
+        for tok in line.split(|c: char| !(c.is_alphanumeric() || c == '_')) {
+            if let Some(rest) = tok.strip_prefix("l0_") {
+                let name = format!("l0_{rest}");
+                if defined.contains(&name) {
+                    continue;
+                }
+                assert!(
+                    KIT_BODY.contains(&format!("fn {name}(")),
+                    "the kit reads {name:?}, which is neither a role nor a token"
+                );
+            }
+        }
+    }
+}
+
+/// Every mood assembles into a kit that still evaluates, and a knob a delta
+/// moves actually reaches the roles.
+///
+/// The ordering this depends on is invisible: `let` evaluates at its own line, so
+/// deriving sizes in the BASE would leave a delta's `radius_factor` with nothing
+/// to change and every mood would silently keep the base's corners.
+#[test]
+fn a_delta_can_move_a_knob() {
+    for (theme, _) in DELTAS {
+        let src = format!(
+            "{}\nlet node = l0_panel([l0_title(\"t\")])\nnode\n",
+            kit_with(theme)
+        );
+        let tree = octoscript_render::build(&src, |_vm| {})
+            .unwrap_or_else(|| panic!("mood {theme:?} does not evaluate"));
+        assert!(tree.attrs.bg.is_some(), "mood {theme:?} lost its panel fill");
+    }
+    // `glass` sets radius_factor 1.5, so its panel corner must differ from dark's.
+    let radius_of = |theme: &str| {
+        let src = format!(
+            "{}\nlet node = l0_panel([l0_title(\"t\")])\nnode\n",
+            kit_with(theme)
+        );
+        octoscript_render::build(&src, |_vm| {}).expect("evaluates").attrs.radius
+    };
+    assert_ne!(
+        radius_of("glass"),
+        radius_of("dark"),
+        "glass moves radius_factor and the derivation must follow it"
+    );
+}
+
+/// The derived tokens equal the numbers the kit used to hardcode.
+///
+/// This is what "the layer moved, the look did not" means, asserted rather than
+/// eyeballed — comparing screenshots cannot do it, because two runs of a card are
+/// two different generations. Four device goldens assert these numbers; if a knob
+/// default or a multiplier drifts, every card silently re-lays-out and only this
+/// notices.
+#[test]
+fn the_default_tokens_are_the_numbers_the_kit_used_to_hardcode() {
+    // `let node = {t: "card", radius: <token>}` is the cheapest way to read a
+    // token's VALUE back out through the same evaluator the kit uses.
+    fn token(name: &str) -> f32 {
+        let src = format!(
+            "{}\nlet node = {{t: \"card\", radius: {name}}}\nnode\n",
+            kit_with("dark")
+        );
+        octoscript_render::build(&src, |_vm| {})
+            .unwrap_or_else(|| panic!("{name} does not evaluate"))
+            .attrs
+            .radius
+            .unwrap_or_else(|| panic!("{name} is undefined — which reads as 0"))
+    }
+    for (name, want) in [
+        ("pad_page_x", 20.0),
+        // c4e7262 removed the second status-bar clearance.
+        ("pad_page_top", 36.0),
+        ("pad_page_bot", 24.0),
+        ("pad_panel_x", 14.0),
+        ("pad_panel_y", 12.0),
+        ("pad_tile_x", 12.0),
+        ("pad_tile_y", 10.0),
+        ("pad_chip_x", 10.0),
+        ("pad_chip_y", 5.0),
+        ("gap_panel_top", 16.0),
+        ("gap_row", 6.0),
+        ("gap_tile", 4.0),
+        ("radius_panel", 14.0),
+        ("radius_tile", 12.0),
+        ("radius_chip", 12.0),
+        ("font_caption", 8.0),
+        ("font_row", 10.0),
+        ("font_body", 12.0),
+        ("font_value", 14.0),
+        ("font_title", 18.0),
+    ] {
+        assert_eq!(token(name), want, "{name} drifted from the shipped value");
+    }
 }

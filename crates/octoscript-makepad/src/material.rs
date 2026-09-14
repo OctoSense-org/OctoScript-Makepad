@@ -411,7 +411,19 @@ pub fn lower(node: &UiNode, r: &Roles) -> Option<UiNode> {
             text_field(node, r)
         }
         NodeKind::Button => button(node, r)?,
-        NodeKind::Image if a.src.is_some() => shapeable_image(a, r),
+        // A src naming a real bundled photo (not a grad* placeholder) is NOT
+        // lowered — it passes through as a native Image widget, which
+        // `to_makepad_ui` emits with `src: crate_resource(...)`. Only the three
+        // gradient keys lower to a gradient box. (Returning a lowered Image that
+        // still carried `src` re-entered this arm forever — the same trap the
+        // Input guard above avoids.)
+        NodeKind::Image if a.src.is_some() => {
+            let key = a.src.as_deref().unwrap_or("grad1");
+            if key != "grad1" && key != "grad2" && key != "grad3" {
+                return None;
+            }
+            shapeable_image(a, r)
+        }
         // An indicator states no size in the reference — Android's widget has an
         // intrinsic one. Here it collapsed to zero and the screens drew nothing,
         // so supply the M3 default and keep the animating widget.

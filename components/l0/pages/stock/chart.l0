@@ -1,0 +1,42 @@
+view root Surface(pad: .page) {
+  when selected == "" { list }
+  when selected != "" { detail }
+}
+view detail Col(gap: 12) {
+  quote_controls
+  TextTitle(text: quote.name, width: .fill)
+  ranges
+  chart
+  quote_summary
+  stats
+}
+view quote_summary Card {
+  Row(gap: 14, align: .center) {
+    TextStat(value: quote.last, format: .money)
+    Col(width: .fill, gap: 4) {
+      TextStat(value: quote.change, format: .signed_money, tint: quote.change)
+      TextValue(value: quote.pct, format: .signed_pct, tint: quote.change)
+    }
+  }
+}
+
+view list Col(gap: 12) {
+  TextTitle(text: copy.movers)
+  Card(on_tap: open_quote, value: movers.0.ticker) {
+    TextTitle(text: movers.0.ticker)
+    TextBody(text: movers.0.name, width: .fill)
+    Row(gap: 12) {
+      TextStat(value: movers.0.last, format: .money)
+      TextValue(value: movers.0.pct, format: .signed_pct, tint: movers.0.change)
+    }
+  }
+  StockPlot(symbol: movers.0.ticker, range: range)
+  watch_controls
+  for m in movers key m.ticker {
+    Row(align: .center, gap: 12, on_tap: open_quote, value: m.ticker) {
+      Col(width: .fill, gap: 3) { TextRow(text: m.ticker) TextCaption(text: m.name, width: .fill) }
+      TextValue(value: m.last, format: .money)
+      TextValue(value: m.pct, format: .signed_pct, tint: m.change)
+    }
+  }
+}

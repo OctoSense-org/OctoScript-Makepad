@@ -14,6 +14,13 @@ pub const KIT: &str = include_str!("../../../components/material/screens/kit.oct
 
 /// Every route, in the order the reference lists them.
 pub const SCREENS: &[(&str, &str)] = &[
+    // The semantic-vocabulary experiment: a NEW app authored only from
+    // WIDGETS.md by a generator, to test the vocabulary as a contract.
+    ("brew", include_str!("../../../components/material/screens/brew.octoscript")),
+    // The three-screen ordering app (tabs, per-drink customization, rewards).
+    ("siren", include_str!("../../../components/material/screens/siren.octoscript")),
+    // The promotion harness: every control writes a slot, a caption renders it.
+    ("wired", include_str!("../../../components/material/screens/wired.octoscript")),
     ("adaptive", include_str!("../../../components/material/screens/adaptive.octoscript")),
     ("allcomponents", include_str!("../../../components/material/screens/allcomponents.octoscript")),
     ("badge", include_str!("../../../components/material/screens/badge.octoscript")),
@@ -64,6 +71,9 @@ pub fn title_of(route: &str) -> &str {
     match route {
         INDEX => "Catalog",
         "allcomponents" => "All components",
+        "brew" => "Brew",
+        "siren" => "Siren Coffee",
+        "wired" => "Wired controls",
             "adaptive" => "Adaptive layouts",
             "badge" => "Badge",
             "bottomappbar" => "Bottom app bar",

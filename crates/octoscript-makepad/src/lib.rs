@@ -20,6 +20,7 @@
 //! and unit-tested so it needs no window to verify.
 
 pub mod kit;
+pub mod l0;
 pub mod material;
 
 use octoscript_render::{Attrs, NodeKind, UiNode};
@@ -57,9 +58,70 @@ fn theme() -> material::Roles {
 /// (`bg` → `show_bg`+`draw_bg.color`, `size` → `draw_text` font size, etc.).
 pub fn to_makepad_ui(root: &UiNode) -> String {
     material::reset_slider_index();
+    let mut root = root.clone();
+    resolve_ink_planes(&mut root, None, None);
     let mut out = String::new();
-    emit(root, &mut out, 0);
+    emit(&root, &mut out, 0, false);
     out
+}
+
+/// Translate a tree whose presentation was already resolved by the L0 kit.
+/// Material's semantic Card/Chip lowering must not overwrite these dimensions,
+/// colors or child labels, and L0 sizes are already Makepad points.
+pub fn to_makepad_l0_ui(root: &UiNode) -> String {
+    let mut root = root.clone();
+    resolve_ink_planes(&mut root, None, None);
+    let mut out = String::new();
+    emit(&root, &mut out, 0, true);
+    out
+}
+
+pub mod design;
+
+/// Relative luminance of an 0xAARRGGBB colour, sRGB, alpha ignored.
+fn rlum(c: u32) -> f64 {
+    let ch = |s: u32| {
+        let v = ((c >> s) & 0xff) as f64 / 255.0;
+        if v <= 0.04045 {
+            v / 12.92
+        } else {
+            ((v + 0.055) / 1.055).powf(2.4)
+        }
+    };
+    0.2126 * ch(16) + 0.7152 * ch(8) + 0.0722 * ch(0)
+}
+
+fn contrast(a: u32, b: u32) -> f64 {
+    let (x, y) = (rlum(a), rlum(b));
+    (x.max(y) + 0.05) / (x.min(y) + 0.05)
+}
+
+/// Give descending text the ink of the nearest enclosing surface that states
+/// one, where its own colour cannot be read on that surface.
+///
+/// A pack states its card colour once, and that colour does not flip when the
+/// pack's light variant flips `l0_text` — so CaMo light drew near-black
+/// headlines on a pure black card, unreadable here and on the ArkUI rail
+/// alike. Resolved as a pre-pass over the tree rather than threaded through
+/// `emit`, because it is a property of the tree and not of the emission, and
+/// the two backends then apply the same rule at the same place in their
+/// pipelines.
+///
+/// Only text that FAILS AA against the surface moves: a chip or a link that
+/// already contrasts keeps the colour the theme gave it.
+fn resolve_ink_planes(node: &mut UiNode, ink: Option<u32>, fill: Option<u32>) {
+    let (ink, fill) = match node.attrs.ink {
+        Some(i) => (Some(i), node.attrs.bg.or(fill)),
+        None => (ink, fill),
+    };
+    if let (Some(own), Some(i), Some(f)) = (node.attrs.color, ink, fill) {
+        if contrast(own, f) < 4.5 {
+            node.attrs.color = Some(i);
+        }
+    }
+    for c in &mut node.children {
+        resolve_ink_planes(c, ink, fill);
+    }
 }
 
 /// The makepad widget a kind renders as.
@@ -167,26 +229,32 @@ fn needs_click_overlay(node: &UiNode) -> bool {
     node.attrs.tapto.is_some() && is_container(node.kind)
 }
 
-fn emit(node: &UiNode, out: &mut String, depth: usize) {
+fn emit(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
+    let mut primitive;
+    let node = if resolved && matches!(node.kind, NodeKind::Card | NodeKind::Chip) {
+        primitive = node.clone();
+        primitive.kind = NodeKind::Column;
+        &primitive
+    } else { node };
     // A Material node is desugared into primitives first, so it picks up the
     // same corner-radius, colour-role and text handling as everything else.
     // Re-enter rather than emit directly: lowering is where a component gains
     // its `tapto`, and going straight to `emit_widget` skipped the click overlay
     // and left every lowered component inert. This terminates because a lowered
     // node is primitive, and a resolved text role clears the `variant`.
-    if let Some(lowered) = material::lower(node, &theme()) {
-        emit(&lowered, out, depth);
+    if let Some(lowered) = (!resolved).then(|| material::lower(node, &theme())).flatten() {
+        emit(&lowered, out, depth, resolved);
         return;
     }
-    if needs_vertical_pad_wrapper(node) {
-        emit_vertical_pad(node, out, depth);
+    if !resolved && needs_vertical_pad_wrapper(node) {
+        emit_vertical_pad(node, out, depth, resolved);
         return;
     }
     if needs_click_overlay(node) {
-        emit_click_overlay(node, out, depth);
+        emit_click_overlay(node, out, depth, resolved);
         return;
     }
-    emit_widget(node, out, depth);
+    emit_widget(node, out, depth, resolved);
 }
 
 /// Vertical-only padding (`pady` with no `padx`) on a node that has no fixed
@@ -227,7 +295,7 @@ fn needs_vertical_pad_wrapper(node: &UiNode) -> bool {
         || text_default
 }
 
-fn emit_vertical_pad(node: &UiNode, out: &mut String, depth: usize) {
+fn emit_vertical_pad(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
     let ind = "    ".repeat(depth);
     let inner_ind = "    ".repeat(depth + 1);
     // The widget already carries makepad's own `theme.mspace_1` inset (~4dp), so
@@ -281,7 +349,7 @@ fn emit_vertical_pad(node: &UiNode, out: &mut String, depth: usize) {
     bare.attrs.pad = None;
     bare.attrs.marginy = Some(0.0);
     bare.attrs.margin = None;
-    emit(&bare, out, depth + 1);
+    emit(&bare, out, depth + 1, resolved);
     let _ = writeln!(out, "{inner_ind}View {{ height: {py} }}");
     let _ = writeln!(out, "{ind}}}");
 }
@@ -293,7 +361,7 @@ fn emit_vertical_pad(node: &UiNode, out: &mut String, depth: usize) {
 /// mounted anywhere else — notably on the app's main VM, which is what gets this
 /// crate's fonts and a widget kit's theming into reach — had every tap silently
 /// do nothing. A global works on either VM.
-fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
+fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
     let ind = "    ".repeat(depth);
     let inner_ind = "    ".repeat(depth + 1);
     let a = &node.attrs;
@@ -358,7 +426,7 @@ fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
     // The content, with `tapto` stripped so it does not re-enter this path.
     let mut content = node.clone();
     content.attrs.tapto = None;
-    emit_widget(&content, out, depth + 1);
+    emit_widget(&content, out, depth + 1, resolved);
 
     // The hit target: an empty ButtonFlatter filling the wrapper.
     //
@@ -385,7 +453,7 @@ fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
     let _ = writeln!(out, "{ind}}}");
 }
 
-fn emit_widget(node: &UiNode, out: &mut String, depth: usize) {
+fn emit_widget(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
     let ind = "    ".repeat(depth);
     let name = widget_for(node);
     // An `id` makes the widget addressable in the mounted tree: `name := Widget{…}`.
@@ -397,14 +465,14 @@ fn emit_widget(node: &UiNode, out: &mut String, depth: usize) {
             let _ = writeln!(out, "{ind}{name} {{");
         }
     }
-    emit_attrs(node, out, depth + 1);
+    emit_attrs(node, out, depth + 1, resolved);
     // Only containers carry children — decided by the node's *kind*, and now
     // actually so. This read `widget_name(node.kind) == "View"`, which is a
     // question about the mapped name wearing the comment of a question about the
     // kind. See `is_container`.
     if is_container(node.kind) {
         for c in &node.children {
-            emit(c, out, depth + 1);
+            emit(c, out, depth + 1, resolved);
         }
     }
     let _ = writeln!(out, "{ind}}}");
@@ -518,9 +586,14 @@ fn control_roles(kind: NodeKind, a: &Attrs) -> Vec<String> {
 /// makepad evidently resolves those on a different rounding path.
 const DP_SCALE: f32 = 157.7 / 157.0;
 
-fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
+fn emit_attrs(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
     let ind = "    ".repeat(depth);
     let a = &node.attrs;
+    if resolved && node.kind == NodeKind::Column {
+        if let Some(selected) = a.selected {
+            let _ = writeln!(out, "{ind}selected: {}", selected != 0);
+        }
+    }
 
     if let Some(f) = flow(node.kind) {
         let _ = writeln!(out, "{ind}flow: {f}");
@@ -553,13 +626,18 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
     let container = flow(node.kind).is_some();
     match a.w {
         Some(w) => {
-            let _ = writeln!(out, "{ind}width: {}", w * DP_SCALE);
+            let _ = writeln!(out, "{ind}width: {}", if resolved { w } else { w * DP_SCALE });
         }
         None if a.fillw == Some(1) => {
             let _ = writeln!(out, "{ind}width: Fill");
         }
         None if a.fitw == Some(1) => {
             let _ = writeln!(out, "{ind}width: Fit");
+        }
+        // A bundled photo spans its column by default, so a card author need not
+        // know makepad's width model to get a full-width banner.
+        None if node.kind == NodeKind::Image => {
+            let _ = writeln!(out, "{ind}width: Fill");
         }
         None if container => {
             let _ = writeln!(out, "{ind}width: Fill");
@@ -574,7 +652,7 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
             let _ = writeln!(out, "{ind}height: Fit");
         }
         Some(h) => {
-            let _ = writeln!(out, "{ind}height: {}", h * DP_SCALE);
+            let _ = writeln!(out, "{ind}height: {}", if resolved { h } else { h * DP_SCALE });
         }
         None if a.fillh == Some(1) => {
             let _ = writeln!(out, "{ind}height: Fill");
@@ -602,41 +680,28 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         }
         None => {}
     }
-    // Padding. Only the *scalar* form lands in this dialect: the per-side object
-    // `{left: .., top: ..}` parses and silently resolves to nothing, as do
-    // `Inset{..}` (declared in mod.draw, out of scope in a mounted body) and
-    // makepad's own base-with-override `0{left: ..}`. All three were tried on
-    // device. That no-op is why every control rendered hugging its label — a
-    // button measured 46dp wide against the reference's 89dp.
-    //
-    // So when the two axes differ, one has to win. A node with a fixed height
-    // cannot use vertical padding anyway, which makes the horizontal inset the
-    // one that matters: it is what gives a button its 24dp sides. Anything else
-    // keeps the (inert) object form rather than gaining a horizontal inset it
-    // never asked for, which would indent every list row's text.
-    if a.padx.is_some() || a.pady.is_some() {
+    // The VM requires the typed Inset constructor for asymmetric values.
+    // Include all four vertical overrides; dropping padtop put L0 titles
+    // against the window edge even when the theme requested a status inset.
+    if a.padx.is_some() || a.pady.is_some() || a.padtop.is_some() || a.padbottom.is_some() {
         let px = a.padx.or(a.pad).unwrap_or(0.0);
         let py = a.pady.or(a.pad).unwrap_or(0.0);
-        if (px - py).abs() < 0.01 || (a.h.is_some() && px > 0.0) {
-            let _ = writeln!(out, "{ind}padding: {px}");
-        } else {
-            let _ = writeln!(
-                out,
-                "{ind}padding: {{left: {px}, right: {px}, top: {py}, bottom: {py}}}"
-            );
-        }
+        let top = a.padtop.unwrap_or(py);
+        let bottom = a.padbottom.unwrap_or(py);
+        let _ = writeln!(out,
+            "{ind}padding: Inset{{left: {px}, right: {px}, top: {top}, bottom: {bottom}}}");
     } else if let Some(p) = a.pad {
         let _ = writeln!(out, "{ind}padding: {p}");
     } else if node.kind == NodeKind::Text {
         let _ = writeln!(out, "{ind}padding: 0");
     }
     let (mx, my) = (a.marginx.or(a.margin), a.marginy.or(a.margin));
-    if mx.is_some() || my.is_some() {
+    if mx.is_some() || my.is_some() || a.margintop.is_some() || a.marginbottom.is_some() {
         let (mx, my) = (mx.unwrap_or(0.0), my.unwrap_or(0.0));
-        let _ = writeln!(
-            out,
-            "{ind}margin: {{left: {mx}, right: {mx}, top: {my}, bottom: {my}}}"
-        );
+        let top = a.margintop.unwrap_or(my);
+        let bottom = a.marginbottom.unwrap_or(my);
+        let _ = writeln!(out,
+            "{ind}margin: Inset{{left: {mx}, right: {mx}, top: {top}, bottom: {bottom}}}");
     }
     if let Some(sp) = a.spacing {
         let _ = writeln!(out, "{ind}spacing: {sp}");
@@ -652,7 +717,8 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         || a.elevation.is_some()
         || !roles.is_empty()
     {
-        if a.bg.is_some() || a.border.is_some() || a.elevation.is_some() {
+        if (a.bg.is_some() || a.border.is_some() || a.elevation.is_some())
+            && !matches!(node.kind, NodeKind::Input | NodeKind::Textarea) {
             let _ = writeln!(out, "{ind}show_bg: true");
         }
         let mut parts = Vec::new();
@@ -714,7 +780,7 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
     }
     // `tapto` wires an on_click that writes the route into the `nav_signal`
     // widget; the host app reads that text and re-mounts the target screen.
-    if let Some(target) = a.tapto.as_ref() {
+    if let Some(target) = a.tapto.as_ref().filter(|t| !t.is_empty()) {
         let _ = writeln!(
             out,
             "{ind}on_click: || {{ NAV(t: {target:?}) }}"
@@ -726,7 +792,7 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         // ~1.33x too tall on every screen (toolbar title 66px vs 47, heading 45
         // vs 34, button label 39 vs 29) — 72/96 exactly.
         const SP_TO_PT: f32 = 0.75;
-        let s = s * SP_TO_PT;
+        let s = if resolved { s } else { s * SP_TO_PT };
         // icon selects the theme's Font-Awesome face (monochrome icons);
         // else weight >= 500 selects the Medium (bold) face — M3's label / title /
         // emphasis weight; else just set the size (Regular). Each swaps the whole
@@ -753,9 +819,11 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
             // (topappbar 8.0 -> 8.7), which stays comfortably in range. 1.6 was
             // also tried and is marginally worse without moving `adaptive`.
             let w = a.weight.unwrap_or(400).max(1) as f32;
+            let font = a.font_src.as_deref().filter(|s|!s.is_empty())
+                .unwrap_or("self:resources/Roboto-Regular.ttf");
             let _ = writeln!(
                 out,
-                "{ind}draw_text.text_style: TextStyle{{ font_family: FontFamily{{ latin := FontMember{{res: crate_resource(\"self:resources/Roboto-Regular.ttf\") asc: -0.1 desc: 0.0 weight: {w}}} }} line_spacing: 1.45 font_size: {s} }}"
+                "{ind}draw_text.text_style: TextStyle{{ font_family: FontFamily{{ latin := FontMember{{res: crate_resource({font:?}) asc: -0.1 desc: 0.0 weight: {w}}} }} line_spacing: 1.45 font_size: {s} }}"
             );
         } else if a.icon == Some(1) {
             let _ = writeln!(
@@ -790,7 +858,20 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         }
     }
     if let Some(src) = &a.src {
-        let _ = writeln!(out, "{ind}source: {src:?}");
+        if node.kind == NodeKind::Image {
+            // A real bundled photo: makepad's Image widget takes a resource
+            // handle via `src:` (same `crate_resource` mechanism the font uses,
+            // which already renders on device). CropToFill fills the box and
+            // crops the overflow — right for a banner.
+            if src.starts_with("https://") || src.starts_with("http://") {
+                let _ = writeln!(out, "{ind}src: http_resource({src:?})");
+            } else {
+                let _ = writeln!(out, "{ind}src: crate_resource(\"self:resources/{src}.png\")");
+            }
+            let _ = writeln!(out, "{ind}fit: ImageFit.CropToFill");
+        } else {
+            let _ = writeln!(out, "{ind}source: {src:?}");
+        }
     }
 
     // Data-visualisation uniforms. The names are the shader's, not the model's:
@@ -972,6 +1053,29 @@ mod tests {
 
     fn tree(src: &str) -> UiNode {
         octoscript_render::build(src, |_vm| {}).expect("evaluates")
+    }
+
+    #[test]
+    fn resolved_l0_keeps_chip_children_card_geometry_and_point_sizes() {
+        let ui = to_makepad_l0_ui(&tree(r#"{t:"card", w:40, h:40, bg:4281558681,
+            padx:4, padtop:6, padbottom:8, c:[{t:"chip", c:[
+                {t:"text",text:"All",size:12}]}]}"#));
+        assert!(ui.contains("text: \"All\""), "chip label was dropped: {ui}");
+        assert!(ui.contains("font_size: 12"), "L0 points were rescaled: {ui}");
+        assert!(ui.contains("width: 40"), "card width was replaced: {ui}");
+        assert!(ui.contains("top: 6, bottom: 8"), "asymmetric padding lost: {ui}");
+        assert!(!ui.contains("padding: {"));
+    }
+
+    #[test]
+    fn image_urls_remain_http_resources_and_inputs_omit_invalid_properties() {
+        let ui = to_makepad_l0_ui(&tree(r#"{t:"column", c:[
+            {t:"image",src:"http://127.0.0.1:8793/photo.png"},
+            {t:"input",placeholder:"Email",bg:4294967295,tapto:""}]}"#));
+        assert!(ui.contains("http_resource(\"http://127.0.0.1:8793/photo.png\")"));
+        assert!(!ui.contains("resources/http"));
+        assert!(!ui.contains("show_bg:"), "TextInput has no show_bg property: {ui}");
+        assert!(!ui.contains("on_click:"), "TextInput has no on_click property: {ui}");
     }
 
     #[test]

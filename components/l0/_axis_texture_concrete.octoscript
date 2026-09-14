@@ -1,0 +1,11 @@
+// Axis delta: texture .concrete — a tiled greyscale grain over the page.
+//
+// Mood-INdependent, unlike accent: a grain is a luminance modulation, so
+// it reads on any ground without being re-solved per palette. That is why
+// this is one file and the accent is forty-eight.
+//
+// Alpha 0.05 and scale 4 are the texture's own: a fine grain needs more
+// repeats and less weight than a coarse one, or it reads as dirt.
+let l0_texture   = "concrete"
+let l0_texture_a = 0.05
+let l0_texture_s = 4

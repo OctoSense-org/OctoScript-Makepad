@@ -20,7 +20,17 @@
 use octoscript_ui_l0::{kit, realize, RealizeLimits};
 
 /// The theme. Every L0 route is this plus one lowered card.
-const KIT: &str = include_str!("../../../components/l0/_kit.octoscript");
+/// The kit body defines no colours or sizes of its own: a host assembles the
+/// default mood's palette, the derivations and then the body, in that order
+/// (`octoscript_makepad::l0::prepare` does the same, with the card's axes).
+const BASE: &str = include_str!("../../../components/l0/_palette_dark.octoscript");
+const DERIVE_COLOR: &str = include_str!("../../../components/l0/_derive_color.octoscript");
+const DERIVE: &str = include_str!("../../../components/l0/_derive.octoscript");
+const KIT_BODY: &str = include_str!("../../../components/l0/_kit.octoscript");
+
+fn kit() -> String {
+    format!("{BASE}\n{DERIVE_COLOR}\n{DERIVE}\n{KIT_BODY}")
+}
 
 const NEWS: &str = include_str!("../../../../Octoscript/crates/octoscript-ui-l0/tests/fixtures/news.card");
 const STOCK: &str = include_str!("../../../../Octoscript/crates/octoscript-ui-l0/tests/fixtures/stock.card");
@@ -62,23 +72,46 @@ pub fn source_for(route: &str) -> String {
         Err(e) => return failed(&format!("data did not parse: {e}")),
     };
     let report = realize(card, &data, RealizeLimits::default());
-    let Some(root) = report.root else {
-        let why: Vec<String> = report.diagnostics.iter().map(|d| d.message.clone()).collect();
-        return failed(&why.join("; "));
+    let root = match report.complete_root() {
+        Ok(root) => root,
+        Err(why) => return failed(&why),
     };
-    format!("{KIT}\n{}", kit::lower(&root))
+    format!("{}\n{}", kit(), kit::lower(&root))
 }
 
 /// A visible failure, in the kit's own vocabulary.
 fn failed(why: &str) -> String {
     let escaped = why.replace('\\', "\\\\").replace('"', "\\\"");
     format!(
-        "{KIT}\nlet node = l0_surface([l0_title(\"card did not realize\"), l0_body(\"{escaped}\")])\nnode\n"
+        "{}\nlet node = l0_surface([l0_title(\"card did not realize\"), l0_body(\"{escaped}\")])\nnode\n", kit()
     )
 }
 
 #[cfg(test)]
 mod tests {
+    use octoscript_render::makepad_script::*;
+
+    /// Deterministic stand-ins for the live `sys.*` capabilities the L0 kit
+    /// lowers to (main registers the same kind of stub for l0_cards): a route
+    /// that reads one must still evaluate to a tree under the uncaught-error
+    /// contract, and the value it gets is a visible placeholder, not data.
+    fn register_missing_capabilities(vm: &mut ScriptVm) {
+        let sys = vm.new_module(id!(sys));
+        for name in [
+            "news", "stock", "movers", "geocode", "geocodenum", "weather", "weathercond",
+            "photo", "daylight", "dayname", "moonphase", "weekmin", "weekmax", "gps", "route",
+            "nav", "cities", "airquality", "aqinum", "satellite",
+        ] {
+            vm.add_method(
+                sys,
+                LiveId::from_str(name),
+                script_args_def!(a = NIL, b = NIL, c = NIL, d = NIL, e = NIL),
+                |vm, _| vm.bx.heap.new_string_from_str("\u{2014}"),
+            );
+        }
+        vm.set_injected_global(id!(sys), sys.into());
+    }
+
     /// Every L0 route evaluates to a real tree through the whole path.
     ///
     /// This host is the only place in this repository that MOUNTS an L0 card.
@@ -89,7 +122,7 @@ mod tests {
     fn every_l0_route_builds_a_tree() {
         for (route, title) in super::ROUTES {
             let src = super::source_for(route);
-            let tree = octoscript_render::build(&src, |_vm| {})
+            let tree = octoscript_render::build(&src, register_missing_capabilities)
                 .unwrap_or_else(|| panic!("{route} ({title}) evaluated to nil"));
             assert!(
                 tree.count() > 10,
@@ -103,7 +136,7 @@ mod tests {
     #[test]
     fn a_card_that_does_not_realize_says_why() {
         let src = super::failed("the reason");
-        let tree = octoscript_render::build(&src, |_vm| {}).expect("the failure card evaluates");
+        let tree = octoscript_render::build(&src, register_missing_capabilities).expect("the failure card evaluates");
         let mut text = String::new();
         fn words(n: &octoscript_render::UiNode, out: &mut String) {
             if let Some(t) = n.attrs.text.as_deref() {
@@ -124,7 +157,7 @@ mod tests {
     /// about `UiNode` being the branch point.
     #[test]
     fn the_visualisations_reach_this_backends_tree() {
-        let tree = octoscript_render::build(&super::source_for("l0/weather"), |_vm| {})
+        let tree = octoscript_render::build(&super::source_for("l0/weather"), register_missing_capabilities)
             .expect("weather evaluates");
         let mut kinds = Vec::new();
         fn walk(n: &octoscript_render::UiNode, out: &mut Vec<String>) {

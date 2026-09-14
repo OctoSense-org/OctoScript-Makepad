@@ -1,0 +1,189 @@
+component TaskplanButtonControl(instance: text, text: text, enabled: bool) {
+  view Kit(component: "TaskplanButtonb90a204cbe", instance: instance, text: text, enabled: enabled)
+}
+component TaskplanClip(instance: text) {
+  view Kit(component: "TaskplanClip47177b2fe0", instance: instance) { slot }
+}
+component TaskplanField(instance: text, text: text, placeholder: text, focused: bool, password: bool, enabled: bool) {
+  view Kit(component: "TaskplanFieldde0c8ded69", instance: instance, text: text, placeholder: placeholder, focused: focused, password: password, enabled: enabled)
+}
+component TaskplanGlassGroup(instance: text) {
+  view Kit(component: "TaskplanGlassGroup1bce1a9ed5", instance: instance) { slot }
+}
+component TaskplanGlassSurface(instance: text) {
+  view Kit(component: "TaskplanGlassSurface72cd100c04", instance: instance)
+}
+component TaskplanGroup(instance: text) {
+  view Kit(component: "TaskplanGroup30a667b63a", instance: instance) { slot }
+}
+component TaskplanImage(instance: text) {
+  view Kit(component: "TaskplanImage1d6cf08bc3", instance: instance)
+}
+component TaskplanKitButton(instance: text) {
+  view Kit(component: "TaskplanKitButtonfae5516b7e", instance: instance) { slot }
+}
+component TaskplanKitFormField(instance: text) {
+  view Kit(component: "TaskplanKitFormField56bc6b430c", instance: instance) { slot }
+}
+component TaskplanKitTabBar(instance: text, index: number) {
+  view Kit(component: "TaskplanKitTabBar02875e4826", instance: instance, index: index) { slot }
+}
+component TaskplanPanel(instance: text) {
+  view Kit(component: "TaskplanPanel14a7896211", instance: instance) { slot }
+}
+component TaskplanProgress(instance: text, value: number) {
+  view Kit(component: "TaskplanProgressc21b33bf01", instance: instance, value: value)
+}
+component TaskplanRadio(instance: text, checked: bool, enabled: bool) {
+  view Kit(component: "TaskplanRadiobec879d62c", instance: instance, checked: checked, enabled: enabled)
+}
+component TaskplanRichText(instance: text, text: text) {
+  view Kit(component: "TaskplanRichText167a59e908", instance: instance, text: text) { slot }
+}
+component TaskplanStockplot(instance: text) {
+  view Kit(component: "TaskplanStockploteaa855661b", instance: instance)
+}
+component TaskplanSurface(instance: text) {
+  view Kit(component: "TaskplanSurface1f48e26363", instance: instance)
+}
+component TaskplanTab(instance: text, selected: bool, enabled: bool) {
+  view Kit(component: "TaskplanTab42b35743b0", instance: instance, selected: selected, enabled: enabled) { slot }
+}
+component TaskplanTaskplanProjectCard(instance: text) {
+  view Kit(component: "TaskplanTaskplanProjectCard84de094351", instance: instance) { slot }
+}
+component TaskplanTextBody(instance: text, text: text) {
+  view Kit(component: "TaskplanTextBody0678b109ba", instance: instance, text: text)
+}
+component TaskplanTextCaption(instance: text, text: text) {
+  view Kit(component: "TaskplanTextCaption1a8b25f8a2", instance: instance, text: text)
+}
+component TaskplanTextTitle(instance: text, text: text) {
+  view Kit(component: "TaskplanTextTitle89ce28ab02", instance: instance, text: text)
+}
+component TaskplanToggle(instance: text, checked: bool) {
+  view Kit(component: "TaskplanTogglecd222c719a", instance: instance, checked: checked)
+}
+component TaskplanVector(instance: text) {
+  view Kit(component: "TaskplanVector9c120757f2", instance: instance)
+}
+component TaskplanButton(instance: text, label: text, enabled: bool) {
+  state internal_2_text { shape: text, initial: "" }
+  view Kit(component: "TaskplanKitButtonfae5516b7e", instance: instance, part: "p0") {
+  Kit(component: "TaskplanTextCaption7db636abf2", instance: instance, part: "p1", text: label)
+  Kit(component: "TaskplanButtonb90a204cbe", instance: instance, part: "p2", text: internal_2_text, enabled: enabled)
+}
+}
+component TaskplanFormField(instance: text, label: text, value: text, placeholder: text, focused: bool, password: bool, enabled: bool) {
+  view Kit(component: "TaskplanKitFormField56bc6b430c", instance: instance, part: "p0") {
+  Kit(component: "TaskplanSurface1f48e26363", instance: instance, part: "p1")
+  Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p2") {
+    Kit(component: "TaskplanTextBody0678b109ba", instance: instance, part: "p3", text: label)
+    Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p4") {
+      Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p5") {
+        Kit(component: "TaskplanImage1d6cf08bc3", instance: instance, part: "p6")
+      }
+      Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p7") {
+        Kit(component: "TaskplanFieldd9b92bbdf1", instance: instance, part: "p8", text: value, placeholder: placeholder, focused: focused, password: password, enabled: enabled)
+      }
+    }
+  }
+}
+}
+component TaskplanProjectCard(instance: text, enabled: bool, title: text, start_label: text, start_date: text, due_label: text, due_date: text, progress_text: text, task_count_text: text, status: text) {
+  state internal_1_text { shape: text, initial: "" }
+  view Kit(component: "TaskplanTaskplanProjectCard657e33cc37", instance: instance, part: "p0") {
+  Kit(component: "TaskplanButtonb90a204cbe", instance: instance, part: "p1", text: internal_1_text, enabled: enabled)
+  Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p2") {
+    Kit(component: "TaskplanImage1d6cf08bc3", instance: instance, part: "p3")
+  }
+  Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p4") {
+    Kit(component: "TaskplanTextBody105141a3a5", instance: instance, part: "p5", text: title)
+    Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p6") {
+      Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p7") {
+        Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p8") {
+          Kit(component: "TaskplanTextCaptionbbbf9b8917", instance: instance, part: "p9", text: start_label)
+          Kit(component: "TaskplanTextBody6f4fdf713b", instance: instance, part: "p10", text: start_date)
+        }
+        Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p11") {
+          Kit(component: "TaskplanTextCaptionbbbf9b8917", instance: instance, part: "p12", text: due_label)
+          Kit(component: "TaskplanTextBody6f4fdf713b", instance: instance, part: "p13", text: due_date)
+        }
+      }
+      Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p14") {
+        Kit(component: "TaskplanStockploteaa855661b", instance: instance, part: "p15")
+        Kit(component: "TaskplanTextCaption2383016f9c", instance: instance, part: "p16", text: progress_text)
+      }
+    }
+  }
+  Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p17") {
+    Kit(component: "TaskplanVector9c120757f2", instance: instance, part: "p18")
+  }
+  Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p19") {
+    Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p20") {
+      Kit(component: "TaskplanTextCaption7968ca6f07", instance: instance, part: "p21", text: task_count_text)
+      Kit(component: "TaskplanSurface94eddc2ac9", instance: instance, part: "p22")
+      Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p23") {
+        Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p24") {
+          Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p25") {
+            Kit(component: "TaskplanSurface1f48e26363", instance: instance, part: "p26")
+            Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p27") {
+              Kit(component: "TaskplanImage1d6cf08bc3", instance: instance, part: "p28")
+            }
+          }
+          Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p29") {
+            Kit(component: "TaskplanSurface1f48e26363", instance: instance, part: "p30")
+            Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p31") {
+              Kit(component: "TaskplanImage1d6cf08bc3", instance: instance, part: "p32")
+            }
+          }
+        }
+      }
+    }
+    Kit(component: "TaskplanGroup30a667b63a", instance: instance, part: "p33") {
+      Kit(component: "TaskplanSurface6c97fd75b7", instance: instance, part: "p34")
+      Kit(component: "TaskplanTextCaption04e7ea2d16", instance: instance, part: "p35", text: status)
+    }
+  }
+}
+}
+component TaskplanTabBar(instance: text, selected_index: number, label: text, subtitle: text, detail_1: text, detail_2: text) {
+  state internal_1_selected { shape: bool, initial: true }
+  state internal_1_enabled { shape: bool, initial: true }
+  state internal_4_checked { shape: bool, initial: true }
+  state internal_4_enabled { shape: bool, initial: true }
+  state internal_5_selected { shape: bool, initial: false }
+  state internal_5_enabled { shape: bool, initial: true }
+  state internal_8_checked { shape: bool, initial: false }
+  state internal_8_enabled { shape: bool, initial: true }
+  state internal_9_selected { shape: bool, initial: false }
+  state internal_9_enabled { shape: bool, initial: true }
+  state internal_12_checked { shape: bool, initial: false }
+  state internal_12_enabled { shape: bool, initial: true }
+  state internal_13_selected { shape: bool, initial: false }
+  state internal_13_enabled { shape: bool, initial: true }
+  state internal_16_checked { shape: bool, initial: false }
+  state internal_16_enabled { shape: bool, initial: true }
+  view Kit(component: "TaskplanKitTabBar02875e4826", instance: instance, part: "p0", index: selected_index) {
+  Kit(component: "TaskplanTab42b35743b0", instance: instance, part: "p1", selected: internal_1_selected, enabled: internal_1_enabled) {
+    Kit(component: "TaskplanSurfacedd4ee87f64", instance: instance, part: "p2")
+    Kit(component: "TaskplanTextCaptionafe7375431", instance: instance, part: "p3", text: label)
+    Kit(component: "TaskplanRadiobec879d62c", instance: instance, part: "p4", checked: internal_4_checked, enabled: internal_4_enabled)
+  }
+  Kit(component: "TaskplanTab42b35743b0", instance: instance, part: "p5", selected: internal_5_selected, enabled: internal_5_enabled) {
+    Kit(component: "TaskplanSurfacef1a4553f64", instance: instance, part: "p6")
+    Kit(component: "TaskplanTextCaption8cc2d652ad", instance: instance, part: "p7", text: subtitle)
+    Kit(component: "TaskplanRadiobec879d62c", instance: instance, part: "p8", checked: internal_8_checked, enabled: internal_8_enabled)
+  }
+  Kit(component: "TaskplanTab42b35743b0", instance: instance, part: "p9", selected: internal_9_selected, enabled: internal_9_enabled) {
+    Kit(component: "TaskplanSurfacef1a4553f64", instance: instance, part: "p10")
+    Kit(component: "TaskplanTextCaption8cc2d652ad", instance: instance, part: "p11", text: detail_1)
+    Kit(component: "TaskplanRadiobec879d62c", instance: instance, part: "p12", checked: internal_12_checked, enabled: internal_12_enabled)
+  }
+  Kit(component: "TaskplanTab42b35743b0", instance: instance, part: "p13", selected: internal_13_selected, enabled: internal_13_enabled) {
+    Kit(component: "TaskplanSurfacef1a4553f64", instance: instance, part: "p14")
+    Kit(component: "TaskplanTextCaption8cc2d652ad", instance: instance, part: "p15", text: detail_2)
+    Kit(component: "TaskplanRadiobec879d62c", instance: instance, part: "p16", checked: internal_16_checked, enabled: internal_16_enabled)
+  }
+}
+}

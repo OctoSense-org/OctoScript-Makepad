@@ -1,0 +1,14 @@
+// Axis delta: ground .navy — nine seeds; `_derive_color.splash`
+// computes the palette from them in-kit. Compare `gen_accent_axes.py`,
+// which had to ship 48 solved files because nothing could compute.
+// Ink 16.26:1 on this ground.
+let seed_on       = 1
+let seed_ground_r = 23
+let seed_ground_g = 33
+let seed_ground_b = 45
+let seed_ink_r    = 255
+let seed_ink_g    = 255
+let seed_ink_b    = 255
+let seed_accent_r = 76
+let seed_accent_g = 95
+let seed_accent_b = 239
