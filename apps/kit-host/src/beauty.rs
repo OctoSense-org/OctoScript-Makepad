@@ -148,7 +148,13 @@ impl App {
             splash_widgets::kit::retire_overlay(cx,&widget);
             let list=widget.borrow::<DesignOverlay>().and_then(|v|v.draw_list.as_ref().map(|l|l.id()))
                 .or_else(||widget.borrow::<DesignGlassSvg>().and_then(|v|v.draw_list.as_ref().map(|l|l.id())));
-            if let Some(id)=list {cx.draw_lists[id].clear_draw_items(cx.redraw_id);}
+            if let Some(id)=list {
+                // Fresh generations for the cleared list (both makepad lanes take them).
+                let redraw_id=cx.redraw_id;
+                let recording_gen=cx.next_uniform_gen();
+                let uniforms_gen=cx.next_uniform_gen();
+                cx.draw_lists[id].clear_draw_items(redraw_id, recording_gen, uniforms_gen);
+            }
             let mut children=Vec::new();
             widget.children(&mut |_,child|children.push(child));
             for child in children {retire_overlay(cx,child);}
