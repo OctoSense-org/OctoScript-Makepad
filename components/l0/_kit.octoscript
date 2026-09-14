@@ -30,58 +30,41 @@
 // it is silently discarded. A previous lowering attempt emitted roughly twenty
 // such attributes and was reverted.
 
-fn argb(a, r, g, b) { return ((a * 256 + r) * 256 + g) * 256 + b }
-
 // ---- palette ---------------------------------------------------------------
-// Hex from the shipped lowering, as ARGB. Note makepad writes #RRGGBBAA, so
-// `#ffffff12` is white at alpha 0x12 — a barely-there panel over a dark page,
-// not a near-white fill.
-let l0_base     = argb(255,  10,  14,  20)   // #0a0e14  page
-let l0_scrim    = argb(102,   0,   0,   0)   // #00000066 over a photo
-// A sheet floating over a MAP, and the one fill in this palette that must be
-// fully opaque. `l0_panel` is 7% white, which is a window rather than a surface:
-// over a map the road labels read straight through whatever the card put there.
-// The colour is the shipping nav card's own sheet.
-let l0_sheet    = argb(255,  15,  22,  32)   // #0f1620 over a map
-// The one action that ENDS something. Values from the shipping nav card's `endrow`.
-let l0_danger   = argb(255, 122,  31,  31)   // #7a1f1f destructive fill
-let l0_danger_i = argb(255, 255, 217, 217)   // #ffd9d9 its ink
-// NOT `l0_panel`, and the name is the whole point.
+// NOT HERE. The palette is a separate file, concatenated BEFORE this one:
+// `_palette_dark.splash` (the default), `_palette_light`, `_palette_glass`,
+// `_palette_photo`. An L0 card declares `theme <mood>` and the host picks the
+// matching palette — that is §1.1's middle layer doing its job, and it is why a
+// card can ask for dark without naming a colour.
 //
-// `fn l0_panel(kids)` is a ROLE in this file, so a palette entry of the same name
-// is shadowed by it from the function's declaration onward — and a function
-// coerced to a colour is 0. Every use after `fn l0_panel` silently became fully
-// transparent: `l0_chip` and `l0_field` both asked for this fill and both got
-// nothing. Uses INSIDE `l0_panel`'s own body still resolved to the colour, which
-// is why panels looked right and chips did not, and why it read as a chip bug.
-//
-// Found by live-testing a nav card on a phone: Go and End rendered as bare text
-// with no button under them. No unit test could see it — zero is a valid colour.
-let l0_fill     = argb( 18, 255, 255, 255)   // #ffffff12 panel fill
-let l0_active   = argb( 56, 255, 255, 255)   // #ffffff38 selected chip
-let l0_hairline = argb( 26, 255, 255, 255)   // #ffffff1a divider
-let l0_text     = argb(255, 255, 255, 255)   // #ffffff   primary
-let l0_soft     = argb(230, 255, 255, 255)   // #ffffffe6 secondary
-let l0_dim      = argb(153, 255, 255, 255)   // #ffffff99 captions and labels
-let l0_up       = argb(255,  50, 215,  75)   // #32d74b   a rise
-let l0_go       = argb(255,  52, 199,  89)   // #34c759   the action a screen is for
-let l0_ondark   = argb(255,  14,  22,  32)   // #0e1620   text on a lit fill
-let l0_down     = argb(255, 255,  69,  58)   // #ff453a   a fall
+// It has to come FIRST, not after: a function body resolves a name at its own
+// declaration point, so a palette appended below would not reach the roles that
+// read it. Rendering this file alone leaves every colour undefined — which
+// coerces to 0, fully transparent — so every consumer concatenates a palette.
 
 // ---- primitives ------------------------------------------------------------
 // Self-contained rather than shared with the sample kits: those are ports of
 // someone else's design system and will move for reasons that have nothing to
 // do with L0.
 
+// `family` and `tracking` ride on EVERY text role, attached here rather than at
+// each of the seven, because a card whose hero is serif and whose rows are sans
+// is two designs. `l0_family` is "sans" in every base mood, so nothing moves
+// until a card asks.
+//
+// `l0_display_family` is the DISPLAY face, used only where a role is a display
+// role. A theme that pairs a serif headline with a sans body is the commonest
+// pairing in the whole corpus, and one family token cannot express it.
 fn l0_txt(s, size, weight, color) {
-    return {t: "text", text: s, size: size, weight: weight, color: color, fith: 1}
+    return {t: "text", text: s, size: size, weight: weight, color: color, fith: 1,
+             family: l0_family, tracking: l0_tracking, font_src: l0_font_src}
 }
 
 // Text that may wrap. `fillw` is what lets it, and forcing it on a short hero
 // wrapped "Top Movers" one character per line on device — so it is opt-in.
 fn l0_para(s, size, weight, color) {
     return {t: "text", text: s, size: size, weight: weight, color: color,
-            fillw: 1, fith: 1}
+            fillw: 1, fith: 1, family: l0_family, tracking: l0_tracking, font_src: l0_font_src}
 }
 
 fn l0_gap(px)   { return {t: "column", h: px} }
@@ -98,7 +81,19 @@ fn l0_spacer()  { return {t: "column", fillw: 1, h: 1} }
 // design. Once a value lowers to a live backend call the drawn text is not in
 // the DSL at all — `"$" + sys.stock("NVDA", "price")` renders as six characters
 // and reads as thirty-three — so only the lowering knows what will be drawn.
-fn l0_hero(s, pt) { return l0_txt(s, pt, 700, l0_text) }
+// The display roles take `l0_display_family`, which is what makes a serif
+// headline over sans body reachable. A theme setting only `l0_family` moves
+// everything together; one setting only the display family moves the headline.
+fn l0_display(node) { node.family = l0_display_family; return node }
+
+fn l0_hero(s, pt) {
+    // A hero over a full-bleed photograph does a different job than one in a
+    // list, and 43 was its ceiling (gap 2 of the mockup study). The factor
+    // scales only the TOP step — a short numeral — so a long text hero that
+    // already stepped down never doubles into a wall of 86pt wrap.
+    if pt >= 43 { return l0_display(l0_txt(s, pt * hero_factor, weight_hero, l0_text)) }
+    return l0_display(l0_txt(s, pt, weight_hero, l0_text))
+}
 
 // The type scale, TAKEN FROM THE WIDGETS THIS REPLACES rather than chosen.
 //
@@ -107,11 +102,22 @@ fn l0_hero(s, pt) { return l0_txt(s, pt, 700, l0_text) }
 // them. Moving the layer and restyling at once would make a golden failure
 // ambiguous between "the theme moved" and "the theme is wrong" — so the theme
 // does not move yet. Restyling comes after, against green goldens.
-fn l0_title(s)    { return l0_txt(s, 18, 700, l0_text) }
-fn l0_body(s)     { return l0_para(s, 12, 400, l0_text) }
-fn l0_row_text(s) { return l0_txt(s, 10, 400, l0_soft) }
-fn l0_caption(s)  { return l0_txt(s, 8, 400, l0_dim) }
-fn l0_value(s)    { return l0_txt(s, 14, 600, l0_text) }
+fn l0_title(s)    { return l0_display(l0_txt(s, font_title, weight_bold, l0_text)) }
+fn l0_body(s)     { return l0_para(s, font_body, weight_normal, l0_text) }
+fn l0_row_text(s) {
+    // `lines` is the theme's call, not the card's: a row that wraps to three
+    // lines breaks the list rhythm, and mid-word wrapping ("Thund erstorm")
+    // was visible in the round-2 corpus.
+    let node = l0_txt(s, font_row, weight_normal, l0_soft)
+    node.lines = row_lines
+    return node
+}
+fn l0_caption(s)  { return l0_txt(s, font_caption, weight_normal, l0_dim) }
+// The tracked-caps line above a hero. `variant` marks it for the backend,
+// which spaces and uppercases a LITERAL — a live value stays as it arrives.
+fn l0_eyebrow(s)  { return {t: "text", text: s, size: font_caption, weight: weight_medium,
+                            color: l0_soft, fith: 1, variant: "eyebrow"} }
+fn l0_value(s)    { return l0_txt(s, font_value, weight_semi, l0_text) }
 
 // A statistic, tinted by direction. `dir` is -1, 0 or 1 — the SIGN, decided by
 // the card, not the colour: red-versus-green is presentation, but "this value
@@ -121,7 +127,7 @@ fn l0_tint(dir) {
     if dir < 0 { return l0_down }
     return l0_text
 }
-fn l0_stat(s, dir) { return l0_txt(s, 10, 600, l0_tint(dir)) }
+fn l0_stat(s, dir) { return l0_txt(s, font_row, weight_semi, l0_tint(dir)) }
 
 // Recolour any text by DIRECTION, composed around the role rather than folded
 // into it.
@@ -192,6 +198,13 @@ fn l0_colw(node, col) {
 // header hard against the left margin — the card was right and looked wrong.
 fn l0_aligned(node, how) {
     if how == "center" {
+        // `Col(align: .center)` centres on ArkUI and does nothing on makepad,
+        // and giving the column `fillw` here does not close it: a makepad Label
+        // defaults to Fill width while an ArkUI text node hugs, so each child
+        // spans the centred column and still draws its glyphs at its own left
+        // edge. Measured — the hero stayed at x=166 of 750 with the column
+        // filling. Closing it means changing the text width default on one
+        // rail, across the whole corpus, which is its own pass.
         if node.t == "row" { node.aligny = 0.5 } else { node.alignx = 0.5 }
     }
     if how == "end" {
@@ -207,18 +220,41 @@ fn l0_aligned(node, how) {
 // surface shows below it. Filling the height painted the whole screen in the
 // card's base colour and covered the app's own background — 94% of the lower
 // half differed, on a card whose content was correct.
+// The page. Its fill is a two-stop VERTICAL gradient, not a flat colour.
+//
+// A judge scoring these renders called the flat moods "generic flat surfaces"
+// with "no atmosphere", and scored the photo mood — the only one whose page is
+// not a flat fill — on its atmosphere rather than against it. `bg2` is the same
+// second stop the photo scrim already uses, so this is an existing, working
+// capability applied where it was missing rather than anything new.
+//
+// A mood that wants a genuinely flat page sets `l0_base_2` equal to `l0_base`.
+// `l0_texture` is the theme's surface grain, laid over the page by the backend.
+// Empty in every base mood, so a card naming no texture emits the node it always
+// did. The card never names the FILE — a texture is the theme's to choose for
+// exactly the reason a colour is (profile §4), and the backend resolves the name.
 fn l0_surface(kids) {
-    return {t: "column", fillw: 1, fith: 1, bg: l0_base,
-            padx: 20, padtop: 54, padbottom: 24, c: kids}
+    return {t: "column", fillw: 1, fillh: 1, bg: l0_base, bg2: l0_base_2,
+            gradient_across: l0_grad_across,
+            texture: l0_texture, texture_alpha: l0_texture_a,
+            texture_scale: l0_texture_s,
+            padx: pad_page_x, padtop: pad_page_top, padbottom: pad_page_bot, c: kids}
 }
 
 // A page whose background is a photo, with a scrim so text stays legible over
 // whatever the image turns out to be.
 fn l0_surface_photo(src, kids) {
-    return {t: "stack", fillw: 1, fillh: 1, c: [
+    // A missing or pending photo must expose the kit's page, not the host black.
+    return {t: "stack", fillw: 1, fillh: 1, bg: l0_base, c: [
         {t: "image", src: src, fit: 2, fillw: 1, fillh: 1},
-        {t: "column", fillw: 1, fillh: 1, bg: l0_scrim},
-        {t: "column", fillw: 1, fillh: 1, padx: 20, padtop: 54, padbottom: 24, c: kids}
+        // Two stops, not one wash: bright sky at the top, near-black under
+        // the content. The L1 immersive exemplar this mood was ported from had
+        // exactly this (GradientYView) and it was flattened on the way into
+        // L0 — the flat wash is why a forecast panel never read as floating
+        // out of the dark. `l0_scrim` stays the mood's strong BOTTOM stop;
+        // `l0_scrim_top` is the light one the photograph shows through.
+        {t: "column", fillw: 1, fillh: 1, bg: l0_scrim_top, bg2: l0_scrim},
+        {t: "column", fillw: 1, fillh: 1, padx: pad_page_x, padtop: pad_page_top, padbottom: pad_page_bot, c: kids}
     ]}
 }
 
@@ -285,6 +321,14 @@ fn l0_mapchip(s) {
     return {t: "column", w: 38, h: 38, radius: 19, bg: l0_sheet,
             alignx: 0.5, aligny: 0.5, c: [l0_txt(s, 11, 600, l0_text)]}
 }
+
+// Functions close over bindings that exist at declaration time.
+fn l0_mapbtn(glyph, act) {
+    return {t: "column", w: 38, h: 38, alignx: 0.5, aligny: 0.5, action: act,
+            c: [l0_title(glyph)]}
+}
+
+fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
 
 fn l0_mapcontrols(which, sidekids, hasside) {
     let ring = {t: "column", fitw: 1, fith: 1, bg: l0_sheet, radius: 19, c: [
@@ -379,12 +423,31 @@ fn l0_surface_map(map, topkids, sidekids, kids, hastop, controls, hasside) {
 }
 
 fn l0_col(kids)      { return {t: "column", fillw: 1, c: kids} }
-fn l0_col_gap(g, kids) { return {t: "column", fillw: 1, spacing: g, c: kids} }
+// A card writes its own `Col(gap: N)`, so this is the one place the KIT can
+// still speak about that spacing — and §1.1 says spacing is the kit's to choose.
+//
+// A LARGE gap is "air", and what air reads as depends on the mood. The weather
+// fixture's `gap: 36` is commented "the mockup's air — the half-screen of
+// photograph": over a photo mood it frames the picture, over a flat fill it is
+// simply a hole. Measured on device, the flat moods carried 540px of dead
+// vertical space, 23% of the screen, and every mood's judge named that void as
+// its biggest gap while the photo mood — same card — scored highest.
+//
+// So scale only the big gaps. Anything under 24 is deliberate fine spacing
+// between related things and is left exactly alone.
+fn l0_col_gap(g, kids) {
+    // Early return rather than reassigning a local inside the `if`: the first
+    // version did `let s = g` then `s = g * air_factor` in the branch, and the
+    // rendered dead space did not move a pixel (540 -> 543), so the mutation
+    // does not escape the block. `l0_colw` already branches by returning.
+    if g >= 24 { return {t: "column", fillw: 1, spacing: g * air_factor, c: kids} }
+    return {t: "column", fillw: 1, spacing: g, c: kids}
+}
 // A row centres its children vertically by default, because a row's whole job
 // is to put unlike things side by side — a 44px icon beside 14pt text beside an
 // 8px gradient bar — and top-aligning those reads as three separate things that
 // happen to be adjacent. The reference rendering aligns every row this way.
-fn l0_row(kids)        { return {t: "row", fillw: 1, spacing: 6, aligny: 0.5, c: kids} }
+fn l0_row(kids)        { return {t: "row", fillw: 1, spacing: gap_row, aligny: 0.5, c: kids} }
 fn l0_row_gap(g, kids) { return {t: "row", fillw: 1, spacing: g, aligny: 0.5, c: kids} }
 // A grid of tiles. `w` is WIDTH IN PIXELS on the shared node model, and this
 // said `w: 2` meaning "two columns" — so the stock card's six statistic tiles
@@ -393,19 +456,174 @@ fn l0_row_gap(g, kids) { return {t: "row", fillw: 1, spacing: g, aligny: 0.5, c:
 // flow it downward like a column. Until one does, the honest thing is to fill
 // the line and let the tiles stack.
 fn l0_grid(kids)     { return {t: "grid", fillw: 1, spacing: 10, c: kids} }
+// The column that holds a grid's chunked rows. `l0_col` has no spacing, so
+// grid rows fused vertically — a gallery of squares read as three solid
+// columns. Rows breathe at the same gap the cells do.
+fn l0_grid_rows(kids) { return {t: "column", fillw: 1, spacing: gap_row, c: kids} }
 
 // A raised surface holding related content.
 fn l0_panel(kids) {
-    return {t: "card", fillw: 1, bg: l0_fill, radius: 14,
-            padx: 14, pady: 12, margintop: 16, c: kids}
+    return {t: "card", fillw: 1, bg: l0_fill, radius: radius_panel,
+            padx: pad_panel_x, pady: pad_panel_y, margintop: gap_panel_top,
+            marginx: panel_inset, border: panel_border, bordercolor: l0_stroke,
+            elevation: panel_lift,
+            // The theme's shadow, when it has an opinion. Absent in every base
+            // mood, so a card that names no depth keeps the derived soft lift.
+            shadowcolor: l0_shadow_ink, shadowblur: l0_shadow_blur,
+            shadowdx: l0_shadow_dx, shadowdy: l0_shadow_dy,
+            c: kids}
 }
 
-fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
+// A CONTENT card. Same box as a panel, but a pack may give it the design
+// system's signature gradient: `l0_card_1 -> l0_card_2`, drawn by the view
+// shader's own two-stop fill. Zero in every base mood, so nothing moves unless
+// a pack asks — the Atro credit cards are the motivating screen.
+// A card whose DESIGN colour differs from the pack gradient: the lower
+// resolves the closed tint token to a pastel pair.
+//
+// A card also states the ink its own contents are read with. The card colour
+// belongs to the PACK and does not flip when the pack's light variant flips
+// the ink: CaMo light put near-black headlines on a pure black card and they
+// simply were not there, on the desktop rail and the phone alike. `inkdark`
+// used to mark that condition, and no renderer ever read the flag. `ink`
+// carries the colour instead, and a renderer applies it to descending text
+// that cannot be read against the card — text that already contrasts, an
+// accent for instance, keeps its own colour.
+fn l0_card_tinted(c1, c2, kids) {
+    let n = l0_panel(kids)
+    n.bg = c1
+    n.bg2 = c2
+    n.ink = l0_card_ink
+    return n
+}
+
+// Chat bubbles: mine right and accent-filled, theirs left on the panel fill.
+fn l0_bubble_me(s) {
+    return {t: "column", fillw: 1, alignx: 1, c: [
+        {t: "card", fitw: 1, bg: l0_accent, radius: radius_panel,
+         padx: 12, pady: 7, c: [ l0_txt(s, font_body, weight_normal, l0_base) ]} ]}
+}
+fn l0_bubble_them(s) {
+    return {t: "column", fillw: 1, c: [
+        {t: "card", fitw: 1, bg: l0_fill, radius: radius_panel,
+         padx: 12, pady: 7, c: [ l0_txt(s, font_body, weight_normal, l0_text) ]} ]}
+}
+// A LONG message wraps inside a capped-width bubble; single-line text would
+// stretch the pill across the page (the lower picks by literal length).
+fn l0_bubble_me_long(s) {
+    return {t: "column", fillw: 1, alignx: 1, c: [
+        {t: "card", w: 252, bg: l0_accent, radius: radius_panel,
+         padx: 12, pady: 7, c: [ l0_para(s, font_body, weight_normal, l0_base) ]} ]}
+}
+fn l0_bubble_them_long(s) {
+    return {t: "column", fillw: 1, c: [
+        {t: "card", w: 252, bg: l0_fill, radius: radius_panel,
+         padx: 12, pady: 7, c: [ l0_para(s, font_body, weight_normal, l0_text) ]} ]}
+}
+
+// The floating round action button, and the overlay that pins it over a page.
+// The bottom tab bar: a full-width row of icon+label tabs on the theme's bar
+// rail, the active one lit in the accent. Nearly every app screen has one, and
+// without it the model drew five "Item" captions in a flat strip.
+fn l0_tab(glyph, label, active) {
+    let ink = l0_dim
+    if active > 0 { ink = l0_accent }
+    return {t: "column", fillw: 1, alignx: 0.5, gap: 3, c: [
+        {t: "text", text: glyph, icon: 1, size: font_value, color: ink, fitw: 1, fith: 1},
+        {t: "text", text: label, size: font_caption - 1, weight: weight_normal, color: ink}
+    ]}
+}
+fn l0_tabbar(kids) {
+    return {t: "row", fillw: 1, bg: l0_base_2, radius: radius_panel,
+            padx: 8, pady: 10, marginx: 0 - pad_page_x, c: kids}
+}
+
+fn l0_fab(glyph) {
+    return {t: "card", w: 54, h: 54, radius: 27, bg: l0_go, elevation: 3,
+            alignx: 0.5, aligny: 0.5,
+            c: [ {t: "text", text: glyph, icon: 1, size: font_title, color: l0_base,
+                  fitw: 1, fith: 1} ]}
+}
+// A page with a tab bar pinned to its floor: the page owns the top, the bar
+// sits on the bottom, via the same aligned-layer trick as the pin surfaces.
+fn l0_surface_tabbar(page, bar) {
+    return {t: "stack", fillw: 1, fillh: 1, c: [
+        page,
+        {t: "column", fillw: 1, fillh: 1, aligny: 1,
+         padx: pad_page_x, padbottom: pad_page_bot, c: [bar]}
+    ]}
+}
+
+fn l0_surface_fab(page, fab) {
+    return {t: "stack", fillw: 1, fillh: 1, c: [ page,
+        {t: "column", fillw: 1, fillh: 1, alignx: 1, aligny: 1,
+         padx: pad_page_x, padbottom: pad_page_bot, c: [ fab ]} ]}
+}
+
+fn l0_card(kids) {
+    let n = l0_panel(kids)
+    if l0_card_2 > 0 {
+        n.bg  = l0_card_1
+        n.bg2 = l0_card_2
+        n.ink = l0_card_ink
+    }
+    return n
+}
+
+// A semantic icon: the glyph arrives already resolved (lower time), the size
+// is a PLACE in the type scale, the ink is the theme's — so `icons: .mono`
+// and an accent both reach it for free through l0_text.
+fn l0_icon(glyph, size) {
+    if size == "hero" { return {t: "text", text: glyph, icon: 1, size: font_title * 1.6, color: l0_text, fitw: 1, fith: 1} }
+    if size == "tile" { return {t: "text", text: glyph, icon: 1, size: font_caption, color: l0_dim, fitw: 1, fith: 1} }
+    return {t: "text", text: glyph, icon: 1, size: font_value, color: l0_soft, fitw: 1, fith: 1}
+}
+
+fn l0_avatar(s) {
+    // Initials in a tinted circle — the no-photo avatar every kit ships.
+    // A fixed 40px circle: radius half the box, accent fill, light ink.
+    return {t: "card", w: 40 * media_stretch, h: 40 * media_stretch,
+            radius: 20 * media_stretch, bg: l0_active,
+            padx: 10 * media_stretch, pady: 11 * media_stretch, fitw: 1, fith: 1,
+            c: [ l0_txt(s, font_caption, weight_semi, l0_ondark) ]}
+}
+
 
 // A labelled value — the unit a detail grid is made of.
+// A calendar day: a fixed SQUARE cell — flat sheet, hairline border, the
+// number centered, an optional event dot under it. A Panel here pills at the
+// pack radius and grows with its dot; a day cell must not.
+fn l0_tile_sq1(label) {
+    return {t: "card", w: 32, h: 32, radius: 4, bg: l0_sheet,
+            border: 1, bordercolor: l0_hairline, alignx: 0.5, aligny: 0.5,
+            c: [ l0_caption(label) ]}
+}
+// The dotted day flows from the top so the mark survives the fixed height:
+// centering two stacked lines in 32pt clips the second one.
+fn l0_tile_sq2(label, g) {
+    return {t: "card", w: 32, h: 32, radius: 4, bg: l0_sheet,
+            border: 1, bordercolor: l0_hairline, alignx: 0.5,
+            c: [ l0_caption(label), l0_caption(g) ]}
+}
+// A FULL-BLEED section band: escapes the page padding by its own margin and
+// paints the theme's INVERSE — ink for ground, ground for ink — the way a
+// month strip or a dark app-bar band sits edge-to-edge over a light page.
+fn l0_band(txt) {
+    return {t: "card", fillw: 1, radius: 0,
+            marginx: 0 - pad_page_x,
+            bg: l0_soft, bg2: l0_dim,
+            padx: pad_page_x, pady: 9,
+            c: [ l0_txt(txt, font_title, weight_bold, l0_base) ]}
+}
+
+// A row/column of day cells spreads at the CALENDAR's pitch, not the list
+// gutter: fixed 32pt squares across a 341pt content width want ~16pt air.
+fn l0_day_row(kids)  { return {t: "row", fillw: 1, spacing: 16, aligny: 0.5, c: kids} }
+fn l0_day_rows(kids) { return {t: "column", fillw: 1, spacing: 14, c: kids} }
+
 fn l0_tile(label, value) {
-    return {t: "card", fillw: 1, bg: l0_fill, radius: 12, padx: 12, pady: 10,
-            c: [ l0_caption(label), l0_gap(4), l0_value(value) ]}
+    return {t: "card", fillw: 1, bg: l0_fill, radius: radius_tile, padx: pad_tile_x, pady: pad_tile_y,
+            c: [ l0_caption(label), l0_gap(gap_tile), l0_value(value) ]}
 }
 
 // A selectable token. `on` is the card's own notion of selected — without it
@@ -466,17 +684,50 @@ fn l0_chip_primary(s) {
 
 fn l0_chip(s, on) {
     if on == 1 {
-        return {t: "chip", bg: l0_active, radius: 12, padx: 10, pady: 5, selected: 1,
-                fitw: 1, fith: 1, c: [ l0_txt(s, 10, 500, l0_text) ]}
+        return {t: "chip", bg: l0_active, radius: radius_chip, padx: pad_chip_x, pady: pad_chip_y, selected: 1,
+                fitw: 1, fith: 1, c: [ l0_txt(s, font_row, weight_medium, l0_text) ]}
     }
-    return {t: "chip", bg: l0_fill, radius: 12, padx: 10, pady: 5, selected: 0,
-            fitw: 1, fith: 1, c: [ l0_txt(s, 10, 500, l0_dim) ]}
+    return {t: "chip", bg: l0_fill, radius: radius_chip, padx: pad_chip_x, pady: pad_chip_y, selected: 0,
+            fitw: 1, fith: 1, c: [ l0_txt(s, font_row, weight_medium, l0_dim) ]}
 }
 
 fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
 
 // A list row's image: fixed 16:9, so the text beside it keeps its baseline.
-fn l0_thumb(src) { return {t: "image", src: src, fit: 2, w: 108, h: 61} }
+// A list-row 16:9 tile, a square mosaic cell, or a full-width hero media
+// panel — the card names which (0/1/2), the kit owns the numbers.
+fn l0_thumb(src, sq) {
+    if sq > 1 { return {t: "image", src: src, fit: 2, fillw: 1, h: 210 * media_stretch} }
+    if sq > 0 { return {t: "image", src: src, fit: 2, w: 102, h: 102} }
+    return {t: "image", src: src, fit: 2, w: 108, h: 61 * media_stretch}
+}
+
+// A flexible blank: absorbs the leftover height of the column it sits in.
+fn l0_space() { return {t: "column", fillh: 1} }
+
+// Aligned page layers. Deferred fills are greedy in the app's layout fork —
+// anything walked after one never fits — so `Space()` splits the page into
+// layers and ALIGNMENT does the pinning: `aligny: 1` sits a footer on the page
+// floor, `0.5` centers a hero, with no fill arithmetic anywhere.
+fn l0_surface_layer(kids, y) {
+    return {t: "column", fillw: 1, fillh: 1, aligny: y,
+            padx: pad_page_x, padtop: pad_page_top, padbottom: pad_page_bot, c: kids}
+}
+fn l0_surface_pin2(top, bottom) {
+    return {t: "stack", fillw: 1, fillh: 1, bg: l0_base, bg2: l0_base_2,
+            gradient_across: l0_grad_across,
+            texture: l0_texture, texture_alpha: l0_texture_a,
+            texture_scale: l0_texture_s,
+            c: [l0_surface_layer(top, 0), l0_surface_layer(bottom, 1)]}
+}
+fn l0_surface_pin3(top, mid, bottom) {
+    return {t: "stack", fillw: 1, fillh: 1, bg: l0_base, bg2: l0_base_2,
+            gradient_across: l0_grad_across,
+            texture: l0_texture, texture_alpha: l0_texture_a,
+            texture_scale: l0_texture_s,
+            c: [l0_surface_layer(top, 0), l0_surface_layer(mid, 0.5),
+                l0_surface_layer(bottom, 1)]}
+}
 
 // ---- interaction -----------------------------------------------------------
 // A tap target, carried as `tapto` — an arbitrary string this renderer does not
@@ -544,6 +795,12 @@ fn l0_tap(target, node) {
 }
 
 fn l0_tap_fit(target, node) {
+    // The wrapper hugs its content, so a Fill CHILD here resolves to a
+    // zero-width box (Fill inside Fit is 0 in makepad) — measured: a
+    // tap-wrapped live hero drew as an invisible column of one-glyph-wide
+    // wrapped lines, tiny at 17pt and a half-screen void at 43. A hug
+    // wrapper means hug content, so say it on the child as well.
+    node.fitw = 1
     return {t: "column", fitw: 1, fith: 1, tapto: target, c: [node]}
 }
 
@@ -581,11 +838,6 @@ fn l0_tap_fit(target, node) {
 // the frame before the first fix lands.
 // One control on a map: a fixed square that carries a glyph and an ACTION the
 // backend turns into a call on the map. The card never names the call.
-fn l0_mapbtn(glyph, act) {
-    return {t: "column", w: 38, h: 38, alignx: 0.5, aligny: 0.5, action: act,
-            c: [l0_title(glyph)]}
-}
-
 fn l0_map(mode, zoom, lat, lon, poly, pins, badge) {
     // `pins` stands the trip's own endpoints on the route: green origin, blue
     // stops, red destination. Derived from the SAME coordinates as `poly`, so a
@@ -599,10 +851,17 @@ fn l0_map(mode, zoom, lat, lon, poly, pins, badge) {
 // A condition, drawn. `cond` is a NUMBER — the WMO code the forecast returns —
 // and `size` is which of the three places this icon sits in: the hero block, a
 // forecast row, or a tile. The card says which; how big each is, is the theme's.
+fn l0_icon_ink(node) {
+    // A mood that wants line-art restraint recolours the glyph to one ink
+    // (gap 8); 0 keeps the filled multi-colour icon.
+    if icon_mono != 0 { node.color = l0_text }
+    return node
+}
+
 fn l0_weathericon(cond, size) {
-    if size == "hero" { return {t: "weathericon", variant: cond, w: 64, h: 64} }
-    if size == "tile" { return {t: "weathericon", variant: cond, w: 28, h: 28} }
-    return {t: "weathericon", variant: cond, w: 34, h: 34}
+    if size == "hero" { return l0_icon_ink({t: "weathericon", variant: cond, w: 64, h: 64}) }
+    if size == "tile" { return l0_icon_ink({t: "weathericon", variant: cond, w: 28, h: 28}) }
+    return l0_icon_ink({t: "weathericon", variant: cond, w: 34, h: 34})
 }
 
 // The five that used to be markers.
@@ -614,8 +873,12 @@ fn l0_weathericon(cond, size) {
 
 // A day's low and high against the week's range, as a gradient segment.
 fn l0_tempbar(lo, hi, min, max) {
-    return {t: "tempbar", fillw: 1, h: 8, marginx: 10,
-            lo: lo, hi: hi, min: min, max: max}
+    let node = {t: "tempbar", fillw: 1, h: 8, marginx: 10,
+                lo: lo, hi: hi, min: min, max: max}
+    // A mood that owns the bar palette says so (gap 7): rail + single hue
+    // instead of the nine-stop spectrum. `l0_bar` of 0 means legacy.
+    if l0_bar != 0 { node.bg = l0_bar_rail; node.bg2 = l0_bar }
+    return node
 }
 
 // The sun's path, with now marked on it. Hours are fractional — 18.9 is 18:54.
@@ -647,7 +910,8 @@ fn l0_aqicontour(lat, lon, span) {
 
 // A price series. Likewise: the card names WHICH series and over what window.
 fn l0_stockplot(symbol, range) {
-    return {t: "stockplot", fillw: 1, h: 180, symbol: symbol, range: range}
+    return {t: "stockplot", fillw: 1, h: 180, symbol: symbol, range: range,
+            color: l0_dim}
 }
 
 // Several countries on one axis. The card names them and the indicator; the

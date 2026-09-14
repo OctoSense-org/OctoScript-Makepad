@@ -1,0 +1,34 @@
+// The camo pack (dark mode), minted by lab/sketch/spec2pack.py.
+let l0_base     = argb(255, 0, 0, 0)
+let l0_base_2   = argb(255, 14, 14, 14)
+let l0_sheet    = argb(255, 8, 8, 8)
+let l0_fill     = argb(255, 12, 12, 12)
+let l0_hairline = argb(255, 33, 33, 33)
+let l0_stroke   = argb(255, 43, 43, 43)
+let l0_active   = argb(255, 0, 119, 255)
+let l0_bar_rail = argb(255, 38, 38, 38)
+let l0_text     = argb(255, 255, 255, 255)
+let l0_soft     = argb(255, 229, 229, 229)
+let l0_dim      = argb(255, 170, 170, 170)
+let icon_mono   = 1
+let l0_accent   = argb(255, 0, 119, 255)
+let l0_bar      = l0_accent
+let l0_go       = l0_accent
+let l0_scrim_top = argb(60, 0, 0, 0)
+let l0_scrim     = argb(242, 0, 0, 0)
+
+// measured type: p50 7pt -> makepad base 6 (x0.62 calibration)
+let font_base     = 6
+let font_step     = 1
+let hero_factor   = 1.45
+let radius_factor = 0.86
+let l0_family         = "geometric"
+let l0_display_family = "geometric"
+
+// the kit's most-reused two-stop gradient — content cards take it
+let l0_card_1 = argb(255, 0, 0, 0)
+let l0_card_2 = argb(255, 0, 0, 0)
+// Every card stop this pack states is dark or saturated, so its contents
+// read in white — in the light variant too, where `l0_text` goes dark and
+// the card colour does not follow it.
+let l0_card_ink = argb(255, 255, 255, 255)

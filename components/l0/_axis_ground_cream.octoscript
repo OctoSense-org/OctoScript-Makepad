@@ -1,0 +1,14 @@
+// Axis delta: ground .cream — nine seeds; `_derive_color.splash`
+// computes the palette from them in-kit. Compare `gen_accent_axes.py`,
+// which had to ship 48 solved files because nothing could compute.
+// Ink 9.16:1 on this ground.
+let seed_on       = 1
+let seed_ground_r = 244
+let seed_ground_g = 234
+let seed_ground_b = 216
+let seed_ink_r    = 74
+let seed_ink_g    = 58
+let seed_ink_b    = 36
+let seed_accent_r = 154
+let seed_accent_g = 108
+let seed_accent_b = 16

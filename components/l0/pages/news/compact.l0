@@ -1,0 +1,28 @@
+view stream Col(gap: 10) {
+  when feed.$state == .pending { TextBody(text: copy.loading) }
+  when feed.$state == .failed { TextBody(text: copy.offline) }
+  masthead
+  topic_controls
+  TextCaption(text: copy.latest)
+  headline
+  latest
+}
+view latest Col(gap: 4) {
+  for s, i in feed key s.id {
+    StoryRow(story: s, position: i, on_open: open_story)
+  }
+}
+view story Col(gap: 10) {
+  Row(align: .center, on_tap: back) { TextRow(text: copy.back_lbl) }
+  TextTitle(text: article.title, width: .fill)
+  Row(gap: 8) {
+    Chip(text: copy.keep_lbl, on_tap: keep_story, value: selected)
+    Chip(text: copy.read_lbl, on_tap: read_story, value: article.url)
+  }
+  Rule()
+  Row(gap: 8) {
+    TextCaption(value: article.points, suffix: copy.pts)
+    TextCaption(text: article.author)
+  }
+  TextBody(text: article.url, width: .fill)
+}

@@ -9,6 +9,10 @@ description = "makepad render backend for Octoscript: shared UiNode -> makepad U
 # needs no makepad-platform/draw/widgets to build or test. A host app that puts
 # the output on screen pulls in makepad-widgets itself (see the Android app).
 octoscript-render = { path = "../octoscript-render" }
+# The L0 profile: src/l0.rs realizes and lowers cards for the kits, so this is a
+# real dependency now, not only a test one.
+octoscript-ui-l0 = { workspace = true }
+serde_json = "1"
 
 [[example]]
 name = "translate"
@@ -23,5 +27,4 @@ path = "examples/assemble.rs"
 # it. Safe as a dependency only because the profile was extracted from
 # octoscript-core: it depends on serde_json alone, so it drags in neither makepad
 # lineage and cannot collide with this workspace's in the lockfile.
-octoscript-ui-l0 = { workspace = true }
 serde_json  = "1"

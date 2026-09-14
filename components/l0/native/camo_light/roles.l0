@@ -1,0 +1,233 @@
+component CamoButtonControl(instance: text, text: text, enabled: bool) {
+  view Kit(component: "CamoButtonb90a204cbe", instance: instance, text: text, enabled: enabled)
+}
+component CamoCamoTrackRow(instance: text) {
+  view Kit(component: "CamoCamoTrackRow5e7468209d", instance: instance) { slot }
+}
+component CamoCheckbox(instance: text, checked: bool, enabled: bool) {
+  view Kit(component: "CamoCheckbox67f9f42708", instance: instance, checked: checked, enabled: enabled)
+}
+component CamoClip(instance: text) {
+  view Kit(component: "CamoClip47177b2fe0", instance: instance) { slot }
+}
+component CamoField(instance: text, text: text, placeholder: text, focused: bool, password: bool, enabled: bool) {
+  view Kit(component: "CamoFieldec8b642e43", instance: instance, text: text, placeholder: placeholder, focused: focused, password: password, enabled: enabled)
+}
+component CamoGlassGroup(instance: text) {
+  view Kit(component: "CamoGlassGroup1bce1a9ed5", instance: instance) { slot }
+}
+component CamoGlassSurface(instance: text) {
+  view Kit(component: "CamoGlassSurface890f25f706", instance: instance)
+}
+component CamoGroup(instance: text) {
+  view Kit(component: "CamoGroup30a667b63a", instance: instance) { slot }
+}
+component CamoImage(instance: text) {
+  view Kit(component: "CamoImage1d6cf08bc3", instance: instance)
+}
+component CamoKitBottomNavigation(instance: text, index: number) {
+  view Kit(component: "CamoKitBottomNavigationa7236526cc", instance: instance, index: index) { slot }
+}
+component CamoKitButton(instance: text) {
+  view Kit(component: "CamoKitButton1083f0d7d3", instance: instance) { slot }
+}
+component CamoKitFormField(instance: text) {
+  view Kit(component: "CamoKitFormField31c1c675a1", instance: instance) { slot }
+}
+component CamoKitTabBar(instance: text, index: number) {
+  view Kit(component: "CamoKitTabBare5ef89ec55", instance: instance, index: index) { slot }
+}
+component CamoPanel(instance: text) {
+  view Kit(component: "CamoPanel14a7896211", instance: instance) { slot }
+}
+component CamoProgress(instance: text, value: number) {
+  view Kit(component: "CamoProgress738165d9f4", instance: instance, value: value)
+}
+component CamoRadio(instance: text, checked: bool, enabled: bool) {
+  view Kit(component: "CamoRadioc4364c335d", instance: instance, checked: checked, enabled: enabled)
+}
+component CamoRichText(instance: text, text: text) {
+  view Kit(component: "CamoRichTexte9c2aa9616", instance: instance, text: text) { slot }
+}
+component CamoStockplot(instance: text) {
+  view Kit(component: "CamoStockploteaa855661b", instance: instance)
+}
+component CamoSurface(instance: text) {
+  view Kit(component: "CamoSurface1e9d552943", instance: instance)
+}
+component CamoTextBody(instance: text, text: text) {
+  view Kit(component: "CamoTextBody1f79b34c8b", instance: instance, text: text)
+}
+component CamoTextCaption(instance: text, text: text) {
+  view Kit(component: "CamoTextCaptiona1d82c6f77", instance: instance, text: text)
+}
+component CamoTextShadow(instance: text) {
+  view Kit(component: "CamoTextShadowbe89bc1b18", instance: instance) { slot }
+}
+component CamoTextTitle(instance: text, text: text) {
+  view Kit(component: "CamoTextTitlebe688c09cf", instance: instance, text: text)
+}
+component CamoToggle(instance: text, checked: bool, enabled: bool) {
+  view Kit(component: "CamoTogglea8e47c6ba5", instance: instance, checked: checked, enabled: enabled)
+}
+component CamoVector(instance: text) {
+  view Kit(component: "CamoVector9c120757f2", instance: instance)
+}
+component CamoBottomNavigation(instance: text, selected_index: number, label: text, subtitle: text, detail_1: text, detail_2: text, detail_3: text) {
+  state internal_10_text { shape: text, initial: "" }
+  state internal_10_enabled { shape: bool, initial: true }
+  state internal_17_text { shape: text, initial: "" }
+  state internal_17_enabled { shape: bool, initial: true }
+  state internal_24_text { shape: text, initial: "" }
+  state internal_24_enabled { shape: bool, initial: true }
+  state internal_31_text { shape: text, initial: "" }
+  state internal_31_enabled { shape: bool, initial: true }
+  state internal_38_text { shape: text, initial: "" }
+  state internal_38_enabled { shape: bool, initial: true }
+  view Kit(component: "CamoKitBottomNavigationa7236526cc", instance: instance, part: "p0", index: selected_index) {
+  Kit(component: "CamoSurfacecee45a2565", instance: instance, part: "p1")
+  Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p2") {
+    Kit(component: "CamoSurfacea3482832e0", instance: instance, part: "p3")
+  }
+  Kit(component: "CamoKitButton1083f0d7d3", instance: instance, part: "p4") {
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p5") {
+
+    }
+    Kit(component: "CamoTextCaption82a904e833", instance: instance, part: "p6", text: label)
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p7") {
+      Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p8") {
+        Kit(component: "CamoVector9c120757f2", instance: instance, part: "p9")
+      }
+    }
+    Kit(component: "CamoButtonb90a204cbe", instance: instance, part: "p10", text: internal_10_text, enabled: internal_10_enabled)
+  }
+  Kit(component: "CamoKitButton1083f0d7d3", instance: instance, part: "p11") {
+    Kit(component: "CamoSurface1f48e26363", instance: instance, part: "p12")
+    Kit(component: "CamoTextCaptiona1d82c6f77", instance: instance, part: "p13", text: subtitle)
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p14") {
+      Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p15") {
+        Kit(component: "CamoVector9c120757f2", instance: instance, part: "p16")
+      }
+    }
+    Kit(component: "CamoButtonb90a204cbe", instance: instance, part: "p17", text: internal_17_text, enabled: internal_17_enabled)
+  }
+  Kit(component: "CamoKitButton1083f0d7d3", instance: instance, part: "p18") {
+    Kit(component: "CamoSurface1f48e26363", instance: instance, part: "p19")
+    Kit(component: "CamoTextCaptiona1d82c6f77", instance: instance, part: "p20", text: detail_1)
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p21") {
+      Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p22") {
+        Kit(component: "CamoVector9c120757f2", instance: instance, part: "p23")
+      }
+    }
+    Kit(component: "CamoButtonb90a204cbe", instance: instance, part: "p24", text: internal_24_text, enabled: internal_24_enabled)
+  }
+  Kit(component: "CamoKitButton1083f0d7d3", instance: instance, part: "p25") {
+    Kit(component: "CamoSurface1f48e26363", instance: instance, part: "p26")
+    Kit(component: "CamoTextCaptiona1d82c6f77", instance: instance, part: "p27", text: detail_2)
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p28") {
+      Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p29") {
+        Kit(component: "CamoVector9c120757f2", instance: instance, part: "p30")
+      }
+    }
+    Kit(component: "CamoButtonb90a204cbe", instance: instance, part: "p31", text: internal_31_text, enabled: internal_31_enabled)
+  }
+  Kit(component: "CamoKitButton1083f0d7d3", instance: instance, part: "p32") {
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p33") {
+
+    }
+    Kit(component: "CamoTextCaptiona1d82c6f77", instance: instance, part: "p34", text: detail_3)
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p35") {
+      Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p36") {
+        Kit(component: "CamoVector9c120757f2", instance: instance, part: "p37")
+      }
+    }
+    Kit(component: "CamoButtonb90a204cbe", instance: instance, part: "p38", text: internal_38_text, enabled: internal_38_enabled)
+  }
+}
+}
+component CamoButton(instance: text, enabled: bool) {
+  state internal_7_text { shape: text, initial: "" }
+  view Kit(component: "CamoKitButtonfa9ad50d66", instance: instance, part: "p0") {
+  Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p1") {
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p2") {
+      Kit(component: "CamoVector9c120757f2", instance: instance, part: "p3")
+    }
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p4") {
+      Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p5") {
+        Kit(component: "CamoVector9c120757f2", instance: instance, part: "p6")
+      }
+    }
+  }
+  Kit(component: "CamoButtonb90a204cbe", instance: instance, part: "p7", text: internal_7_text, enabled: enabled)
+}
+}
+component CamoFormField(instance: text, value: text, placeholder: text, focused: bool, password: bool, enabled: bool) {
+  view Kit(component: "CamoKitFormField8d6ce9d14d", instance: instance, part: "p0") {
+  Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p1") {
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p2") {
+      Kit(component: "CamoVector9c120757f2", instance: instance, part: "p3")
+    }
+    Kit(component: "CamoFieldcd8ddb925a", instance: instance, part: "p4", text: value, placeholder: placeholder, focused: focused, password: password, enabled: enabled)
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p5") {
+      Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p6") {
+        Kit(component: "CamoVector9c120757f2", instance: instance, part: "p7")
+      }
+    }
+  }
+}
+}
+component CamoTabBar(instance: text, selected_index: number, label: text, subtitle: text) {
+  state internal_5_text { shape: text, initial: "" }
+  state internal_5_enabled { shape: bool, initial: true }
+  state internal_10_text { shape: text, initial: "" }
+  state internal_10_enabled { shape: bool, initial: true }
+  view Kit(component: "CamoKitTabBare5ef89ec55", instance: instance, part: "p0", index: selected_index) {
+  Kit(component: "CamoKitButton1092825441", instance: instance, part: "p1") {
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p2") {
+      Kit(component: "CamoSurfacea411405a9c", instance: instance, part: "p3")
+      Kit(component: "CamoTextBody720fd41063", instance: instance, part: "p4", text: label)
+    }
+    Kit(component: "CamoButtonb90a204cbe", instance: instance, part: "p5", text: internal_5_text, enabled: internal_5_enabled)
+  }
+  Kit(component: "CamoKitButton1092825441", instance: instance, part: "p6") {
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p7") {
+      Kit(component: "CamoSurface9508e40725", instance: instance, part: "p8")
+      Kit(component: "CamoTextBodye13aa195f1", instance: instance, part: "p9", text: subtitle)
+    }
+    Kit(component: "CamoButtonb90a204cbe", instance: instance, part: "p10", text: internal_10_text, enabled: internal_10_enabled)
+  }
+}
+}
+component CamoTrackRow(instance: text, enabled: bool, artist: text, title: text) {
+  state internal_1_text { shape: text, initial: "" }
+  state internal_4_text { shape: text, initial: "" }
+  state internal_4_enabled { shape: bool, initial: true }
+  state internal_8_text { shape: text, initial: "" }
+  state internal_8_enabled { shape: bool, initial: true }
+  view Kit(component: "CamoCamoTrackRow5e7468209d", instance: instance, part: "p0") {
+  Kit(component: "CamoButtonb90a204cbe", instance: instance, part: "p1", text: internal_1_text, enabled: enabled)
+  Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p2") {
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p3") {
+      Kit(component: "CamoButtonb90a204cbe", instance: instance, part: "p4", text: internal_4_text, enabled: internal_4_enabled)
+      Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p5") {
+        Kit(component: "CamoVector9c120757f2", instance: instance, part: "p6")
+      }
+    }
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p7") {
+      Kit(component: "CamoButtonb90a204cbe", instance: instance, part: "p8", text: internal_8_text, enabled: internal_8_enabled)
+      Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p9") {
+        Kit(component: "CamoVector9c120757f2", instance: instance, part: "p10")
+      }
+    }
+  }
+  Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p11") {
+    Kit(component: "CamoTextCaptionf901ca0191", instance: instance, part: "p12", text: artist)
+    Kit(component: "CamoTextBody1f79b34c8b", instance: instance, part: "p13", text: title)
+  }
+  Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p14") {
+    Kit(component: "CamoGroup30a667b63a", instance: instance, part: "p15") {
+      Kit(component: "CamoImage1d6cf08bc3", instance: instance, part: "p16")
+    }
+  }
+}
+}

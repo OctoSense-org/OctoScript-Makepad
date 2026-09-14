@@ -20,6 +20,8 @@ pub enum NodeKind {
     Swiper,
     Text,
     Image,
+    /// Source SVG geometry, rendered with a native vector widget.
+    Svg,
     Button,
     Toggle,
     Checkbox,
@@ -150,6 +152,7 @@ impl NodeKind {
             "swiper" => Self::Swiper,
             "text" => Self::Text,
             "image" => Self::Image,
+            "svg" => Self::Svg,
             "button" => Self::Button,
             "toggle" => Self::Toggle,
             "checkbox" => Self::Checkbox,
@@ -217,9 +220,15 @@ impl NodeKind {
 /// `on` means checkbox-select vs toggle-value depending on the kind).
 #[derive(Clone, Default, Debug)]
 pub struct Attrs {
+    /// Validated semantic widget contract: native type and child index paths.
+    pub kit: Option<String>,
+    pub kit_index: Option<i32>,
     pub text: Option<String>,
     pub label: Option<String>,
     pub placeholder: Option<String>,
+    /// Initial keyboard focus and password masking for native input fields.
+    pub focused: Option<i32>,
+    pub password: Option<i32>,
     /// Makepad widget id (`name := Widget{…}`) so the widget is addressable
     /// (e.g. a signal Label the host reads, or a target of `ui.<id>.set_text`).
     pub id: Option<String>,
@@ -228,6 +237,9 @@ pub struct Attrs {
     pub tapto: Option<String>,
     /// Image source: a resource ref or an `https://` URL.
     pub src: Option<String>,
+    /// Decoded raster dimensions, independent of logical layout size.
+    pub image_width: Option<f32>,
+    pub image_height: Option<f32>,
     /// ObjectFit-style enum for images.
     pub fit: Option<i32>,
     pub w: Option<f32>,
@@ -256,6 +268,61 @@ pub struct Attrs {
     /// The far end of a two-stop gradient fill (makepad's `draw_bg.color_2`).
     /// The reference's shapeable images are named gradients, not bitmaps.
     pub bg2: Option<u32>,
+    /// A tiled surface grain laid over this node — the NAME of a bundled
+    /// texture (`paper`, `linen`, …), never a path. The theme owns the asset,
+    /// so a card names an intent and never a file, exactly as it does for
+    /// colour. L0 refuses a literal in a data position (profile §4), and a
+    /// texture is no more the card's to choose than a hex value is.
+    ///
+    /// The assets are greyscale by construction: a texture carrying its own hue
+    /// would fight whatever accent the card asked for — the same defect as an
+    /// accent that never reached the ink.
+    pub texture: Option<String>,
+    /// The shadow's INK. Absent means the derived soft shadow that `elevation`
+    /// alone produces; present means the theme chose, which is the difference
+    /// between a Material lift and a neubrutalist offset block.
+    ///
+    /// `elevation` was always able to say how FAR a surface sits off the page.
+    /// It could never say what the shadow is made of, so every school that
+    /// wants a hard coloured drop — memphis, neubrutalist, punk — was
+    /// unreachable no matter what elevation it asked for.
+    pub shadowcolor: Option<u32>,
+    /// Blur radius. Zero is a hard edge; large with no offset is a glow.
+    pub shadowblur: Option<f32>,
+    /// Offset. A hard shadow is defined by having one; a glow by having none.
+    pub shadowdx: Option<f32>,
+    pub shadowdy: Option<f32>,
+    /// The type FAMILY this run is drawn in — `"sans"` (the default) or
+    /// `"serif"`. A role, not a file: the theme picks the family and the
+    /// backend owns which face answers it at each weight, exactly as the
+    /// backend already owns Roboto-Thin versus Roboto-Bold.
+    pub family: Option<String>,
+    /// Explicit font resource and line height for source-measured designs.
+    pub font_src: Option<String>,
+    pub font_asc: Option<f32>,
+    pub font_desc: Option<f32>,
+    pub line_height: Option<f32>,
+    /// Letter spacing, in ems. The text stack has always had `letter_spacing`
+    /// in its shaper; nothing above ever reached it, so the eyebrow role fakes
+    /// tracking by inserting thin spaces into the STRING — which cannot work on
+    /// a live value, because its text does not exist at lowering time.
+    pub tracking: Option<f32>,
+    /// Run the two-stop fill ACROSS rather than down.
+    ///
+    /// `gradient_fill_horizontal` has been a uniform on every view shader all
+    /// along and nothing has ever set it, so every gradient in the product ran
+    /// top-to-bottom because that is the branch the default takes — not because
+    /// anything chose it. A second direction is the cheapest axis in the whole
+    /// list: no shader work, one uniform.
+    pub gradient_across: Option<i32>,
+
+
+
+    /// How strongly the grain reads, 0..1. Small, because this is a surface and
+    /// not a picture.
+    pub texture_alpha: Option<f32>,
+    /// How many times the tile repeats across the node. Larger is finer.
+    pub texture_scale: Option<f32>,
     pub radius: Option<f32>,
     /// Material elevation (dp). Non-zero promotes a filled container to a
     /// shadow-casting view and scales its drop shadow.
@@ -266,6 +333,8 @@ pub struct Attrs {
     /// horizontal / 6dp vertical padding that a uniform `pad` can't express.
     pub padx: Option<f32>,
     pub pady: Option<f32>,
+    /// Explicit leading inset for source-measured native text fields.
+    pub padleft: Option<f32>,
     /// Asymmetric vertical padding, where `pady` cannot say it.
     ///
     /// A page's top padding clears the status bar and its bottom clears the
@@ -351,11 +420,25 @@ pub struct Attrs {
     /// thumb when on.
     pub markcolor: Option<u32>,
     pub value: Option<f32>,
+    /// Background blur radius in logical pixels for measured native designs.
+    pub blur: Option<f32>,
     pub total: Option<f32>,
     pub align: Option<i32>,
     /// Child alignment within a container, 0.0..=1.0 on each axis.
     pub alignx: Option<f32>,
     pub aligny: Option<f32>,
+    /// The ink descendant text is read with, where the mood's own ink cannot
+    /// be read on this node's fill.
+    ///
+    /// A card's fill belongs to the PACK — CaMo's black slab, Atro's indigo
+    /// gradient — and it does not flip when the pack's light variant flips
+    /// `l0_text`; the theme cannot re-answer a role per subtree. CaMo light
+    /// therefore drew near-black headlines on a pure black card, on every
+    /// rail. This was an `inkdark` FLAG, which no renderer ever read and which
+    /// the evaluator never even parsed, so it fixed nothing. Carrying the
+    /// colour lets a backend apply it, and apply it only where a descendant's
+    /// own colour fails contrast — an accent that already reads keeps its own.
+    pub ink: Option<u32>,
     pub on: Option<i32>,
     pub tap: Option<i32>,
     /// Map camera. `tilt` is what makes the view 2.5D; `rotation` is the bearing.

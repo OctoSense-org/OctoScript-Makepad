@@ -1,0 +1,33 @@
+view list Col(gap: 14) {
+  TextTitle(text: copy.movers)
+  watch_controls
+  Grid(cols: 2) {
+    for m in movers key m.ticker {
+      Row(align: .center, gap: 8, on_tap: open_quote, value: m.ticker) {
+        Col(gap: 2, width: .fill) {
+          TextRow(text: m.ticker)
+          TextCaption(text: m.name, width: .fill)
+        }
+        TextValue(value: m.last, format: .money)
+        TextValue(value: m.pct, format: .signed_pct, tint: m.change)
+      }
+    }
+  }
+}
+view detail Col(gap: 12) {
+  quote_controls
+  TextTitle(text: quote.name, width: .fill)
+  quote_summary
+  stats
+  ranges
+  chart
+}
+view quote_summary Card {
+  Row(gap: 14, align: .center) {
+    TextStat(value: quote.last, format: .money)
+    Col(width: .fill, gap: 4) {
+      TextStat(value: quote.change, format: .signed_money, tint: quote.change)
+      TextValue(value: quote.pct, format: .signed_pct, tint: quote.change)
+    }
+  }
+}

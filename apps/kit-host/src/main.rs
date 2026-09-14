@@ -429,6 +429,8 @@ impl App {
             .ok()
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
+            // Desktop has no /data/local/tmp; the env var is its route file.
+            .or_else(|| std::env::var("SPLASH_ROUTE").ok())
             .unwrap_or_else(|| "button".to_string())
     }
 
@@ -485,6 +487,18 @@ impl App {
         // backing layer's 820dp height is: this host is pinned to one device.
         if state_get("win_class").is_empty() {
             state_set("win_class", "Compact (384dp)");
+        }
+        // Deterministic state for screenshots: `SPLASH_SEED=k=v;k=v` writes the
+        // store before the first mount, so a sweep can photograph a screen in a
+        // chosen state with no input driver at all. The QA loop's other half:
+        // the route file picks the screen, this picks the state.
+        if let Ok(seed) = std::env::var("SPLASH_SEED") {
+            for pair in seed.split(';').filter(|p| p.contains('=')) {
+                let (k, v) = pair.split_once('=').unwrap();
+                if state_get(k.trim()).is_empty() {
+                    state_set(k.trim(), v.trim());
+                }
+            }
         }
         if let Some(node) = octoscript_render::build(&full, register_state) {
             // Every reference screen is rooted in its own `scroll`. This shell

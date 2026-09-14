@@ -12,6 +12,62 @@ use makepad_widgets::*;
 script_mod! {
     use mod.prelude.widgets.*
 
+    set_type_default() do #(DrawDonutArc::script_shader(vm)) {
+        ..mod.draw.DrawQuad
+        draw_depth: 0.0
+        ink: #ffffff
+        ink2: #ffffff
+        pixel: fn() {
+            let p=(self.pos-vec2(0.5))*self.rect_size
+            let radius=min(self.rect_size.x,self.rect_size.y)*0.5
+            let inner=radius*self.inner_ratio
+            let angle=atan2(p.y,p.x)
+            let travel=modf((angle-self.start)*self.direction+12.566370614,6.283185307)
+            let center_radius=(radius+inner)*0.5
+            let half_width=(radius-inner)*0.5
+            let radial=abs(length(p)-center_radius)-half_width
+            let edge=min(travel,self.sweep-travel)*center_radius
+            var dist=max(radial,-edge)
+            if self.rounded>0.5 && self.sweep<6.2831 {
+                let a=self.start+self.direction*self.sweep
+                let cap1=length(p-vec2(cos(self.start),sin(self.start))*center_radius)-half_width
+                let cap2=length(p-vec2(cos(a),sin(a))*center_radius)-half_width
+                dist=min(dist,min(cap1,cap2))
+            }
+            var coverage=1.0-smoothstep(-0.5,0.5,dist)
+            if self.dash_length>0.0 && self.dash_gap>0.0 {
+                let cycle=self.dash_length+self.dash_gap
+                let phase=modf(travel*center_radius+cycle*0.5,cycle)-cycle*0.5
+                coverage=coverage*(1.0-smoothstep(self.dash_length*0.5-0.5,self.dash_length*0.5+0.5,abs(phase)))
+            }
+            var t=0.0
+            if self.gradient_mode>2.5 {
+                t=length(self.pos-self.gradient_from)/max(length(self.gradient_to-self.gradient_from),0.000001)
+            } else if self.gradient_mode>1.5 {
+                let angular_p=(self.pos-self.angular_center)*self.rect_size
+                t=modf(atan2(angular_p.y,angular_p.x)+6.283185307,6.283185307)/6.283185307
+            } else if self.gradient_mode>0.5 {
+                let d=self.gradient_to-self.gradient_from
+                t=dot(self.pos-self.gradient_from,d)/max(dot(d,d),0.000001)
+            }
+            let f=clamp((t-self.stop_start)/max(self.stop_end-self.stop_start,0.000001),0.0,1.0)
+            var c=mix(self.ink,self.ink2,f)
+            if self.three_stops>0.5 {
+                if t<self.stop_mid {c=mix(self.ink,self.ink_mid,clamp((t-self.stop_start)/max(self.stop_mid-self.stop_start,0.000001),0.0,1.0))}
+                else {c=mix(self.ink_mid,self.ink2,clamp((t-self.stop_mid)/max(self.stop_end-self.stop_mid,0.000001),0.0,1.0))}
+            }
+            if self.gradient_mode>1.5 && self.gradient_mode<2.5 {
+                if t<self.stop_start {t=t+1.0}
+                if t>self.stop_end {
+                    let wrap=(t-self.stop_end)/max(1.0+self.stop_start-self.stop_end,0.000001)
+                    c=mix(self.ink2,self.ink,clamp(wrap,0.0,1.0))
+                }
+            }
+            if c.a*coverage<0.000001 {discard()}
+            return vec4(c.rgb*c.a*coverage,c.a*coverage)
+        }
+    }
+
     mod.plot.PieChartBase = #(PieChart::register_widget(vm))
 
     mod.plot.PieChart = set_type_default() do mod.plot.PieChartBase{
@@ -71,6 +127,42 @@ script_mod! {
         draw_vector +: { draw_depth: 2.0 }
         draw_text +: { draw_depth: 3.0, color: #x333333, text_style: theme.font_regular{} }
     }
+}
+
+#[derive(Script, ScriptHook)]
+#[repr(C)]
+struct DrawDonutArc {
+    #[deref] draw_super: DrawQuad,
+    #[live] ink: Vec4,
+    #[live] ink2: Vec4,
+    #[live] ink_mid: Vec4,
+    #[live] stop_mid: f32,
+    #[live] three_stops: f32,
+    #[live] inner_ratio: f32,
+    #[live] start: f32,
+    #[live] sweep: f32,
+    #[live] direction: f32,
+    #[live] rounded: f32,
+    #[live] dash_length: f32,
+    #[live] dash_gap: f32,
+    #[live] gradient_mode: f32,
+    #[live] gradient_from: Vec2,
+    #[live] angular_center: Vec2,
+    #[live] gradient_to: Vec2,
+    #[live] stop_start: f32,
+    #[live] stop_end: f32,
+}
+
+#[derive(Clone, Debug)]
+pub struct DonutArcStyle {
+    pub center: (f64,f64),
+    pub radius_scale: f64,
+    pub inner: f64,
+    pub start: f64,
+    pub direction: f64,
+    pub rounded: bool,
+    pub dash_length: f32,
+    pub dash_gap: f32,
 }
 
 // =============================================================================
@@ -359,8 +451,30 @@ pub struct DonutChart {
     #[rust]
     pub slices: Vec<DonutSlice>,
     #[rust]
+    pub slice_paints: Vec<Option<crate::ChartPaint>>,
+    #[rust]
+    pub independent_arcs: Vec<DonutArcStyle>,
+    #[live]
+    draw_arc: DrawDonutArc,
+    #[live(false)]
+    pub styled_arcs: bool,
+    #[live(false)]
+    pub rounded_caps: bool,
+    #[live(-1.5707963267948966)]
+    pub start_angle: f64,
+    #[live(1.0)]
+    pub direction: f64,
+    #[live(0.95)]
+    pub radius_scale: f64,
+    #[live]
+    pub track_color: Vec4,
+    #[rust]
     center_label: String,
 
+    #[live(true)]
+    pub show_center_label: bool,
+    #[live(0.0)]
+    pub slice_gap: f64,
     #[live(0.55)]
     pub inner_radius: f64,
     #[live(false)]
@@ -435,32 +549,65 @@ impl DonutChart {
         let label_room = if self.show_labels || self.show_percentages {
             0.8
         } else {
-            0.95
+            self.radius_scale
         };
         let outer_radius = (pr.size.x.min(pr.size.y) * 0.5) * label_room;
         if outer_radius < 2.0 {
             return;
         }
-        let inner_ratio = self.inner_radius.clamp(0.0, 0.9) as f32;
+        let inner_ratio = self.inner_radius.clamp(0.0, 0.999) as f32;
 
         let slices = self.slices.clone();
-        let mut start_angle = -std::f64::consts::FRAC_PI_2;
+        let mut start_angle = self.start_angle;
+
+        if self.styled_arcs && self.track_color.w>0. {
+            let draw=&mut self.draw_arc;
+            draw.ink=self.track_color;draw.ink2=self.track_color;draw.inner_ratio=inner_ratio;
+            draw.start=0.;draw.sweep=std::f32::consts::TAU;draw.direction=1.;draw.rounded=0.;
+            draw.gradient_mode=0.;draw.dash_length=0.;draw.dash_gap=0.;draw.three_stops=0.;draw.stop_start=0.;draw.stop_end=1.;
+            draw.draw_abs(cx,Rect{pos:dvec2(cx0-outer_radius,cy0-outer_radius),size:dvec2(outer_radius*2.,outer_radius*2.)});
+        }
 
         for (i, slice) in slices.iter().enumerate() {
             let v = slice.value.max(0.0);
-            let sweep_angle = (v / total) * std::f64::consts::TAU;
-            let end_angle = start_angle + sweep_angle;
+            let arc=self.independent_arcs.get(i);
+            let sweep_angle = if arc.is_some() {v.clamp(0.,1.)*std::f64::consts::TAU} else {(v/total)*std::f64::consts::TAU};
+            let (cx0,cy0,outer_radius,inner_ratio,direction,rounded)=if let Some(arc)=arc {
+                start_angle=arc.start;
+                (pr.pos.x+pr.size.x*arc.center.0,pr.pos.y+pr.size.y*arc.center.1,
+                 pr.size.x.min(pr.size.y)*0.5*arc.radius_scale,arc.inner as f32,arc.direction,arc.rounded)
+            }else{(cx0,cy0,outer_radius,inner_ratio,self.direction,self.rounded_caps)};
+            let end_angle = start_angle + sweep_angle*direction;
             let color = slice.color.unwrap_or_else(|| cycle_color(i));
 
-            self.plot_view.fill_arc_px(
+            if self.styled_arcs && sweep_angle>1e-6 {
+                let draw=&mut self.draw_arc;
+                draw.ink=color;draw.ink2=color;
+                draw.inner_ratio=inner_ratio;draw.start=start_angle as f32;
+                draw.sweep=sweep_angle as f32;draw.direction=direction as f32;
+                draw.dash_length=arc.map(|a|a.dash_length).unwrap_or(0.);draw.dash_gap=arc.map(|a|a.dash_gap).unwrap_or(0.);
+                draw.rounded=if rounded {1.}else{0.};draw.gradient_mode=0.;draw.three_stops=0.;
+                draw.stop_start=0.;draw.stop_end=1.;
+                if let Some(Some(paint))=self.slice_paints.get(i) {
+                    if let (Some(first),Some(last))=(paint.stops.first(),paint.stops.last()) {
+                        draw.ink=first.1;draw.ink2=last.1;
+                        if paint.stops.len()==3 {draw.ink_mid=paint.stops[1].1;draw.stop_mid=paint.stops[1].0;draw.three_stops=1.;}draw.stop_start=first.0;draw.stop_end=last.0;
+                        draw.gradient_mode=if paint.angular {2.}else if paint.radial {3.}else{1.};
+                        draw.angular_center=vec2(paint.angular_center.0,paint.angular_center.1);
+                        draw.gradient_from=vec2(paint.from.0,paint.from.1);
+                        draw.gradient_to=vec2(paint.to.0,paint.to.1);
+                    }
+                }
+                draw.draw_abs(cx,Rect{pos:dvec2(cx0-outer_radius,cy0-outer_radius),size:dvec2(outer_radius*2.,outer_radius*2.)});
+            } else if !self.styled_arcs {self.plot_view.fill_arc_px(
                 cx0 as f32,
                 cy0 as f32,
                 outer_radius as f32,
                 inner_ratio,
-                start_angle as f32,
-                end_angle as f32,
+                (start_angle+self.slice_gap/outer_radius*0.5) as f32,
+                (end_angle-self.slice_gap/outer_radius*0.5) as f32,
                 color,
-            );
+            );}
 
             // External labels / percentages
             if (self.show_labels || self.show_percentages) && sweep_angle > 0.02 {
@@ -507,6 +654,7 @@ impl DonutChart {
             start_angle = end_angle;
         }
 
+        if !self.show_center_label {return;}
         // Center text: explicit center label or the total
         let center_text = if self.center_label.is_empty() {
             let rounded = format!("{:.1}", total);
