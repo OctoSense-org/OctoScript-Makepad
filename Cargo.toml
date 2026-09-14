@@ -19,8 +19,8 @@ members = [
 # and the kits never carry two copies of makepad-widgets / makepad-script. This rev is the
 # former guofoo/makepad pin, unchanged, hosted at refs/heads/pin/octoscript-makepad-beb3857a.
 [workspace.dependencies]
-makepad-widgets = { git = "https://github.com/OctoSense-org/makepad.git", rev = "703c00acd738c1762b5db581d3dcc359bfb97d4a" }
-makepad-script = { git = "https://github.com/OctoSense-org/makepad.git", rev = "703c00acd738c1762b5db581d3dcc359bfb97d4a" }
+makepad-widgets = { git = "https://github.com/OctoSense-org/makepad.git", rev = "3090964f9eba54c9384c0b55d2b4869c80305f7b" }
+makepad-script = { git = "https://github.com/OctoSense-org/makepad.git", rev = "3090964f9eba54c9384c0b55d2b4869c80305f7b" }
 # The VM-independent Octoscript node model, from the Octoscript repo itself.
 octoscript-ui-l0 = { git = "https://github.com/OctoSense-org/Octoscript.git", branch = "main" }
 
