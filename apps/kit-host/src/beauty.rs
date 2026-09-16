@@ -1,6 +1,7 @@
 //! Native, chrome-free preview of the lab's L0 cards through octoscript-makepad.
 pub use makepad_widgets;
 use makepad_widgets::*;
+use makepad_widgets::browser::Browser;
 use octoscript_widgets::design::*;
 mod beauty_semantics;
 use beauty_semantics::Session as SemanticSession;
@@ -9,6 +10,8 @@ app_main!(App);
 
 script_mod! {
     use mod.prelude.widgets.*
+    mod.prelude.widgets.Browser = mod.widgets.Browser
+    mod.prelude.widgets.BrowserBackend = mod.widgets.BrowserBackend
     startup() do #(App::script_component(vm)) {
         ui: Root {
             main_window := Window {
@@ -41,6 +44,12 @@ pub struct App {
     layout_path: String,
     #[rust]
     pending_focus: Option<String>,
+    #[rust]
+    pending_selection: Option<makepad_draw::text::selection::Selection>,
+    #[rust]
+    pending_scroll: Vec<(String, f64)>,
+    #[rust]
+    scroll_report: String,
     #[rust]
     action_log: String,
     #[rust]
@@ -89,6 +98,16 @@ impl App {
         self.pending_focus = focused
             .first()
             .and_then(|e| e["id"].as_str().map(str::to_owned));
+        self.pending_selection = if r["preserve_input_selection"].as_bool()==Some(true) {
+            self.pending_focus.as_ref().and_then(|id| {
+                let widget=self.ui.widget(cx,&[LiveId::from_str(id)]);
+                widget.borrow::<TextInput>().filter(|input|cx.has_key_focus(input.area())).map(|input|input.selection())
+            })
+        } else {None};
+        self.pending_scroll=r["scroll_restore"].as_array().map(|items|items.iter().filter_map(|item| {
+            Some((item["id"].as_str()?.to_owned(),item["y"].as_f64()?))
+        }).collect()).unwrap_or_default();
+        self.scroll_report.clear();
         cx.set_key_focus(Area::Empty);
         self.inspection_ids = elements
             .iter()
@@ -104,8 +123,11 @@ impl App {
             octoscript_makepad::to_makepad_l0_ui(&tree)
         };
         let code = format!(
-            "use mod.prelude.widgets.*\nlet root = View{{width:Fill height:Fill flow:Overlay {ui}}}\nroot"
+            "use mod.prelude.widgets.*\nreturn View{{width:Fill height:Fill flow:Overlay {ui}}}"
         );
+        if let Some(layout) = r["layout"].as_str() {
+            let _ = std::fs::write(format!("{layout}.native.splash"), &code);
+        }
         let sm = ScriptMod {
             cargo_manifest_path: env!("CARGO_MANIFEST_DIR").into(),
             module_path: module_path!().into(),
@@ -118,7 +140,8 @@ impl App {
         let view = cx.with_vm(|vm| {
             let value = vm
                 .eval_checked(sm, 2_000_000)
-                .ok_or("native VM rejected the widget tree")?;
+                .ok_or_else(|| format!("native VM rejected the widget tree; consumed={}; captured={:?}",
+                    vm.last_limit_consumed(), vm.bx.captured_errors))?;
             Ok::<_, String>(View::script_from_value(vm, value))
         })?;
         let width = r["width"].as_f64().ok_or("missing width")?;
@@ -128,7 +151,7 @@ impl App {
             dvec2(width, height),
             dvec2(80.0, 80.0),
             false,
-            "Splash beauty preview".into(),
+            r["title"].as_str().unwrap_or("Splash beauty preview").into(),
         );
         if !first_mount {
             self.ui
@@ -145,6 +168,10 @@ impl App {
         // overlay drawing immediately. Nested old overlays can otherwise keep
         // the same stale parent redraw id and survive into the next screen.
         fn retire_overlay(cx:&mut Cx,widget:WidgetRef) {
+            if widget.borrow::<Browser>().is_some() {
+                // Native WebViews must close before their AppCard is retired.
+                cx.system_browser(LiveId(widget.widget_uid().0)).close();
+            }
             octoscript_widgets::kit::retire_overlay(cx,&widget);
             let list=widget.borrow::<DesignOverlay>().and_then(|v|v.draw_list.as_ref().map(|l|l.id()))
                 .or_else(||widget.borrow::<DesignGlassSvg>().and_then(|v|v.draw_list.as_ref().map(|l|l.id())));
@@ -206,6 +233,14 @@ impl App {
 
     fn measure_layout(&mut self, cx: &mut Cx) {
         if self.layout_path.is_empty() {
+            return;
+        }
+        if !self.pending_scroll.is_empty() {
+            if self.pending_scroll.iter().any(|(id,_)|!self.ui.widget(cx,&[LiveId::from_str(id)]).area().is_valid(cx)) {return;}
+            for (id,y) in std::mem::take(&mut self.pending_scroll) {
+                self.ui.widget(cx,&[LiveId::from_str(&id)]).set_scroll_pos(cx,dvec2(0.,y.max(0.)));
+            }
+            cx.redraw_all();
             return;
         }
         let mut rows = Vec::new();
@@ -273,7 +308,8 @@ impl App {
             let widget = self.ui.widget(cx, &[LiveId::from_str(&id)]);
             if let Some(mut input) = widget.borrow_mut::<TextInput>() {
                 input.set_key_focus(cx);
-                input.move_cursor_text_end(cx, false);
+                if let Some(selection)=self.pending_selection.take() {input.set_selection(cx,selection);}
+                else {input.move_cursor_text_end(cx, false);}
                 input.reset_blink_timer(cx);
                 input.redraw(cx);
                 return;
@@ -288,12 +324,34 @@ impl App {
             self.layout_path.clear();
         }
     }
+
+    fn report_scroll(&mut self,cx:&mut Cx) {
+        if !self.layout_path.is_empty() {return;}
+        let r:serde_json::Value=serde_json::from_str(&self.last_request).unwrap_or_default();
+        let Some(path)=r["scroll_state"].as_str() else {return;};
+        let Some(watches)=r["scroll_watch"].as_array() else {return;};
+        let mut rows=Vec::new();
+        for watch in watches {
+            let (Some(id),Some(content))=(watch["id"].as_str(),watch["content"].as_str()) else {continue;};
+            let viewport=self.ui.widget(cx,&[LiveId::from_str(id)]).area();
+            let content=self.ui.widget(cx,&[LiveId::from_str(content)]).area();
+            if !viewport.is_valid(cx) || !content.is_valid(cx) {continue;}
+            let v=viewport.rect(cx);let c=content.rect(cx);
+            rows.push(serde_json::json!({"id":id,"y":(v.pos.y-c.pos.y).max(0.),"max_y":(c.size.y-v.size.y).max(0.),"viewport_height":v.size.y}));
+        }
+        let report=serde_json::json!({"nonce":r["nonce"],"elements":rows}).to_string();
+        if report!=self.scroll_report {
+            let tmp=format!("{path}.new");
+            if std::fs::write(&tmp,&report).is_ok() && std::fs::rename(&tmp,path).is_ok() {self.scroll_report=report;}
+        }
+    }
 }
 
 impl AppMain for App {
     fn script_mod(vm: &mut ScriptVm) -> ScriptValue {
         crate::makepad_widgets::theme_mod(vm);
         octoscript_widgets::widgets_mod(vm);
+        makepad_widgets::browser::script_mod(vm);
         octoscript_widgets::design::script_mod(vm);
         octoscript_widgets::kit::script_mod(vm);
         octoscript_widgets::progress::script_mod(vm);
@@ -301,6 +359,27 @@ impl AppMain for App {
         self::script_mod(vm)
     }
     fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
+        #[cfg(target_os = "macos")]
+        if let Event::Custom(body)=event {
+            if let Ok(probe)=serde_json::from_str::<serde_json::Value>(body) {
+                if probe["kind"]=="webview_lifecycle" {
+                    if let Some(path)=probe["result"].as_str() {
+                        let _=std::fs::write(path,serde_json::json!({"native_browsers":cx.system_browser_count()}).to_string());
+                    }
+                }
+                if probe["kind"]=="webview_inspect" {
+                    if let (Some(id),Some(path))=(probe["id"].as_str(),probe["result"].as_str()) {
+                        if self.inspection_ids.iter().any(|known|known==id) {
+                            let widget=self.ui.widget(cx,&[LiveId::from_str(id)]);
+                            if widget.borrow::<Browser>().is_some() {
+                                cx.system_browser(LiveId(widget.widget_uid().0)).inspect(
+                                    path.to_owned(),probe["snapshot"].as_str().map(str::to_owned),probe["scroll_y"].as_f64());
+                            }
+                        }
+                    }
+                }
+            }
+        }
         if let Event::Actions(actions)=event {
             self.semantic.actions(cx,&self.ui,actions);
             for action in actions {
@@ -332,6 +411,7 @@ impl AppMain for App {
         if self.timer.is_event(event).is_some() {
             self.semantic.poll(cx,&self.ui);
             self.measure_layout(cx);
+            self.report_scroll(cx);
         }
     }
 }

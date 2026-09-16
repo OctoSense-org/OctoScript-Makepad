@@ -79,37 +79,40 @@ Each new theme is just more variants in `octoscript-widgets` + a `.octoscript` c
 
 Building + running the `kit-host` against upstream surfaced exactly **one** thing upstream doesn't have: a **`Splash` main-VM-mount option**. Upstream's `Splash` always allocates an *isolate* VM (`alloc_splash_vm_with_network(allow_net)`), but the light theme and a shared heap live on the app's **main** VM. The fix is the small `isolate: false` field this project's fork added to `widgets/src/splash.rs` — upstreaming it lets a trusted, app-generated kit mount on the main VM (correct theme, no isolate-heap animator panics). Until then the kit mounts on an isolate (dark-default theme). That is the *only* upstream change needed; everything else runs against upstream `dev` as-is.
 
-## Relationship to makepad
+## Shared runtime for OctoSense apps
 
-Makepad ships everything this needs — the `makepad-script` VM (`platform/script`) and the `Splash` runtime-mount widget. The whole workspace takes them from **one pinned revision** of [`guofoo/makepad`](https://github.com/guofoo/makepad) (a fork of upstream `dev`), declared once in the root `Cargo.toml` under `[workspace.dependencies]`:
+This repository is the UI runtime entry point for AppCards, Mail and the browser
+hosts. `runtime.json` locks one underlying `OctoSense-org/makepad` revision and
+one `OctoSense-org/Octoscript` revision. The same pins appear in the root Cargo
+workspace; `tools/runtime.py` rejects drift and configures a single local source
+for each crate. Mail's scrolling, text input and native HTML WebView support live
+here and in the locked Makepad source, rather than in per-application patches.
 
-- The **core crates** depend on `makepad-script` from that pin.
-- **`octoscript-widgets`** and the kit apps depend on `makepad-widgets` from the same pin, so `makepad-script` stays aligned with `octoscript-render`'s.
-- The pin is the revision [OctoSense-org/octosense](https://github.com/OctoSense-org/octosense) builds against; bump both together so an app never carries two makepad lineages.
-- `octoscript-ui-l0` (the VM-independent node model) comes by git from [OctoSense-org/Octoscript](https://github.com/OctoSense-org/Octoscript), branch `main`.
+Arrange the independent repositories as siblings named `octoscript-makepad`,
+`octoscript` and `makepad`. Run `python3 tools/runtime.py prepare` from this
+repository, or use AppCards' `tools/setup-native.py`, which also selects the
+framework release. Existing local edits are preserved; `--update` only moves
+clean dependency checkouts. `python3 tools/runtime.py verify --cargo-manifest
+Cargo.toml` checks the source set and rejects multiple Makepad instances in the
+resolved Cargo graph.
 
 ## Build
 
-### L0 design-kit validation
+### Native application validation
 
-The lab's `splash-beauty-host` Studio runnable mounts L0 cards through
-`l0::prepare` and `to_makepad_l0_ui`. This preserves the L0 kit's resolved
-Card/Chip presentation; `to_makepad_ui` remains the Material semantic entry
-point. The preview uses a standalone native window so Studio's pane size
-cannot change the design frame. HTTP image resources and host fixture data
-are exercised by the pipeline, alongside checked native widget construction.
+Build `cargo build --release -p kit-host --bin beauty-host` from this workspace.
+Launch the standalone host with `--remote`; automation sets
+`MAKEPAD_HIDE_WINDOWS=1` and uses the built-in HTTP instrument on the native GPU
+backend. Use `/snap`, input routes and `/g` to inspect the owned application;
+finish with `/gq` and confirm process exit. Studio is not part of this workflow.
 
-See [the Taskplan runbook](../lab/sketch/TASKPLAN-VALIDATION.md) for commands,
-capture hashes, fill/vision judgments and known fidelity limits. The new
-runnable is independent of the older Material catalog shell.
+The host accepts measured AppCard designs and L0 cards, preserves text selection
+and scroll state across remounts, and retires platform WebViews when navigating.
+On macOS its custom-event probes expose the owned WebView's content, scroll
+extent, snapshot and lifecycle for application acceptance checks.
 
-With the `makepad`, `splash` and `octoscript-makepad` checkouts present:
-
-```sh
-cargo test            # builds + tests the portable core (octoscript-render, octoscript-makepad)
-```
-
-`octoscript-widgets` is excluded from the default workspace build (it needs the full upstream-makepad build); wire it into an app's makepad workspace to use it — call `octoscript_widgets::widgets_mod(vm)` in place of `makepad_widgets::widgets_mod(vm)`.
+`cargo test --release -p octoscript-node -p octoscript-render -p octoscript-makepad`
+checks the portable render pipeline and component contracts.
 
 ## Status
 
