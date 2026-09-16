@@ -81,11 +81,11 @@ Building + running the `kit-host` against upstream surfaced exactly **one** thin
 
 ## Shared runtime for OctoSense apps
 
-This repository is the UI runtime entry point for AppCards, Mail and the browser
-hosts. `runtime.json` locks one underlying `OctoSense-org/makepad` revision and
+This repository owns the shared runtime for AppCards, Mail, OctoSense desktop
+and mobile, Android, OpenHarmony and browser hosts. `runtime.json` locks one underlying `OctoSense-org/makepad` revision and
 one `OctoSense-org/Octoscript` revision. The same pins appear in the root Cargo
-workspace; `tools/runtime.py` rejects drift and configures a single local source
-for each crate. Mail's scrolling, text input and native HTML WebView support live
+workspace; `tools/runtime.py` rejects drift. Each Cargo workspace declares
+only the sibling overrides it actually uses, so locked builds stay reproducible. Mail's scrolling, text input and native HTML WebView support live
 here and in the locked Makepad source, rather than in per-application patches.
 
 Arrange the independent repositories as siblings named `octoscript-makepad`,
