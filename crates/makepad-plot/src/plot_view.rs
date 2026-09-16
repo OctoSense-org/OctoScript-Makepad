@@ -1,4 +1,4 @@
-// PlotView — core cartesian plot widget for makepad-plot (Makepad 2.0 / Splash)
+// PlotView — core cartesian plot widget for makepad-plot (Makepad 2.0 / Octoscript)
 //
 // All cartesian charts embed a PlotView via #[deref] and use its coordinate
 // transforms + DrawVector helpers, in the same way makepad's built-in charts
@@ -276,6 +276,7 @@ impl PlotView {
                 height: Size::Fixed(self.rect.size.y),
                 margin: Inset::default(),
                 metrics: Metrics::default(),
+                ..Walk::default()
             },
             Layout {
                 clip_x: self.clip_plot,

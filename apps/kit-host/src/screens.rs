@@ -1,6 +1,6 @@
 //! The reference catalog's screens, baked in.
 //!
-//! These are the **same `.splash` files** the Splash-Android catalog renders
+//! These are the **same `.octoscript` files** the Octoscript-Android catalog renders
 //! with real `com.google.android.material.*` views. Baking the identical source
 //! here is what makes the two backends comparable: same input, so any difference
 //! on screen is this renderer's.
@@ -10,59 +10,59 @@
 //! script (the same reason the flutter kit is baked).
 
 /// Shared helpers every screen composes from (`section`, `caption`, `group`, …).
-pub const KIT: &str = include_str!("../../../components/material/screens/kit.splash");
+pub const KIT: &str = include_str!("../../../components/material/screens/kit.octoscript");
 
 /// Every route, in the order the reference lists them.
 pub const SCREENS: &[(&str, &str)] = &[
     // The semantic-vocabulary experiment: a NEW app authored only from
     // WIDGETS.md by a generator, to test the vocabulary as a contract.
-    ("brew", include_str!("../../../components/material/screens/brew.splash")),
+    ("brew", include_str!("../../../components/material/screens/brew.octoscript")),
     // The three-screen ordering app (tabs, per-drink customization, rewards).
-    ("siren", include_str!("../../../components/material/screens/siren.splash")),
+    ("siren", include_str!("../../../components/material/screens/siren.octoscript")),
     // The promotion harness: every control writes a slot, a caption renders it.
-    ("wired", include_str!("../../../components/material/screens/wired.splash")),
-    ("adaptive", include_str!("../../../components/material/screens/adaptive.splash")),
-    ("allcomponents", include_str!("../../../components/material/screens/allcomponents.splash")),
-    ("badge", include_str!("../../../components/material/screens/badge.splash")),
-    ("bottomappbar", include_str!("../../../components/material/screens/bottomappbar.splash")),
-    ("bottomnav", include_str!("../../../components/material/screens/bottomnav.splash")),
-    ("bottomsheet", include_str!("../../../components/material/screens/bottomsheet.splash")),
-    ("button", include_str!("../../../components/material/screens/button.splash")),
-    ("card", include_str!("../../../components/material/screens/card.splash")),
-    ("carousel", include_str!("../../../components/material/screens/carousel.splash")),
-    ("checkbox", include_str!("../../../components/material/screens/checkbox.splash")),
-    ("chip", include_str!("../../../components/material/screens/chip.splash")),
-    ("color", include_str!("../../../components/material/screens/color.splash")),
-    ("datepicker", include_str!("../../../components/material/screens/datepicker.splash")),
-    ("dialog", include_str!("../../../components/material/screens/dialog.splash")),
-    ("divider", include_str!("../../../components/material/screens/divider.splash")),
-    ("dockedtoolbar", include_str!("../../../components/material/screens/dockedtoolbar.splash")),
-    ("elevation", include_str!("../../../components/material/screens/elevation.splash")),
-    ("fab", include_str!("../../../components/material/screens/fab.splash")),
-    ("floatingtoolbar", include_str!("../../../components/material/screens/floatingtoolbar.splash")),
-    ("font", include_str!("../../../components/material/screens/font.splash")),
-    ("imageview", include_str!("../../../components/material/screens/imageview.splash")),
-    ("listitem", include_str!("../../../components/material/screens/listitem.splash")),
-    ("loadingindicator", include_str!("../../../components/material/screens/loadingindicator.splash")),
-    ("materialswitch", include_str!("../../../components/material/screens/materialswitch.splash")),
-    ("menu", include_str!("../../../components/material/screens/menu.splash")),
-    ("musicplayer", include_str!("../../../components/material/screens/musicplayer.splash")),
-    ("navigationdrawer", include_str!("../../../components/material/screens/navigationdrawer.splash")),
-    ("navigationrail", include_str!("../../../components/material/screens/navigationrail.splash")),
-    ("octoswidgets", include_str!("../../../components/material/screens/octoswidgets.splash")),
-    ("preferences", include_str!("../../../components/material/screens/preferences.splash")),
-    ("progressindicator", include_str!("../../../components/material/screens/progressindicator.splash")),
-    ("radiobutton", include_str!("../../../components/material/screens/radiobutton.splash")),
-    ("search", include_str!("../../../components/material/screens/search.splash")),
-    ("shapetheming", include_str!("../../../components/material/screens/shapetheming.splash")),
-    ("sidesheet", include_str!("../../../components/material/screens/sidesheet.splash")),
-    ("slider", include_str!("../../../components/material/screens/slider.splash")),
-    ("snackbar", include_str!("../../../components/material/screens/snackbar.splash")),
-    ("tabs", include_str!("../../../components/material/screens/tabs.splash")),
-    ("textfield", include_str!("../../../components/material/screens/textfield.splash")),
-    ("timepicker", include_str!("../../../components/material/screens/timepicker.splash")),
-    ("topappbar", include_str!("../../../components/material/screens/topappbar.splash")),
-    ("transition", include_str!("../../../components/material/screens/transition.splash")),
+    ("wired", include_str!("../../../components/material/screens/wired.octoscript")),
+    ("adaptive", include_str!("../../../components/material/screens/adaptive.octoscript")),
+    ("allcomponents", include_str!("../../../components/material/screens/allcomponents.octoscript")),
+    ("badge", include_str!("../../../components/material/screens/badge.octoscript")),
+    ("bottomappbar", include_str!("../../../components/material/screens/bottomappbar.octoscript")),
+    ("bottomnav", include_str!("../../../components/material/screens/bottomnav.octoscript")),
+    ("bottomsheet", include_str!("../../../components/material/screens/bottomsheet.octoscript")),
+    ("button", include_str!("../../../components/material/screens/button.octoscript")),
+    ("card", include_str!("../../../components/material/screens/card.octoscript")),
+    ("carousel", include_str!("../../../components/material/screens/carousel.octoscript")),
+    ("checkbox", include_str!("../../../components/material/screens/checkbox.octoscript")),
+    ("chip", include_str!("../../../components/material/screens/chip.octoscript")),
+    ("color", include_str!("../../../components/material/screens/color.octoscript")),
+    ("datepicker", include_str!("../../../components/material/screens/datepicker.octoscript")),
+    ("dialog", include_str!("../../../components/material/screens/dialog.octoscript")),
+    ("divider", include_str!("../../../components/material/screens/divider.octoscript")),
+    ("dockedtoolbar", include_str!("../../../components/material/screens/dockedtoolbar.octoscript")),
+    ("elevation", include_str!("../../../components/material/screens/elevation.octoscript")),
+    ("fab", include_str!("../../../components/material/screens/fab.octoscript")),
+    ("floatingtoolbar", include_str!("../../../components/material/screens/floatingtoolbar.octoscript")),
+    ("font", include_str!("../../../components/material/screens/font.octoscript")),
+    ("imageview", include_str!("../../../components/material/screens/imageview.octoscript")),
+    ("listitem", include_str!("../../../components/material/screens/listitem.octoscript")),
+    ("loadingindicator", include_str!("../../../components/material/screens/loadingindicator.octoscript")),
+    ("materialswitch", include_str!("../../../components/material/screens/materialswitch.octoscript")),
+    ("menu", include_str!("../../../components/material/screens/menu.octoscript")),
+    ("musicplayer", include_str!("../../../components/material/screens/musicplayer.octoscript")),
+    ("navigationdrawer", include_str!("../../../components/material/screens/navigationdrawer.octoscript")),
+    ("navigationrail", include_str!("../../../components/material/screens/navigationrail.octoscript")),
+    ("octoswidgets", include_str!("../../../components/material/screens/octoswidgets.octoscript")),
+    ("preferences", include_str!("../../../components/material/screens/preferences.octoscript")),
+    ("progressindicator", include_str!("../../../components/material/screens/progressindicator.octoscript")),
+    ("radiobutton", include_str!("../../../components/material/screens/radiobutton.octoscript")),
+    ("search", include_str!("../../../components/material/screens/search.octoscript")),
+    ("shapetheming", include_str!("../../../components/material/screens/shapetheming.octoscript")),
+    ("sidesheet", include_str!("../../../components/material/screens/sidesheet.octoscript")),
+    ("slider", include_str!("../../../components/material/screens/slider.octoscript")),
+    ("snackbar", include_str!("../../../components/material/screens/snackbar.octoscript")),
+    ("tabs", include_str!("../../../components/material/screens/tabs.octoscript")),
+    ("textfield", include_str!("../../../components/material/screens/textfield.octoscript")),
+    ("timepicker", include_str!("../../../components/material/screens/timepicker.octoscript")),
+    ("topappbar", include_str!("../../../components/material/screens/topappbar.octoscript")),
+    ("transition", include_str!("../../../components/material/screens/transition.octoscript")),
 ];
 
 /// The reference's own name for a route -- shared so the toolbar and the index
@@ -131,7 +131,7 @@ pub fn has(route: &str) -> bool {
 pub const INDEX: &str = "index";
 
 /// The index: one tappable row per screen, in the order the reference lists
-/// them. Generated rather than written as a `.splash` file so it cannot drift
+/// them. Generated rather than written as a `.octoscript` file so it cannot drift
 /// out of step with `SCREENS`.
 fn index_source() -> String {
     let mut rows = String::new();

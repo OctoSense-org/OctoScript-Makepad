@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Visual QA sweep: drive every route on a connected device and screenshot it.
 #
-# The route-sweep test in crates/splash-makepad proves each screen *translates*
+# The route-sweep test in crates/octoscript-makepad proves each screen *translates*
 # to its own dialect. It cannot tell you whether the widgets then render — a
 # control whose shader never binds, a container that collapses to zero height,
 # or a Label whose box clips its descenders all translate perfectly and look

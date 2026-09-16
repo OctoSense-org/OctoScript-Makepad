@@ -1,4 +1,4 @@
-// makepad-plot demo — all plot widgets declared in the Splash DSL
+// makepad-plot demo — all plot widgets declared in the Octoscript DSL
 
 pub use makepad_plot;
 pub use makepad_plot::makepad_widgets;
@@ -33,7 +33,7 @@ script_mod! {
                             flow: Right
                             align: Align{y: 0.5}
                             title_label := Label{
-                                text: "makepad-plot 2.0 — Splash widget gallery"
+                                text: "makepad-plot 2.0 — Octoscript widget gallery"
                                 draw_text.text_style.font_size: 16
                             }
                             feed := Button{

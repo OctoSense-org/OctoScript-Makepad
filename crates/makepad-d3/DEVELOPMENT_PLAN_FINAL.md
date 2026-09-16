@@ -6,31 +6,31 @@
 
 ---
 
-> ## ⚠️ Revision notice (2026-07-13): Makepad 2.0 "Splash" migration
+> ## ⚠️ Revision notice (2026-07-13): Makepad 2.0 "Octoscript" migration
 >
 > Makepad's `dev` branch shipped **2.0**, which removes the Live system
 > (`live_design!`, `#[derive(Live, LiveHook, ...)]`) that this plan's widget
-> layer was designed against, replacing it with the **Script/Splash system**
-> (`script_mod!`, `#[derive(Script, ScriptHook, Widget)]`, runtime Splash DSL
+> layer was designed against, replacing it with the **Script/Octoscript system**
+> (`script_mod!`, `#[derive(Script, ScriptHook, Widget)]`, runtime Octoscript DSL
 > apps, `DrawVector` GPU vector paths).
 >
 > The updated design lives in
-> **[`docs/SPLASH_INTEGRATION_DESIGN.md`](docs/SPLASH_INTEGRATION_DESIGN.md)**.
+> **[`docs/OCTOSCRIPT_INTEGRATION_DESIGN.md`](docs/OCTOSCRIPT_INTEGRATION_DESIGN.md)**.
 > It defines how makepad-d3 registers a `d3.*` widget namespace into the
-> Splash VM so charts can be used inside Splash apps (including AI-chat
+> Octoscript VM so charts can be used inside Octoscript apps (including AI-chat
 > `runsplash` mini-apps), the script-facing data/event contract, the
 > `render3d` shader port, and the phased migration.
 >
 > **Update 2026-07-13:** the migration was executed (design doc §14). The
-> library now builds on makepad 2.0; `d3.*` charts work directly in Splash
-> DSL (`cargo run --example splash_demo`). The pre-2.0 chart_zoo example is
+> library now builds on makepad 2.0; `d3.*` charts work directly in Octoscript
+> DSL (`cargo run --example octoscript_demo`). The pre-2.0 chart_zoo example is
 > the remaining porting backlog (Phase 4).
 >
 > How that affects this document:
 > - **Still valid:** the d3 math core roadmap — scales, axes, shapes, colors,
 >   layouts, geo (Phases 1–7 below). That code is pure Rust and unaffected.
 > - **Superseded:** every widget/rendering/`live_design!` code sample and the
->   app-integration sections; follow the Splash design doc instead.
+>   app-integration sections; follow the Octoscript design doc instead.
 > - **Dependency:** makepad 2.0 is consumed as a **sibling path dependency**
 >   (`../makepad`, dev branch) — its repo vendors a pre-2.0 crate copy under
 >   `old/`, which makes git dependencies ambiguous (design doc §14).
