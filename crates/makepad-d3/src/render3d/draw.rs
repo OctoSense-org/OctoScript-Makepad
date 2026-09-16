@@ -3,7 +3,7 @@
 //! This module provides Makepad-compatible drawing primitives with
 //! 3D lighting effects and colormap support.
 //!
-//! The shader types are registered into the Splash script VM under the
+//! The shader types are registered into the Octoscript script VM under the
 //! `d3` module by [`crate::script_mod`]; call that from your app's
 //! `AppMain::script_mod` (after `makepad_widgets::script_mod`) before
 //! using any widget that draws with these primitives.

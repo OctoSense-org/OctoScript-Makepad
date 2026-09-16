@@ -2,13 +2,13 @@
 name = "makepad-plot"
 version = "0.2.0"
 edition = "2021"
-description = "Matplotlib-style plotting library for Makepad 2.0 (Splash)"
+description = "Matplotlib-style plotting library for Makepad 2.0 (Octoscript)"
 license = "MIT"
 autoexamples = false
 
 [dependencies]
 # The workspace's single makepad checkout (see makepad-d3's note).
-makepad-widgets = { path = "../../../makepad/widgets" }
+makepad-widgets = { workspace = true }
 
 [[bin]]
 name = "plot_demo"

@@ -1,6 +1,6 @@
 // Scatter-family charts: ScatterPlot, BubbleChart, HexbinChart
 //
-// Ported from the Makepad 1.0 makepad-plot library to Makepad 2.0 / Splash.
+// Ported from the Makepad 1.0 makepad-plot library to Makepad 2.0 / Octoscript.
 
 use crate::plot_view::*;
 use crate::script_util::*;

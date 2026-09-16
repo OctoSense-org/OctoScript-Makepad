@@ -1,27 +1,27 @@
-# Splash-Makepad
+# Octoscript-Makepad
 
-Themed, cross-platform **component kits** for apps built on the **Splash DSL → makepad native-widget** renderer.
+Themed, cross-platform **component kits** for apps built on the **Octoscript DSL → makepad native-widget** renderer.
 
-Author a UI once as plain-data Splash DSL; it is evaluated in the makepad-script VM, translated to makepad's own widget dialect, and mounted as **real native makepad widgets** at runtime (with on-device hot reload). This repo is the home for the render pipeline **and** the themed component sets that ride on it — Material 3 today; **iOS** and **liquid-glass** planned.
+Author a UI once as plain-data Octoscript DSL; it is evaluated in the makepad-script VM, translated to makepad's own widget dialect, and mounted as **real native makepad widgets** at runtime (with on-device hot reload). This repo is the home for the render pipeline **and** the themed component sets that ride on it — Material 3 today; **iOS** and **liquid-glass** planned.
 
 ## The pipeline
 
 ```
-Splash DSL  ──►  splash-render  ──►  UiNode tree  ──►  splash-makepad  ──►  makepad dialect string
+Octoscript DSL  ──►  octoscript-render  ──►  UiNode tree  ──►  octoscript-makepad  ──►  makepad dialect string
 {t:"column",       (makepad-script VM,   (backend-       (pure translation)     View{…}/Label{…}/…
  c:[ … ]}           renderer-free)        agnostic)                              │
                                                                                  ▼
                                                           makepad `Splash` widget .set_text() → live native widgets
 ```
 
-- **`crates/splash-render`** — backend-agnostic core: evaluates the Splash DSL in the makepad-script VM and walks it into a `UiNode` tree. Depends only on `makepad-script`. Unit-tested.
-- **`crates/splash-makepad`** — the makepad backend: `to_makepad_ui(&UiNode) -> String` turns the tree into makepad's `View{}/Label{}/…` dialect. Pure, unit-tested — no makepad-platform/draw needed to build or test.
-- **`crates/splash-widgets`** — the **themed native-widget kits** (Material 3 now; iOS / liquid-glass later), as **external `script_mod!` variants of makepad's widgets** (see *Fork-free theming* below).
+- **`crates/octoscript-render`** — backend-agnostic core: evaluates the Octoscript DSL in the makepad-script VM and walks it into a `UiNode` tree. Depends only on `makepad-script`. Unit-tested.
+- **`crates/octoscript-makepad`** — the makepad backend: `to_makepad_ui(&UiNode) -> String` turns the tree into makepad's `View{}/Label{}/…` dialect. Pure, unit-tested — no makepad-platform/draw needed to build or test.
+- **`crates/octoscript-widgets`** — the **themed native-widget kits** (Material 3 now; iOS / liquid-glass later), as **external `script_mod!` variants of makepad's widgets** (see *Fork-free theming* below).
 - **`crates/makepad-d3`** — the **d3 grammar as native widgets** (scales, shapes, layouts, hierarchies, geo, 3D), registered into the VM under `mod.d3.*`. Grafted in with its history 2026-08-09 (was `mofa-org/makepad-d3`).
 - **`crates/makepad-plot`** — the **matplotlib chart set** (32 widgets: line, bar, scatter, pie, box, violin, heatmap, contour, quiver, 3D surface/scatter/line, gauge, treemap, …) under `mod.plot.*`. Grafted in with its history 2026-08-09 (was `mofa-org/makepad-matplot`).
-  Both build against the SAME makepad checkout as `splash-widgets` — one makepad per workspace, or two copies of `makepad-widgets` meet in one binary and each registers into its own heap. Their namespaces are disjoint, so a card may use either or both.
-- **`components/<theme>/`** — each theme's **component library**, authored as `.splash` (e.g. `components/material/catalog.splash`, ~35 Material components + demo screens). Pure data — hot-reloadable, no rebuild.
-- **`components/flutter/`** — the **flutter/samples port**: one `.splash` per sample directory, 108 routes (see below).
+  Both build against the SAME makepad checkout as `octoscript-widgets` — one makepad per workspace, or two copies of `makepad-widgets` meet in one binary and each registers into its own heap. Their namespaces are disjoint, so a card may use either or both.
+- **`components/<theme>/`** — each theme's **component library**, authored as `.octoscript` (e.g. `components/material/catalog.octoscript`, ~35 Material components + demo screens). Pure data — hot-reloadable, no rebuild.
+- **`components/flutter/`** — the **flutter/samples port**: one `.octoscript` per sample directory, 108 routes (see below).
 
 ## The flutter/samples port
 
@@ -32,7 +32,7 @@ Splash DSL  ──►  splash-render  ──►  UiNode tree  ──►  splash-
 > independent review that established this and the two defects it found.
 
 
-Every directory of [flutter/samples](https://github.com/flutter/samples) has a `.splash` file in `components/flutter/` — 27 of them, 108 routes, all swept by `cargo test`. Full write-up in [`components/flutter/README.md`](components/flutter/README.md).
+Every directory of [flutter/samples](https://github.com/flutter/samples) has a `.octoscript` file in `components/flutter/` — 27 of them, 108 routes, all swept by `cargo test`. Full write-up in [`components/flutter/README.md`](components/flutter/README.md).
 
 Eleven directories are apps with a UI to draw, and are ported: 92 screens carrying the samples' real content — the M3 type scale at its actual sp values, the six elevation levels with their dp and surface-tint percentages, all nine `date_planner` events with their task lists, the four `libraryInstance` books, the real `destinations.json` entries.
 
@@ -40,10 +40,10 @@ The other sixteen exist to demonstrate Flutter's **platform integration** — `a
 
 These are **visual ports**: the pipeline evaluates the DSL to a tree once per mount, so there is no per-component state, no async, no HTTP, no navigation stack and no animation. `animations` ports its index and all 20 titles but not the animations; `compass_app` ports its five screens but not the architecture that is most of the sample. Anything a screen cannot honestly render says so on the screen.
 
-The kit spans many files and the DSL has no `import`, so it is **concatenated** in a fixed order by `splash_makepad::kit` — `_kit.splash` first, samples sorted, `_index.splash` (the router) last. The test and the `assemble` example call that function; the app bakes the same files with `include_str!`, because `cargo-makepad` builds Android inside a generated wrapper crate that never runs the app's build script. A test pins the baked list to the directory so the two cannot drift.
+The kit spans many files and the DSL has no `import`, so it is **concatenated** in a fixed order by `octoscript_makepad::kit` — `_kit.octoscript` first, samples sorted, `_index.octoscript` (the router) last. The test and the `assemble` example call that function; the app bakes the same files with `include_str!`, because `cargo-makepad` builds Android inside a generated wrapper crate that never runs the app's build script. A test pins the baked list to the directory so the two cannot drift.
 
 ```sh
-cargo test -p splash-makepad     # sweep all 108 routes — no device needed
+cargo test -p octoscript-makepad     # sweep all 108 routes — no device needed
 cargo run  -p flutter-samples    # run the catalog on desktop
 cargo makepad android run -p flutter-samples --release    # …or on a phone
 tools/visual-qa.sh               # screenshot all 108 on the device
@@ -64,16 +64,16 @@ because the `Splash` isolate resolves `ui` against its own view root, the
 
 ## Fork-free theming (the key design point)
 
-makepad's native controls — checkbox, switch, radio, slider, text field — are drawn by their own MPSL shaders; their look is **not** reachable from the Splash DSL. It **is** reachable from an external crate, but only one way works:
+makepad's native controls — checkbox, switch, radio, slider, text field — are drawn by their own MPSL shaders; their look is **not** reachable from the Octoscript DSL. It **is** reachable from an external crate, but only one way works:
 
 | Mechanism | Result |
 |---|---|
 | Runtime `script_eval!` override of `mod.prelude.widgets.*` | shader **dropped** → widget renders blank ❌ |
 | **Compiled `script_mod!`** — extend the base (`mod.widgets.CheckBox = mod.widgets.CheckBoxFlat{ draw_bg +: {…} }`), then reference into the prelude | shader **kept** ✅ |
 
-The `script_mod!` macro compiles the MPSL at build time; a runtime string never gets compiled. So `splash-widgets` restyles makepad's widgets against **upstream makepad** with **no fork** — theming itself needs no upstream change. (Verified on device: a compiled variant renders; the runtime override renders blank.)
+The `script_mod!` macro compiles the MPSL at build time; a runtime string never gets compiled. So `octoscript-widgets` restyles makepad's widgets against **upstream makepad** with **no fork** — theming itself needs no upstream change. (Verified on device: a compiled variant renders; the runtime override renders blank.)
 
-Each new theme is just more variants in `splash-widgets` + a `.splash` component library — no makepad fork per theme.
+Each new theme is just more variants in `octoscript-widgets` + a `.octoscript` component library — no makepad fork per theme.
 
 ### The one upstream PR
 
@@ -81,10 +81,12 @@ Building + running the `kit-host` against upstream surfaced exactly **one** thin
 
 ## Relationship to makepad
 
-The workspace uses the checked-out sibling `../makepad`: `splash-render` takes
-`platform/script`, and the native widget crates and apps take `widgets`. Keep that checkout
-at the parent repository's pinned revision; the bounded evaluator also uses its
-`ScriptVm::eval_checked` API. The L0 integration tests use sibling `../splash`.
+Makepad ships everything this needs — the `makepad-script` VM (`platform/script`) and the `Splash` runtime-mount widget. The whole workspace takes them from **one pinned revision** of [`guofoo/makepad`](https://github.com/guofoo/makepad) (a fork of upstream `dev`), declared once in the root `Cargo.toml` under `[workspace.dependencies]`:
+
+- The **core crates** depend on `makepad-script` from that pin.
+- **`octoscript-widgets`** and the kit apps depend on `makepad-widgets` from the same pin, so `makepad-script` stays aligned with `octoscript-render`'s.
+- The pin is the revision [OctoSense-org/octosense](https://github.com/OctoSense-org/octosense) builds against; bump both together so an app never carries two makepad lineages.
+- `octoscript-ui-l0` (the VM-independent node model) comes by git from [OctoSense-org/Octoscript](https://github.com/OctoSense-org/Octoscript), branch `main`.
 
 ## Build
 
@@ -101,21 +103,20 @@ See [the Taskplan runbook](../lab/sketch/TASKPLAN-VALIDATION.md) for commands,
 capture hashes, fill/vision judgments and known fidelity limits. The new
 runnable is independent of the older Material catalog shell.
 
-With the `makepad`, `splash` and `splash-makepad` checkouts present:
+With the `makepad`, `splash` and `octoscript-makepad` checkouts present:
 
 ```sh
-cargo test --release -p splash-render -p splash-makepad
+cargo test            # builds + tests the portable core (octoscript-render, octoscript-makepad)
 ```
 
-This tests the portable renderer and translator without building the native applications.
-The native applications are workspace members and have separate platform build requirements.
+`octoscript-widgets` is excluded from the default workspace build (it needs the full upstream-makepad build); wire it into an app's makepad workspace to use it — call `octoscript_widgets::widgets_mod(vm)` in place of `makepad_widgets::widgets_mod(vm)`.
 
 ## Status
 
-- ✅ `splash-render` + `splash-makepad` — portable render pipeline; **compile + test against upstream `makepad-script`** (rev `e1c2164b`), no fork
-- ✅ **Material 3 kit** — `components/material/catalog.splash`: ~35 components (buttons, FABs, cards, chips, nav bar/rail/drawer, app bars, dialog/menu/sheets as **real interactive overlays**, pickers, tabs, badges, toolbars), M3 tokens (colour, type scale + Medium weight, shape, elevation, surface tones), Font-Awesome monochrome icons, and real animation (circular spinner + shape-morph loading indicator)
-- ✅ `splash-widgets` — Material 3 native-control variants (checkbox/switch/radio/slider/text field) + `LoadingMorph`, fork-free; **compiles against upstream `makepad-widgets`**
-- ✅ **`apps/kit-host`** — generic app shell that **builds + runs against upstream makepad** (desktop, ~37 MB binary), fork-free, mounting the Material kit via `splash_widgets::widgets_mod`
+- ✅ `octoscript-render` + `octoscript-makepad` — portable render pipeline; **compile + test against upstream `makepad-script`** (rev `e1c2164b`), no fork
+- ✅ **Material 3 kit** — `components/material/catalog.octoscript`: ~35 components (buttons, FABs, cards, chips, nav bar/rail/drawer, app bars, dialog/menu/sheets as **real interactive overlays**, pickers, tabs, badges, toolbars), M3 tokens (colour, type scale + Medium weight, shape, elevation, surface tones), Font-Awesome monochrome icons, and real animation (circular spinner + shape-morph loading indicator)
+- ✅ `octoscript-widgets` — Material 3 native-control variants (checkbox/switch/radio/slider/text field) + `LoadingMorph`, fork-free; **compiles against upstream `makepad-widgets`**
+- ✅ **`apps/kit-host`** — generic app shell that **builds + runs against upstream makepad** (desktop, ~37 MB binary), fork-free, mounting the Material kit via `octoscript_widgets::widgets_mod`
 - ⏳ **The one upstream PR:** the `Splash` main-VM-mount option (see above) — the single change needed for correct light-theme rendering
 - ⏳ **Next:** that PR (or an isolate-VM theme/heap fix so the mount works isolated); Android build via `cargo-makepad`; Button **touch-ripple** as a `RippleButton` variant; **iOS** + **liquid-glass** kits
 

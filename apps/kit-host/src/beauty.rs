@@ -1,7 +1,7 @@
-//! Native, chrome-free preview of the lab's L0 cards through splash-makepad.
+//! Native, chrome-free preview of the lab's L0 cards through octoscript-makepad.
 pub use makepad_widgets;
 use makepad_widgets::*;
-use splash_widgets::design::*;
+use octoscript_widgets::design::*;
 mod beauty_semantics;
 use beauty_semantics::Session as SemanticSession;
 
@@ -68,9 +68,9 @@ impl App {
         let data = serde_json::from_str(&read("data")?).map_err(|e| e.to_string())?;
         let mut measured = r["format"].as_str() == Some("design");
         let mut tree = if measured {
-            splash_makepad::design::prepare(&card)?
+            octoscript_makepad::design::prepare(&card)?
         } else {
-            let prepared = splash_makepad::l0::prepare(
+            let prepared = octoscript_makepad::l0::prepare(
                 &card,
                 &data,
                 std::path::Path::new(r["kit_dir"].as_str().ok_or("missing kit_dir")?),
@@ -78,7 +78,7 @@ impl App {
             measured = prepared.native_components;
             prepared.tree
         };
-        let elements = splash_makepad::l0::inspectable(&mut tree);
+        let elements = octoscript_makepad::l0::inspectable(&mut tree);
         let focused: Vec<_> = elements
             .iter()
             .filter(|e| e["focused"].as_i64() == Some(1))
@@ -99,9 +99,9 @@ impl App {
         self.semantic_actions.clear();
         if !self.action_log.is_empty() {std::fs::write(&self.action_log,"[]").map_err(|e|e.to_string())?;}
         let ui = if measured {
-            splash_makepad::design::to_makepad_ui(&tree)?
+            octoscript_makepad::design::to_makepad_ui(&tree)?
         } else {
-            splash_makepad::to_makepad_l0_ui(&tree)
+            octoscript_makepad::to_makepad_l0_ui(&tree)
         };
         let code = format!(
             "use mod.prelude.widgets.*\nlet root = View{{width:Fill height:Fill flow:Overlay {ui}}}\nroot"
@@ -145,10 +145,16 @@ impl App {
         // overlay drawing immediately. Nested old overlays can otherwise keep
         // the same stale parent redraw id and survive into the next screen.
         fn retire_overlay(cx:&mut Cx,widget:WidgetRef) {
-            splash_widgets::kit::retire_overlay(cx,&widget);
+            octoscript_widgets::kit::retire_overlay(cx,&widget);
             let list=widget.borrow::<DesignOverlay>().and_then(|v|v.draw_list.as_ref().map(|l|l.id()))
                 .or_else(||widget.borrow::<DesignGlassSvg>().and_then(|v|v.draw_list.as_ref().map(|l|l.id())));
-            if let Some(id)=list {cx.draw_lists[id].clear_draw_items(cx.redraw_id);}
+            if let Some(id)=list {
+                // Fresh generations for the cleared list (both makepad lanes take them).
+                let redraw_id=cx.redraw_id;
+                let recording_gen=cx.next_uniform_gen();
+                let uniforms_gen=cx.next_uniform_gen();
+                cx.draw_lists[id].clear_draw_items(redraw_id, recording_gen, uniforms_gen);
+            }
             let mut children=Vec::new();
             widget.children(&mut |_,child|children.push(child));
             for child in children {retire_overlay(cx,child);}
@@ -189,7 +195,7 @@ impl App {
         self.semantic.mount(cx,&self.ui,&r,&elements)?;
         cx.redraw_all();
         let evidence = serde_json::json!({"ok":true, "request":r,
-            "nodes":tree.count(), "texts":splash_makepad::l0::texts(&tree),
+            "nodes":tree.count(), "texts":octoscript_makepad::l0::texts(&tree),
             "elements": elements});
         if let Some(path) = r["result"].as_str() {
             std::fs::write(path, evidence.to_string()).map_err(|e| e.to_string())?;
@@ -287,10 +293,10 @@ impl App {
 impl AppMain for App {
     fn script_mod(vm: &mut ScriptVm) -> ScriptValue {
         crate::makepad_widgets::theme_mod(vm);
-        splash_widgets::widgets_mod(vm);
-        splash_widgets::design::script_mod(vm);
-        splash_widgets::kit::script_mod(vm);
-        splash_widgets::progress::script_mod(vm);
+        octoscript_widgets::widgets_mod(vm);
+        octoscript_widgets::design::script_mod(vm);
+        octoscript_widgets::kit::script_mod(vm);
+        octoscript_widgets::progress::script_mod(vm);
         makepad_plot::script_mod(vm);
         self::script_mod(vm)
     }
@@ -299,11 +305,11 @@ impl AppMain for App {
             self.semantic.actions(cx,&self.ui,actions);
             for action in actions {
                 let Some(action)=action.downcast_ref::<WidgetAction>() else {continue;};
-                let action_kind=match action.cast::<splash_widgets::kit::KitAction>() {
-                    splash_widgets::kit::KitAction::Activated=>serde_json::json!({"kind":"activated"}),
-                    splash_widgets::kit::KitAction::Action(name)=>serde_json::json!({"kind":"action","name":name}),
-                    splash_widgets::kit::KitAction::Changed(value)=>serde_json::json!({"kind":"changed","value":value}),
-                    splash_widgets::kit::KitAction::Selected(index)=>serde_json::json!({"kind":"selected","index":index}),
+                let action_kind=match action.cast::<octoscript_widgets::kit::KitAction>() {
+                    octoscript_widgets::kit::KitAction::Activated=>serde_json::json!({"kind":"activated"}),
+                    octoscript_widgets::kit::KitAction::Action(name)=>serde_json::json!({"kind":"action","name":name}),
+                    octoscript_widgets::kit::KitAction::Changed(value)=>serde_json::json!({"kind":"changed","value":value}),
+                    octoscript_widgets::kit::KitAction::Selected(index)=>serde_json::json!({"kind":"selected","index":index}),
                     _=>continue,
                 };
                 let id=self.inspection_ids.iter().find(|id|

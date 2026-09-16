@@ -1,4 +1,4 @@
-// Line-family charts: LinePlot (exemplar for the Splash port)
+// Line-family charts: LinePlot (exemplar for the Octoscript port)
 //
 // Additional line-family widgets (StepPlot, AreaChart, StemPlot, Stackplot,
 // Streamgraph, LinePlotDual) follow the same pattern below.
