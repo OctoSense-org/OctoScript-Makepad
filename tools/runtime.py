@@ -51,7 +51,7 @@ def checkout_status(path):
     top = Path(git(path, "rev-parse", "--show-toplevel").stdout.strip()).resolve()
     if top != path.resolve():
         raise RuntimeError(f"{path} belongs to another checkout: {top}")
-    return {"revision": git(path, "rev-parse", "HEAD").stdout.strip(),
+    return {"revision": git(path, "rev-parse", "--verify", "HEAD", check=False).stdout.strip(),
             "dirty": bool(git(path, "status", "--porcelain", "--untracked-files=normal").stdout)}
 
 
@@ -97,7 +97,7 @@ def prepare(root, *, update=False, cache=None):
     for name, state in states.items():
         if state and state["dirty"]:
             raise RuntimeError(f"{root / name} has local changes; preserve them before preparing the runtime")
-        if state and state["revision"] != specs[name]["revision"] and not update:
+        if state and state["revision"] and state["revision"] != specs[name]["revision"] and not update:
             raise RuntimeError(f"{root / name} has another revision; use --update for a clean checkout")
     for name, spec in specs.items():
         path = root / name
@@ -138,6 +138,7 @@ def verify(root):
 
 
 def verify_cargo(root, cargo_manifest):
+    cargo_manifest = Path(cargo_manifest).resolve()
     verify(root)
     metadata = json.loads(subprocess.check_output([
         "cargo", "metadata", "--locked", "--format-version", "1", "--manifest-path", str(cargo_manifest)
