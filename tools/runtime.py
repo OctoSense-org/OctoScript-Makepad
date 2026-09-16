@@ -85,6 +85,7 @@ def cargo_config(root):
 
 def prepare(root, *, update=False, cache=None):
     root = Path(root).resolve()
+    cache = Path(cache).resolve() if cache else None
     if HERE != root / "octoscript-makepad":
         raise RuntimeError("Run the runtime tool from ROOT/octoscript-makepad")
     wrapper_state = checkout_status(HERE)
