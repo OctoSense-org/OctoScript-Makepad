@@ -4,6 +4,30 @@
 use octoscript_render::{NodeKind, UiNode};
 use std::fmt::Write;
 
+fn design_asset_allowed(src: &str) -> bool {
+    if src.starts_with("http://127.0.0.1:") { return true; }
+    #[cfg(target_arch = "wasm32")]
+    if src.starts_with("http://localhost:") || src.starts_with("http://localhost/") { return true; }
+    // The browser host additionally checks against its own iframe origin/base.
+    // Native/lab builds retain their loopback-only resource rule.
+    #[cfg(target_arch = "wasm32")]
+    for base in [
+        "https://octosense.org/wasm/service-cards/card-assets/",
+        "https://octosense-org.github.io/wasm/service-cards/card-assets/",
+        "https://octosense-org.github.io/Octosense-website/wasm/service-cards/card-assets/",
+    ] {
+        if let Some(path) = src.strip_prefix(base) {
+            let parts: Vec<_> = path.split('/').collect();
+            if parts.len() == 3 && parts[1] == "assets"
+                && parts.iter().all(|part| !part.is_empty() && *part != "." && *part != ".."
+                    && part.bytes().all(|c| c.is_ascii_alphanumeric() || matches!(c, b'-' | b'_' | b'.'))) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 /// Turn template-local child paths into the IDs of this mounted instance.
 /// Reject broken bindings before evaluating any Makepad widget source.
 pub fn kit_contract(n: &UiNode) -> Result<Option<serde_json::Value>, String> {
@@ -84,8 +108,18 @@ pub fn prepare(source: &str) -> Result<UiNode, String> {
 }
 
 pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
-    fn emit(n: &UiNode, out: &mut String) -> Result<(), String> {
+    fn emit(n: &UiNode, out: &mut String, flow_origin: Option<(f64, f64)>) -> Result<(), String> {
         let a = &n.attrs;
+        let scroll_y = n.kind == NodeKind::Stack && a.variant.as_deref() == Some("scroll_y");
+        // Leaf widgets may reuse their Walk for internal text layout. Keep the
+        // positioning margin on a wrapper so it cannot be applied twice.
+        let wrapped = flow_origin.is_some() && n.kind != NodeKind::Stack;
+        if wrapped {
+            let (x, y) = flow_origin.unwrap();
+            writeln!(out, "View {{width: {} height: {} margin: Inset{{left: {} top: {} right: 0 bottom: 0}} flow: Overlay padding: 0 clip_x: false clip_y: false",
+                a.w.ok_or("design width required")?, a.h.ok_or("design height required")?,
+                a.x.unwrap_or(0.) - x, a.y.unwrap_or(0.) - y).unwrap();
+        }
         let contract = kit_contract(n)?;
         let glass = matches!(a.variant.as_deref(),Some("glass_surface" | "glass_overlay"));
         let glass_children = n.children.iter().any(|c|matches!(c.attrs.variant.as_deref(),Some("glass_surface" | "glass_overlay" | "glass_svg" | "glass_group")));
@@ -94,6 +128,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             NodeKind::Stack if a.variant.as_deref() == Some("pill") => "DesignPill",
             NodeKind::Stack if a.variant.as_deref() == Some("button") => "DesignButton",
             NodeKind::Stack if a.variant.as_deref() == Some("radio") => "DesignRadio",
+            NodeKind::Stack if scroll_y => "ScrollYView",
             NodeKind::Stack if glass => "DesignGlassSurface",
             // The importer marks the component that owns the glass and its
             // foreground. Promoting its parent too would move an entire
@@ -105,6 +140,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             NodeKind::Stack => "View",
             NodeKind::Text if a.rotation.is_some() => "DesignRotatedLabel",
             NodeKind::Text => "Label",
+            NodeKind::Web => "Browser",
             NodeKind::Input => "DesignInput",
             NodeKind::Button => "DesignNativeButton",
             NodeKind::Slider | NodeKind::RangeSlider => "DesignAtroSlider",
@@ -144,16 +180,25 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             a.h.ok_or("design height required")?
         )
         .unwrap();
-        // Walk.abs_pos is window-local; source frames retain that coordinate
-        // system through nested, inspectable Views.
-        writeln!(
-            out,
-            "abs_pos: vec2({}, {})",
-            a.x.unwrap_or(0.),
-            a.y.unwrap_or(0.)
-        )
-        .unwrap();
+        // Source frames stay window-local. Inside a scroll viewport, convert
+        // them to parent-relative overlay margins so native layout applies the
+        // scroll offset and measures the complete content extent.
+        if wrapped {
+            writeln!(out, "margin: 0").unwrap();
+        } else if let Some((x, y)) = flow_origin {
+            writeln!(out, "margin: Inset{{left: {} top: {} right: 0 bottom: 0}}",
+                a.x.unwrap_or(0.) - x, a.y.unwrap_or(0.) - y).unwrap();
+        } else {
+            writeln!(out, "abs_pos: vec2({}, {})", a.x.unwrap_or(0.), a.y.unwrap_or(0.)).unwrap();
+        }
         match n.kind {
+            NodeKind::Web => {
+                let src=a.src.as_ref().ok_or("web document source required")?;
+                if !src.starts_with("data:text/html;charset=utf-8;base64,") {
+                    return Err("measured web content requires an inline HTML document".into());
+                }
+                writeln!(out,"backend: BrowserBackend.Native url: {src:?}").unwrap();
+            }
             NodeKind::StockPlot => {
                 writeln!(out,"demo_data: false clip_plot: false plot_margin: Inset{{left:0 top:0 right:0 bottom:0}} draw_bg.color: #0000 draw_vector.draw_depth: 0").unwrap();
                 if a.variant.as_deref()==Some("donut") {
@@ -236,7 +281,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                     )
                     .unwrap();
                 }
-                let clip=a.variant.as_deref()==Some("clip");
+                let clip=scroll_y || a.variant.as_deref()==Some("clip");
                 writeln!(out, "flow: Overlay padding: 0 clip_x: {clip} clip_y: {clip}").unwrap();
                 if let Some(bg) = a.bg {
                     writeln!(out, "show_bg: true draw_bg.color: {}", super::hex_rgba(bg)).unwrap();
@@ -245,7 +290,10 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                     writeln!(out, "selected: {}", selected != 0).unwrap();
                 }
                 for c in &n.children {
-                    emit(c, out)?;
+                    let origin = if scroll_y || flow_origin.is_some() {
+                        Some((a.x.unwrap_or(0.), a.y.unwrap_or(0.)))
+                    } else { None };
+                    emit(c, out, origin)?;
                 }
             }
             NodeKind::Text | NodeKind::Input => {
@@ -335,7 +383,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             }
             NodeKind::Image => {
                 let src = a.src.as_ref().ok_or("design image resource required")?;
-                if !src.starts_with("http://127.0.0.1:") {
+                if !design_asset_allowed(src) {
                     return Err("design assets must use the lab's local asset server".into());
                 }
                 writeln!(out, "src: http_resource({src:?}) fit: ImageFit.Stretch").unwrap();
@@ -356,7 +404,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                     writeln!(out,"draw_svg.overlay_blend: {}",a.value.unwrap_or(0.)).unwrap();
                 }
                 let src=a.src.as_ref().ok_or("design SVG resource required")?;
-                if !src.starts_with("http://127.0.0.1:") || !src.ends_with(".svg") {
+                if !design_asset_allowed(src) || !src.ends_with(".svg") {
                     return Err("design vectors require a local SVG asset".into());
                 }
                 writeln!(out,"animating: false draw_svg.svg: http_resource({src:?}) draw_svg.preserve_viewbox: true draw_svg.preserve_aspect: false").unwrap();
@@ -364,16 +412,35 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             _ => unreachable!(),
         }
         writeln!(out, "}}").unwrap();
+        if wrapped { writeln!(out, "}}").unwrap(); }
         Ok(())
     }
     let mut out = String::new();
-    emit(tree, &mut out)?;
+    emit(tree, &mut out, None)?;
     Ok(out)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn scroll_content_flows_relative_to_parents_and_chrome_stays_absolute() {
+        let tree=prepare(r#"{t:"stack" x:0 y:0 w:406 h:776 c:[
+            {t:"stack" id:"reader" variant:"scroll_y" x:0 y:88 w:406 h:616 c:[
+                {t:"stack" id:"content" x:0 y:88 w:406 h:1800 c:[
+                    {t:"stack" id:"last" x:23 y:1800 w:360 h:24}
+                ]}
+            ]}
+            {t:"stack" id:"toolbar" x:0 y:704 w:406 h:49}
+        ]}"#).unwrap();
+        let ui=to_makepad_ui(&tree).unwrap();
+        assert!(ui.contains("reader := ScrollYView {\nwidth: 406 height: 616\nabs_pos: vec2(0, 88)"));
+        assert!(ui.contains("clip_x: true clip_y: true"));
+        assert!(ui.contains("content := View {\nwidth: 406 height: 1800\nmargin: Inset{left: 0 top: 0 right: 0 bottom: 0}"));
+        assert!(ui.contains("last := View {\nwidth: 360 height: 24\nmargin: Inset{left: 23 top: 1712 right: 0 bottom: 0}"));
+        assert!(ui.contains("toolbar := View {\nwidth: 406 height: 49\nabs_pos: vec2(0, 704)"));
+    }
 
     #[test]
     fn semantic_index_keeps_no_selection_and_nonzero_values() {
@@ -465,6 +532,16 @@ mod tests {
         let image =
             prepare(r#"{t:"image" w:40 h:40 src:"https://example.com/image.png"}"#).unwrap();
         assert!(to_makepad_ui(&image).is_err());
+    }
+
+    #[test]
+    fn html_document_uses_platform_browser_and_rejects_external_sources() {
+        let tree=prepare(r#"{t:"web" w:406 h:616 src:"data:text/html;charset=utf-8;base64,PGI+SGVsbG88L2I+"}"#).unwrap();
+        let ui=to_makepad_ui(&tree).unwrap();
+        assert!(ui.contains("Browser {"));
+        assert!(ui.contains("backend: BrowserBackend.Native"));
+        let remote=prepare(r#"{t:"web" w:406 h:616 src:"https://example.com"}"#).unwrap();
+        assert!(to_makepad_ui(&remote).is_err());
     }
 
     #[test]
