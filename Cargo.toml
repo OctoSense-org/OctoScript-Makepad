@@ -15,16 +15,26 @@ members = [
     "apps/flutter-samples",
 ]
 
-# One makepad lineage for every crate here: the OctoSense-org/makepad fork, so octosense
-# and the kits never carry two copies of makepad-widgets / makepad-script. This rev is the
-# former guofoo/makepad pin, unchanged, hosted at refs/heads/pin/octoscript-makepad-beb3857a.
+# runtime.json is the source contract shared by every OctoSense application.
 [workspace.dependencies]
-makepad-widgets = { git = "https://github.com/OctoSense-org/makepad.git", rev = "3090964f9eba54c9384c0b55d2b4869c80305f7b" }
-makepad-script = { git = "https://github.com/OctoSense-org/makepad.git", rev = "3090964f9eba54c9384c0b55d2b4869c80305f7b" }
+makepad-widgets = { git = "https://github.com/OctoSense-org/makepad.git", rev = "8d6bfb6644c91c562ddc33bb2e1678b2cf438513" }
+makepad-script = { git = "https://github.com/OctoSense-org/makepad.git", rev = "8d6bfb6644c91c562ddc33bb2e1678b2cf438513" }
 # The VM-independent Octoscript node model, from the Octoscript repo itself.
-octoscript-ui-l0 = { git = "https://github.com/OctoSense-org/Octoscript.git", branch = "main" }
+octoscript-ui-l0 = { git = "https://github.com/OctoSense-org/Octoscript.git", rev = "c014a63e09bc630da19a49600af376b5276de230" }
 
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
+
+# Resolve the exact framework sources prepared by tools/setup-native.py.
+
+[patch."https://github.com/OctoSense-org/makepad.git"]
+makepad-widgets = { path = "../makepad/widgets" }
+makepad-script = { path = "../makepad/platform/script" }
+
+[patch."https://github.com/OctoSense-org/Octoscript.git"]
+octoscript-ui-l0 = { path = "../octoscript/crates/octoscript-ui-l0" }
+
+[patch."https://github.com/OctoSense-org/Octoscript-Makepad.git"]
+octoscript-node = { path = "crates/octoscript-node" }
