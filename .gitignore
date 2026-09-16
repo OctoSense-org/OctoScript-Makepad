@@ -8,3 +8,7 @@ tools/qa-shots/
 
 # makepad studio state
 .makepad/
+
+# Python runtime setup cache
+__pycache__/
+*.pyc

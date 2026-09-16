@@ -1571,13 +1571,6 @@ fn radio_group(a: &Attrs, r: &Roles) -> UiNode {
     let sel = a.selected.unwrap_or(0);
     let mut g = col();
     g.attrs.spacing = Some(4.0);
-    let count = a
-        .items
-        .as_deref()
-        .unwrap_or("")
-        .split(';')
-        .filter(|s| !s.is_empty())
-        .count();
     for (i, item) in a
         .items
         .as_deref()

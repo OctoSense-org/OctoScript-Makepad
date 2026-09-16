@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "repositories": {
+    "makepad": {
+      "url": "https://github.com/OctoSense-org/makepad.git",
+      "revision": "7287bd157d4b53e5d93cfbc07200b2afd127c650"
+    },
+    "octoscript": {
+      "url": "https://github.com/OctoSense-org/Octoscript.git",
+      "revision": "eedb7fd81e580345c3bd050c4b98dd4b93891409"
+    }
+  }
+}
