@@ -20,7 +20,7 @@ members = [
 makepad-widgets = { git = "https://github.com/OctoSense-org/makepad.git", rev = "8d6bfb6644c91c562ddc33bb2e1678b2cf438513" }
 makepad-script = { git = "https://github.com/OctoSense-org/makepad.git", rev = "8d6bfb6644c91c562ddc33bb2e1678b2cf438513" }
 # The VM-independent Octoscript node model, from the Octoscript repo itself.
-octoscript-ui-l0 = { git = "https://github.com/OctoSense-org/Octoscript.git", rev = "11c8f6fddf65357af21a995e64da771fd9237044" }
+octoscript-ui-l0 = { git = "https://github.com/OctoSense-org/Octoscript.git", rev = "c014a63e09bc630da19a49600af376b5276de230" }
 
 [profile.release]
 opt-level = 3
