@@ -8,7 +8,7 @@ description = "Generic app shell rendering a Splash component kit as native make
 # The L0 profile, so this host can realize and lower a card at runtime. Depends
 # on serde_json alone — it carries no makepad lineage, which is what makes it
 # safe here and is why it was extracted from splash-core.
-splash-ui-l0 = { path = "../../../splash/crates/splash-ui-l0" }
+splash-ui-l0 = { path = "../../../octoscript/crates/splash-ui-l0" }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 sha2 = "0.10"
 makepad-plot = { path = "../../crates/makepad-plot" }
