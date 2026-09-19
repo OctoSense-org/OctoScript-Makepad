@@ -3,6 +3,7 @@ name = "octoscript-render"
 version = "0.1.0"
 edition = "2021"
 description = "Backend-agnostic Octoscript DSL renderer core: makepad-script VM -> UiNode tree"
+license = "Apache-2.0"
 
 [dependencies]
 # The Octoscript VM only. Renderer-free by construction — no makepad-platform, no

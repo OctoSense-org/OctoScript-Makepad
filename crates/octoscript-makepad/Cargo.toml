@@ -3,6 +3,7 @@ name = "octoscript-makepad"
 version = "0.1.0"
 edition = "2021"
 description = "makepad render backend for Octoscript: shared UiNode -> makepad UI dialect"
+license = "Apache-2.0"
 
 [dependencies]
 # Only the shared render core — the UiNode -> makepad translation is pure and

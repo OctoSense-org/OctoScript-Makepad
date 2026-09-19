@@ -125,4 +125,6 @@ checks the portable render pipeline and component contracts.
 
 ## License
 
-MIT OR Apache-2.0 (matching makepad).
+Apache-2.0 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). The grafted `crates/makepad-d3`
+(MIT OR Apache-2.0) and `crates/makepad-plot` (MIT) keep their original licenses, and bundled
+fonts keep theirs.

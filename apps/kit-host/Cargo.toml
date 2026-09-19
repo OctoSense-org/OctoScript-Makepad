@@ -3,6 +3,7 @@ name = "kit-host"
 version = "0.1.0"
 edition = "2021"
 description = "Generic app shell rendering a Octoscript component kit as native makepad widgets (fork-free, upstream makepad)"
+license = "Apache-2.0"
 
 [dependencies]
 # The L0 profile, so this host can realize and lower a card at runtime. Depends
