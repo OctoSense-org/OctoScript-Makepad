@@ -3,6 +3,7 @@ name = "octoscript-node"
 version = "0.1.0"
 edition = "2021"
 description = "The Octoscript UI node model: the branch point every render backend consumes"
+license = "Apache-2.0"
 
 # NOTHING. Not a VM, not a renderer, not serde.
 #

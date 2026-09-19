@@ -1,0 +1,24 @@
+Octoscript-Makepad
+Copyright 2026 The OctoSense Authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Third-party components
+----------------------
+
+The following components are included in this repository and remain under
+their own licenses; they are not relicensed by this project:
+
+* crates/makepad-d3: grafted with its history from mofa-org/makepad-d3.
+  Licensed under MIT OR Apache-2.0, as declared in its Cargo.toml.
+* crates/makepad-plot: grafted with its history from mofa-org/makepad-matplot.
+  Licensed under the MIT License, as declared in its Cargo.toml.
+* apps/kit-host/resources and apps/flutter-samples/resources: fonts (Roboto,
+  Roboto Condensed, Montserrat, DM Sans, Noto Sans SC, Inter, Plus Jakarta
+  Sans, Poppins and others) are the work of their respective authors and are
+  licensed under the SIL Open Font License, Version 1.1 or the Apache License,
+  Version 2.0; see the OFL/license files next to each font.
+
+Makepad (https://github.com/makepad/makepad, Copyright (c) 2023 Makepad B.V.),
+which this project builds against as a dependency, is licensed under the MIT
+License.
