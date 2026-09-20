@@ -12,7 +12,7 @@ A D3.js-compatible data visualization library for [Makepad](https://github.com/m
 
 ## Quick Run
 
-Makepad 2.0 comes from the `guofoo/makepad` revision pinned in the Octoscript-Makepad
+Makepad 2.0 comes from the `OctoSense-org/makepad` revision pinned in the Octoscript-Makepad
 workspace root (`[workspace.dependencies]`), the same pin OctoSense-org/octosense uses:
 
 ```bash
