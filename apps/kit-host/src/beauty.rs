@@ -261,8 +261,8 @@ impl App {
             }
             let mut image_pixels = None;
             let vector_ready = widget.borrow::<Svg>().map(|svg| {
-                svg.draw_svg.svg_doc.is_some() && !svg.draw_svg.cached_indices.is_empty()
-            }).or_else(||widget.borrow::<DesignGlassSvg>().map(|glass|glass.svg.draw_svg.svg_doc.is_some()&&!glass.svg.draw_svg.cached_indices.is_empty()));
+                svg.draw_svg.svg_doc.is_some() && svg.draw_svg.has_mesh()
+            }).or_else(||widget.borrow::<DesignGlassSvg>().map(|glass|glass.svg.draw_svg.svg_doc.is_some()&&glass.svg.draw_svg.has_mesh()));
             let glass_ready=widget.borrow::<makepad_widgets::gauss_view::GaussRoundedView>().map(|glass|glass.snapshot_ready)
                 .or_else(||widget.borrow::<DesignGlassSvg>().map(|glass|glass.snapshot_ready));
             if glass_ready==Some(false) {
