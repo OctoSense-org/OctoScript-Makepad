@@ -2,6 +2,8 @@
 
 English | [简体中文](README.zh-CN.md)
 
+> **Building an OctoSense app?** You do not need to work in this repository. It is the shared UI runtime every OctoSense shell and `card-host` build against; `tools/setup-native.py` in OctoScript-App-Design-Flow checks it out for you as the sibling `octoscript-makepad/` at the pinned revision. Start from the [OctoSense organization profile](https://github.com/OctoSense-org)'s reading order: [OctoScript-App-Design-Flow `AGENTS.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/AGENTS.md) → [`flows/README.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/flows/README.md) → [`docs/QUICKSTART.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/docs/QUICKSTART.md).
+
 Themed, cross-platform **component kits** for apps built on the **Octoscript DSL → makepad native-widget** renderer.
 
 Author a UI once as plain-data Octoscript DSL; it is evaluated in the makepad-script VM, translated to makepad's own widget dialect, and mounted as **real native makepad widgets** at runtime (with on-device hot reload). This repo is the home for the render pipeline **and** the themed component sets that ride on it — Material 3 today; **iOS** and **liquid-glass** planned.
@@ -83,8 +85,9 @@ Building + running the `kit-host` against upstream surfaced exactly **one** thin
 
 ## Shared runtime for OctoSense apps
 
-This repository owns the shared runtime for AppCards, Mail, OctoSense desktop
-and mobile, Android, OpenHarmony and browser hosts. `runtime.json` locks one underlying `OctoSense-org/makepad` revision and
+This repository owns the shared runtime for the OctoSense shells (OctoSense-ROM
+`home/` and OctoSense-Desktop), the App Hub's `card-host`, the App Cards and flows in
+[OctoScript-App-Design-Flow](https://github.com/OctoSense-org/OctoScript-App-Design-Flow), Mail, Android, OpenHarmony and browser hosts. `runtime.json` locks one underlying `OctoSense-org/makepad` revision and
 one `OctoSense-org/Octoscript` revision. The same pins appear in the root Cargo
 workspace; `tools/runtime.py` rejects drift. Each Cargo workspace declares
 only the sibling overrides it actually uses, so locked builds stay reproducible. Mail's scrolling, text input and native HTML WebView support live
@@ -92,8 +95,8 @@ here and in the locked Makepad source, rather than in per-application patches.
 
 Arrange the independent repositories as siblings named `octoscript-makepad`,
 `octoscript` and `makepad`. Run `python3 tools/runtime.py prepare` from this
-repository, or use AppCards' `tools/setup-native.py`, which also selects the
-framework release. Existing local edits are preserved; `--update` only moves
+repository, or use [OctoScript-App-Design-Flow](https://github.com/OctoSense-org/OctoScript-App-Design-Flow)'s `tools/setup-native.py`, whose
+`native-runtime.lock.json` also selects the framework release. Existing local edits are preserved; `--update` only moves
 clean dependency checkouts. `python3 tools/runtime.py verify --cargo-manifest
 Cargo.toml` checks the source set and rejects multiple Makepad instances in the
 resolved Cargo graph.
