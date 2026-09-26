@@ -1,5 +1,7 @@
 # makepad-plot
 
+English | [简体中文](README.zh-CN.md)
+
 Matplotlib-style plotting library for **Makepad 2.0 (Octoscript)** — 32 chart widgets,
 all declarable and scriptable from the Octoscript DSL.
 

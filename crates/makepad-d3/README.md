@@ -1,5 +1,7 @@
 # Makepad D3
 
+English | [简体中文](README.zh-CN.md)
+
 A D3.js-compatible data visualization library for [Makepad](https://github.com/makepad/makepad)'s GPU-accelerated rendering.
 
 > **Makepad 2.0 / Octoscript status (2026-07):** This library now targets

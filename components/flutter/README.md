@@ -1,5 +1,7 @@
 # flutter/samples, on Octoscript + makepad
 
+English | [简体中文](README.zh-CN.md)
+
 > ## These are illustrations, not ports. Read this first.
 >
 > An independent review (OpenAI Codex, read-only) was asked whether this is a
