@@ -63,3 +63,16 @@ fn theme_modes_answer_the_same_registered_component_names() {
         assert!(dark["compounds"].as_object().unwrap().len() > 50);
     }
 }
+
+#[test]
+fn l0_event_target_routes_to_a_host_owned_channel() {
+    let source = "state selected { shape: enum[off, on], initial: .off }\n\
+                  event flip { selected: cycle(.off, .on) }\n\
+                  view root Row(on_tap: flip) { TextBody(text: selected) }";
+    let prepared = octoscript_makepad::l0::prepare(source, &serde_json::json!({}), &directory()).unwrap();
+    let ui = octoscript_makepad::to_makepad_l0_ui_with_events(&prepared.tree, "card-runtime-42");
+    assert!(ui.contains("OctoscriptTap {"));
+    assert!(ui.contains("agent.notify(\"card-runtime-42\""));
+    assert!(ui.contains("l0:{"));
+    assert!(!ui.contains("NAV("));
+}

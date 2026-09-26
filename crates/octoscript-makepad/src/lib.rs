@@ -61,7 +61,7 @@ pub fn to_makepad_ui(root: &UiNode) -> String {
     let mut root = root.clone();
     resolve_ink_planes(&mut root, None, None);
     let mut out = String::new();
-    emit(&root, &mut out, 0, false);
+    emit(&root, &mut out, 0, false, None);
     out
 }
 
@@ -69,11 +69,28 @@ pub fn to_makepad_ui(root: &UiNode) -> String {
 /// Material's semantic Card/Chip lowering must not overwrite these dimensions,
 /// colors or child labels, and L0 sizes are already Makepad points.
 pub fn to_makepad_l0_ui(root: &UiNode) -> String {
+    to_makepad_l0_ui_inner(root, None)
+}
+
+/// Route checked L0 event targets to a host-owned channel. The host must
+/// verify the currently mounted Card identity before dispatching the target.
+pub fn to_makepad_l0_ui_with_events(root: &UiNode, event_channel: &str) -> String {
+    to_makepad_l0_ui_inner(root, Some(event_channel))
+}
+
+fn to_makepad_l0_ui_inner(root: &UiNode, event_channel: Option<&str>) -> String {
     let mut root = root.clone();
     resolve_ink_planes(&mut root, None, None);
     let mut out = String::new();
-    emit(&root, &mut out, 0, true);
+    emit(&root, &mut out, 0, true, event_channel);
     out
+}
+
+fn click_call(target: &str, event_channel: Option<&str>) -> String {
+    match event_channel.filter(|_| target.starts_with("l0:")) {
+        Some(channel) => format!("agent.notify({channel:?}, {{target: {target:?}}})"),
+        None => format!("NAV(t: {target:?})"),
+    }
 }
 
 pub mod design;
@@ -229,7 +246,7 @@ fn needs_click_overlay(node: &UiNode) -> bool {
     node.attrs.tapto.is_some() && is_container(node.kind)
 }
 
-fn emit(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
+fn emit(node: &UiNode, out: &mut String, depth: usize, resolved: bool, event_channel: Option<&str>) {
     let mut primitive;
     let node = if resolved && matches!(node.kind, NodeKind::Card | NodeKind::Chip) {
         primitive = node.clone();
@@ -243,18 +260,18 @@ fn emit(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
     // and left every lowered component inert. This terminates because a lowered
     // node is primitive, and a resolved text role clears the `variant`.
     if let Some(lowered) = (!resolved).then(|| material::lower(node, &theme())).flatten() {
-        emit(&lowered, out, depth, resolved);
+        emit(&lowered, out, depth, resolved, event_channel);
         return;
     }
     if !resolved && needs_vertical_pad_wrapper(node) {
-        emit_vertical_pad(node, out, depth, resolved);
+        emit_vertical_pad(node, out, depth, resolved, event_channel);
         return;
     }
     if needs_click_overlay(node) {
-        emit_click_overlay(node, out, depth, resolved);
+        emit_click_overlay(node, out, depth, resolved, event_channel);
         return;
     }
-    emit_widget(node, out, depth, resolved);
+    emit_widget(node, out, depth, resolved, event_channel);
 }
 
 /// Vertical-only padding (`pady` with no `padx`) on a node that has no fixed
@@ -295,7 +312,7 @@ fn needs_vertical_pad_wrapper(node: &UiNode) -> bool {
         || text_default
 }
 
-fn emit_vertical_pad(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
+fn emit_vertical_pad(node: &UiNode, out: &mut String, depth: usize, resolved: bool, event_channel: Option<&str>) {
     let ind = "    ".repeat(depth);
     let inner_ind = "    ".repeat(depth + 1);
     // The widget already carries makepad's own `theme.mspace_1` inset (~4dp), so
@@ -349,19 +366,19 @@ fn emit_vertical_pad(node: &UiNode, out: &mut String, depth: usize, resolved: bo
     bare.attrs.pad = None;
     bare.attrs.marginy = Some(0.0);
     bare.attrs.margin = None;
-    emit(&bare, out, depth + 1, resolved);
+    emit(&bare, out, depth + 1, resolved, event_channel);
     let _ = writeln!(out, "{inner_ind}View {{ height: {py} }}");
     let _ = writeln!(out, "{ind}}}");
 }
 
 /// `Overlay{ <content>, Button{…on_click} }` — see [`needs_click_overlay`].
 ///
-/// The handler calls `NAV`, a global the host registers, rather than reaching
-/// through `ui.nav_signal`. `ui` is injected by `Splash::eval_body`, so a body
+/// The handler calls `NAV` for ordinary routes. L0 Card event targets can use
+/// a host-owned notification channel instead. `ui` is injected by `Splash::eval_body`, so a body
 /// mounted anywhere else — notably on the app's main VM, which is what gets this
 /// crate's fonts and a widget kit's theming into reach — had every tap silently
 /// do nothing. A global works on either VM.
-fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
+fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize, resolved: bool, event_channel: Option<&str>) {
     let ind = "    ".repeat(depth);
     let inner_ind = "    ".repeat(depth + 1);
     let a = &node.attrs;
@@ -426,7 +443,7 @@ fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize, resolved: b
     // The content, with `tapto` stripped so it does not re-enter this path.
     let mut content = node.clone();
     content.attrs.tapto = None;
-    emit_widget(&content, out, depth + 1, resolved);
+    emit_widget(&content, out, depth + 1, resolved, event_channel);
 
     // The hit target: an empty ButtonFlatter filling the wrapper.
     //
@@ -445,15 +462,13 @@ fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize, resolved: b
     let _ = writeln!(out, "{inner_ind}OctoscriptTap {{");
     let _ = writeln!(out, "{inner_ind}    width: Fill");
     let _ = writeln!(out, "{inner_ind}    height: Fill");
-    let _ = writeln!(
-        out,
-        "{inner_ind}    on_click: || {{ NAV(t: {target:?}) }}"
-    );
+    let call = click_call(target, event_channel);
+    let _ = writeln!(out, "{inner_ind}    on_click: || {{ {call} }}");
     let _ = writeln!(out, "{inner_ind}}}");
     let _ = writeln!(out, "{ind}}}");
 }
 
-fn emit_widget(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
+fn emit_widget(node: &UiNode, out: &mut String, depth: usize, resolved: bool, event_channel: Option<&str>) {
     let ind = "    ".repeat(depth);
     let name = widget_for(node);
     // An `id` makes the widget addressable in the mounted tree: `name := Widget{…}`.
@@ -465,14 +480,14 @@ fn emit_widget(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
             let _ = writeln!(out, "{ind}{name} {{");
         }
     }
-    emit_attrs(node, out, depth + 1, resolved);
+    emit_attrs(node, out, depth + 1, resolved, event_channel);
     // Only containers carry children — decided by the node's *kind*, and now
     // actually so. This read `widget_name(node.kind) == "View"`, which is a
     // question about the mapped name wearing the comment of a question about the
     // kind. See `is_container`.
     if is_container(node.kind) {
         for c in &node.children {
-            emit(c, out, depth + 1, resolved);
+            emit(c, out, depth + 1, resolved, event_channel);
         }
     }
     let _ = writeln!(out, "{ind}}}");
@@ -586,7 +601,7 @@ fn control_roles(kind: NodeKind, a: &Attrs) -> Vec<String> {
 /// makepad evidently resolves those on a different rounding path.
 const DP_SCALE: f32 = 157.7 / 157.0;
 
-fn emit_attrs(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
+fn emit_attrs(node: &UiNode, out: &mut String, depth: usize, resolved: bool, event_channel: Option<&str>) {
     let ind = "    ".repeat(depth);
     let a = &node.attrs;
     if resolved && node.kind == NodeKind::Column {
@@ -778,13 +793,11 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
     if let Some(ph) = a.placeholder.as_ref() {
         let _ = writeln!(out, "{ind}empty_text: {ph:?}");
     }
-    // `tapto` wires an on_click that writes the route into the `nav_signal`
-    // widget; the host app reads that text and re-mounts the target screen.
+    // `tapto` uses the registered navigation callback or the Card host's
+    // event channel; only the latter handles L0 event targets.
     if let Some(target) = a.tapto.as_ref().filter(|t| !t.is_empty()) {
-        let _ = writeln!(
-            out,
-            "{ind}on_click: || {{ NAV(t: {target:?}) }}"
-        );
+        let call = click_call(target, event_channel);
+        let _ = writeln!(out, "{ind}on_click: || {{ {call} }}");
     }
     if let Some(s) = a.size {
         // The DSL states type sizes in sp, as Material does; makepad's font_size
