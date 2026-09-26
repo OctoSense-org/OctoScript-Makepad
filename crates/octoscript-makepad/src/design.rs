@@ -170,6 +170,17 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             write!(out, "{id} := ").unwrap();
         }
         writeln!(out, "{widget} {{").unwrap();
+        if n.kind == NodeKind::Input {
+            for (property, route) in [("on_change", &a.changeto), ("on_return", &a.tapto)] {
+                if let Some(target) = route.as_ref().filter(|t| !t.is_empty()) {
+                    writeln!(out, "{property}: fn(text) {{ NAV(t: {target:?}, v: text) }}").unwrap();
+                }
+            }
+        } else if n.kind == NodeKind::Button {
+            if let Some(target) = a.tapto.as_ref().filter(|t| !t.is_empty()) {
+                writeln!(out, "on_click: || {{ NAV(t: {target:?}) }}").unwrap();
+            }
+        }
         if let Some(config)=&contract {
             writeln!(out,"contract: {:?} glass: {}",config.to_string(),a.variant.as_deref()==Some("glass_group")).unwrap();
         }
