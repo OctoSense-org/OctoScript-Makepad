@@ -1,5 +1,7 @@
 # Octoscript-Makepad
 
+English | [简体中文](README.zh-CN.md)
+
 Themed, cross-platform **component kits** for apps built on the **Octoscript DSL → makepad native-widget** renderer.
 
 Author a UI once as plain-data Octoscript DSL; it is evaluated in the makepad-script VM, translated to makepad's own widget dialect, and mounted as **real native makepad widgets** at runtime (with on-device hot reload). This repo is the home for the render pipeline **and** the themed component sets that ride on it — Material 3 today; **iOS** and **liquid-glass** planned.
