@@ -780,11 +780,14 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
     }
     // `tapto` wires an on_click that writes the route into the `nav_signal`
     // widget; the host app reads that text and re-mounts the target screen.
-    if let Some(target) = a.tapto.as_ref().filter(|t| !t.is_empty()) {
-        let _ = writeln!(
-            out,
-            "{ind}on_click: || {{ NAV(t: {target:?}) }}"
-        );
+    if matches!(node.kind, NodeKind::Input | NodeKind::Textarea) {
+        for (property, route) in [("on_change", &a.changeto), ("on_return", &a.tapto)] {
+            if let Some(target) = route.as_ref().filter(|t| !t.is_empty()) {
+                let _ = writeln!(out, "{ind}{property}: fn(text) {{ NAV(t: {target:?}, v: text) }}");
+            }
+        }
+    } else if let Some(target) = a.tapto.as_ref().filter(|t| !t.is_empty()) {
+        let _ = writeln!(out, "{ind}on_click: || {{ NAV(t: {target:?}) }}");
     }
     if let Some(s) = a.size {
         // The DSL states type sizes in sp, as Material does; makepad's font_size
@@ -820,10 +823,10 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize, resolved: bool) {
             // also tried and is marginally worse without moving `adaptive`.
             let w = a.weight.unwrap_or(400).max(1) as f32;
             let font = a.font_src.as_deref().filter(|s|!s.is_empty())
-                .unwrap_or("self:resources/Roboto-Regular.ttf");
+                .unwrap_or("makepad_widgets:resources/Roboto-Regular.ttf");
             let _ = writeln!(
                 out,
-                "{ind}draw_text.text_style: TextStyle{{ font_family: FontFamily{{ latin := FontMember{{res: crate_resource({font:?}) asc: -0.1 desc: 0.0 weight: {w}}} }} line_spacing: 1.45 font_size: {s} }}"
+                "{ind}draw_text.text_style: TextStyle{{ font_family: FontFamily{{ latin := FontMember{{res: crate_resource({font:?}) asc: -0.1 desc: 0.0 weight: {w}}} cjk := FontMember{{res: crate_resource(\"makepad_widgets:resources/LXGWWenKaiRegular.ttf\") asc: 0.0 desc: 0.0}} emoji := FontMember{{res: crate_resource(\"makepad_widgets:resources/NotoColorEmoji.ttf\") asc: 0.0 desc: 0.0}} }} line_spacing: 1.45 font_size: {s} }}"
             );
         } else if a.icon == Some(1) {
             let _ = writeln!(
