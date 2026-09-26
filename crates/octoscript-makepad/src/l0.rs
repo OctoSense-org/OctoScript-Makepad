@@ -40,7 +40,13 @@ pub fn inspectable(tree: &mut octoscript_render::UiNode) -> Vec<serde_json::Valu
 /// Use the same ordered palette chain as the application. Missing fragments
 /// and incomplete realization are errors, never a fallback to another mood.
 pub fn prepare(card: &str, data: &serde_json::Value, dir: &Path) -> Result<PreparedCard, String> {
-    let report = octoscript_ui_l0::realize(card, data, Default::default());
+    prepare_with_state(card, data, dir, &octoscript_ui_l0::InstanceStore::default())
+}
+
+/// Rebuild the same native Card after a declared event changed instance state.
+pub fn prepare_with_state(card: &str, data: &serde_json::Value, dir: &Path,
+    state: &octoscript_ui_l0::InstanceStore) -> Result<PreparedCard, String> {
+    let report = octoscript_ui_l0::realize_with_state(card, data, state, Default::default());
     let root = report.complete_root()?;
     let mood = octoscript_ui_l0::card_theme(card).unwrap_or_else(|| "dark".into());
     if octoscript_ui_l0::kit_pack::contains(root) {

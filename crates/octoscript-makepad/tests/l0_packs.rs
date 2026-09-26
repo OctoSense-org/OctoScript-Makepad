@@ -75,4 +75,11 @@ fn l0_event_target_routes_to_a_host_owned_channel() {
     assert!(ui.contains("agent.notify(\"card-runtime-42\""));
     assert!(ui.contains("l0:{"));
     assert!(!ui.contains("NAV("));
+    let mut state = octoscript_ui_l0::InstanceStore::default();
+    assert!(octoscript_ui_l0::dispatch_with_data(source, &mut state, "root", "flip", None, &serde_json::json!({})));
+    let changed = octoscript_makepad::l0::prepare_with_state(source, &serde_json::json!({}), &directory(), &state).unwrap();
+    fn has_text(node: &octoscript_render::UiNode, text: &str) -> bool {
+        node.attrs.text.as_deref() == Some(text) || node.children.iter().any(|child| has_text(child, text))
+    }
+    assert!(has_text(&changed.tree, "on"));
 }
