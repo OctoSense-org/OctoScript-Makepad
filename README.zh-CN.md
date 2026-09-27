@@ -73,7 +73,7 @@ makepad 的原生控件（复选框、开关、单选、滑块、文本框）由
 
 ## OctoSense 应用的共享运行时
 
-本仓库负责 OctoSense 外壳（OctoSense-ROM 的 `home/` 与 OctoSense-Desktop）、App Hub 的 `card-host`、[OctoScript-App-Design-Flow](https://github.com/OctoSense-org/OctoScript-App-Design-Flow) 中的 App Card 与流程、Mail、Android、OpenHarmony 以及浏览器宿主的共享运行时。`runtime.json` 锁定一个底层 `OctoSense-org/makepad` 修订版本和一个 `OctoSense-org/Octoscript` 修订版本。根 Cargo 工作区中出现的是同样的固定版本；`tools/runtime.py` 会拒绝任何偏差。每个 Cargo 工作区只声明它实际用到的同级目录覆盖，从而保证锁定构建可复现。Mail 的滚动、文本输入和原生 HTML WebView 支持都放在这里以及锁定的 Makepad 源码中，而不是放在各个应用的补丁里。
+本仓库负责 OctoSense 外壳（[OctoSense](https://github.com/OctoSense-org/OctoSense) 中的桌面端与手机端）、App Hub 的 `card-host`、[OctoScript-App-Design-Flow](https://github.com/OctoSense-org/OctoScript-App-Design-Flow) 中的 App Card 与流程、Mail、Android、OpenHarmony 以及浏览器宿主的共享运行时。`runtime.json` 锁定一个底层 `OctoSense-org/makepad` 修订版本和一个 `OctoSense-org/Octoscript` 修订版本。根 Cargo 工作区中出现的是同样的固定版本；`tools/runtime.py` 会拒绝任何偏差。每个 Cargo 工作区只声明它实际用到的同级目录覆盖，从而保证锁定构建可复现。Mail 的滚动、文本输入和原生 HTML WebView 支持都放在这里以及锁定的 Makepad 源码中，而不是放在各个应用的补丁里。
 
 把这几个独立仓库作为同级目录放置，分别命名为 `octoscript-makepad`、`octoscript` 和 `makepad`。在本仓库中运行 `python3 tools/runtime.py prepare`，或者使用 [OctoScript-App-Design-Flow](https://github.com/OctoSense-org/OctoScript-App-Design-Flow) 的 `tools/setup-native.py`（它的 `native-runtime.lock.json` 还会选择框架版本）。已有的本地修改会被保留；`--update` 只会移动干净的依赖检出。`python3 tools/runtime.py verify --cargo-manifest Cargo.toml` 会检查源码集合，并拒绝在解析后的 Cargo 依赖图中出现多个 Makepad 实例。
 
