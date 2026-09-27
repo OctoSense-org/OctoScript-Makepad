@@ -793,9 +793,16 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize, resolved: bool, eve
     if let Some(ph) = a.placeholder.as_ref() {
         let _ = writeln!(out, "{ind}empty_text: {ph:?}");
     }
-    // `tapto` uses the registered navigation callback or the Card host's
-    // event channel; only the latter handles L0 event targets.
-    if let Some(target) = a.tapto.as_ref().filter(|t| !t.is_empty()) {
+    // `tapto` wires an on_click to the registered navigation callback, or to
+    // the Card host's event channel for L0 event targets; text fields report
+    // their value through the navigation callback.
+    if matches!(node.kind, NodeKind::Input | NodeKind::Textarea) {
+        for (property, route) in [("on_change", &a.changeto), ("on_return", &a.tapto)] {
+            if let Some(target) = route.as_ref().filter(|t| !t.is_empty()) {
+                let _ = writeln!(out, "{ind}{property}: fn(text) {{ NAV(t: {target:?}, v: text) }}");
+            }
+        }
+    } else if let Some(target) = a.tapto.as_ref().filter(|t| !t.is_empty()) {
         let call = click_call(target, event_channel);
         let _ = writeln!(out, "{ind}on_click: || {{ {call} }}");
     }
@@ -833,10 +840,10 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize, resolved: bool, eve
             // also tried and is marginally worse without moving `adaptive`.
             let w = a.weight.unwrap_or(400).max(1) as f32;
             let font = a.font_src.as_deref().filter(|s|!s.is_empty())
-                .unwrap_or("self:resources/Roboto-Regular.ttf");
+                .unwrap_or("makepad_widgets:resources/Roboto-Regular.ttf");
             let _ = writeln!(
                 out,
-                "{ind}draw_text.text_style: TextStyle{{ font_family: FontFamily{{ latin := FontMember{{res: crate_resource({font:?}) asc: -0.1 desc: 0.0 weight: {w}}} }} line_spacing: 1.45 font_size: {s} }}"
+                "{ind}draw_text.text_style: TextStyle{{ font_family: FontFamily{{ latin := FontMember{{res: crate_resource({font:?}) asc: -0.1 desc: 0.0 weight: {w}}} cjk := FontMember{{res: crate_resource(\"makepad_widgets:resources/LXGWWenKaiRegular.ttf\") asc: 0.0 desc: 0.0}} emoji := FontMember{{res: crate_resource(\"makepad_widgets:resources/NotoColorEmoji.ttf\") asc: 0.0 desc: 0.0}} }} line_spacing: 1.45 font_size: {s} }}"
             );
         } else if a.icon == Some(1) {
             let _ = writeln!(
