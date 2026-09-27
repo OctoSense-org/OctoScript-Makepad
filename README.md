@@ -83,6 +83,10 @@ Each new theme is just more variants in `octoscript-widgets` + a `.octoscript` c
 
 Building + running the `kit-host` against upstream surfaced exactly **one** thing upstream doesn't have: a **`Splash` main-VM-mount option**. Upstream's `Splash` always allocates an *isolate* VM (`alloc_splash_vm_with_network(allow_net)`), but the light theme and a shared heap live on the app's **main** VM. The fix is the small `isolate: false` field this project's fork added to `widgets/src/splash.rs` — upstreaming it lets a trusted, app-generated kit mount on the main VM (correct theme, no isolate-heap animator panics). Until then the kit mounts on an isolate (dark-default theme). That is the *only* upstream change needed; everything else runs against upstream `dev` as-is.
 
+These notes date from the `kit-host` bring-up. The workspace now builds against the
+`OctoSense-org/makepad` revision locked in `runtime.json` (`cd812acd`); that `Splash` has
+no `isolate` field, so the kit mounts on an isolate.
+
 ## Shared runtime for OctoSense apps
 
 This repository owns the shared runtime for the OctoSense shells (OctoSense-ROM
@@ -120,6 +124,8 @@ extent, snapshot and lifecycle for application acceptance checks.
 checks the portable render pipeline and component contracts.
 
 ## Status
+
+Status as of the `kit-host` bring-up; "upstream" below means upstream Makepad at that time. Today every crate here builds against the revisions in `runtime.json`.
 
 - ✅ `octoscript-render` + `octoscript-makepad` — portable render pipeline; **compile + test against upstream `makepad-script`** (rev `e1c2164b`), no fork
 - ✅ **Material 3 kit** — `components/material/catalog.octoscript`: ~35 components (buttons, FABs, cards, chips, nav bar/rail/drawer, app bars, dialog/menu/sheets as **real interactive overlays**, pickers, tabs, badges, toolbars), M3 tokens (colour, type scale + Medium weight, shape, elevation, surface tones), Font-Awesome monochrome icons, and real animation (circular spinner + shape-morph loading indicator)
