@@ -69,6 +69,8 @@ makepad 的原生控件（复选框、开关、单选、滑块、文本框）由
 
 基于上游构建并运行 `kit-host` 时，只暴露出**一处**上游缺少的东西：**`Splash` 在主 VM 上挂载的选项**。上游的 `Splash` 总是分配一个 *isolate* VM（`alloc_splash_vm_with_network(allow_net)`），但浅色主题和共享堆都位于应用的**主** VM 上。修复方法是本项目的 fork 在 `widgets/src/splash.rs` 中新增的一个小字段 `isolate: false`；把它合入上游后，受信任的、由应用生成的套件就能挂载到主 VM 上（主题正确，也不会出现 isolate 堆上的 animator panic）。在此之前，套件挂载在 isolate 上（默认深色主题）。这是*唯一*需要的上游改动；其他一切都可以直接基于上游 `dev` 运行。
 
+以上记录来自 `kit-host` 初建时期。现在本工作区基于 `runtime.json` 锁定的 `OctoSense-org/makepad` 版本（`cd812acd`）构建；该版本的 `Splash` 没有 `isolate` 字段，所以套件挂载在 isolate 上。
+
 ## OctoSense 应用的共享运行时
 
 本仓库负责 OctoSense 外壳（OctoSense-ROM 的 `home/` 与 OctoSense-Desktop）、App Hub 的 `card-host`、[OctoScript-App-Design-Flow](https://github.com/OctoSense-org/OctoScript-App-Design-Flow) 中的 App Card 与流程、Mail、Android、OpenHarmony 以及浏览器宿主的共享运行时。`runtime.json` 锁定一个底层 `OctoSense-org/makepad` 修订版本和一个 `OctoSense-org/Octoscript` 修订版本。根 Cargo 工作区中出现的是同样的固定版本；`tools/runtime.py` 会拒绝任何偏差。每个 Cargo 工作区只声明它实际用到的同级目录覆盖，从而保证锁定构建可复现。Mail 的滚动、文本输入和原生 HTML WebView 支持都放在这里以及锁定的 Makepad 源码中，而不是放在各个应用的补丁里。
@@ -86,6 +88,8 @@ makepad 的原生控件（复选框、开关、单选、滑块、文本框）由
 `cargo test --release -p octoscript-node -p octoscript-render -p octoscript-makepad` 检查可移植的渲染管线和组件契约。
 
 ## 状态
+
+以下状态记录于 `kit-host` 初建时期，其中的“上游”指当时的上游 Makepad。如今本仓库的所有 crate 都基于 `runtime.json` 中的版本构建。
 
 - ✅ `octoscript-render` + `octoscript-makepad`：可移植渲染管线；**基于上游 `makepad-script` 编译并通过测试**（修订版本 `e1c2164b`），无 fork
 - ✅ **Material 3 套件**：`components/material/catalog.octoscript`，约 35 个组件（按钮、FAB、卡片、纸片、导航栏/导航轨/抽屉、应用栏，以**真正可交互的浮层**实现的对话框/菜单/面板，选择器、标签页、徽标、工具栏），M3 设计令牌（颜色、字号体系 + Medium 字重、形状、海拔、表面色调），Font-Awesome 单色图标，以及真正的动画（环形加载指示器 + 形状变形加载指示器）
