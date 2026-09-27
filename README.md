@@ -89,8 +89,8 @@ no `isolate` field, so the kit mounts on an isolate.
 
 ## Shared runtime for OctoSense apps
 
-This repository owns the shared runtime for the OctoSense shells (OctoSense-ROM
-`home/` and OctoSense-Desktop), the App Hub's `card-host`, the App Cards and flows in
+This repository owns the shared runtime for the OctoSense shells (the desktop and
+phone packagings in [OctoSense](https://github.com/OctoSense-org/OctoSense)), the App Hub's `card-host`, the App Cards and flows in
 [OctoScript-App-Design-Flow](https://github.com/OctoSense-org/OctoScript-App-Design-Flow), Mail, Android, OpenHarmony and browser hosts. `runtime.json` locks one underlying `OctoSense-org/makepad` revision and
 one `OctoSense-org/Octoscript` revision. The same pins appear in the root Cargo
 workspace; `tools/runtime.py` rejects drift. Each Cargo workspace declares
