@@ -69,7 +69,7 @@ makepad 的原生控件（复选框、开关、单选、滑块、文本框）由
 
 基于上游构建并运行 `kit-host` 时，只暴露出**一处**上游缺少的东西：**`Splash` 在主 VM 上挂载的选项**。上游的 `Splash` 总是分配一个 *isolate* VM（`alloc_splash_vm_with_network(allow_net)`），但浅色主题和共享堆都位于应用的**主** VM 上。修复方法是本项目的 fork 在 `widgets/src/splash.rs` 中新增的一个小字段 `isolate: false`；把它合入上游后，受信任的、由应用生成的套件就能挂载到主 VM 上（主题正确，也不会出现 isolate 堆上的 animator panic）。在此之前，套件挂载在 isolate 上（默认深色主题）。这是*唯一*需要的上游改动；其他一切都可以直接基于上游 `dev` 运行。
 
-以上记录来自 `kit-host` 初建时期。现在本工作区基于 `runtime.json` 锁定的 `OctoSense-org/makepad` 版本（`b0cbc9bc`）构建；该版本的 `Splash` 没有 `isolate` 字段，所以套件挂载在 isolate 上。
+以上记录来自 `kit-host` 初建时期。现在本工作区基于 `runtime.json` 锁定的 `OctoSense-org/makepad` 版本（`75e3e24d`）构建；该版本的 `Splash` 没有 `isolate` 字段，所以套件挂载在 isolate 上。
 
 ## OctoSense 应用的共享运行时
 
