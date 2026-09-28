@@ -3,7 +3,7 @@
   "repositories": {
     "makepad": {
       "url": "https://github.com/OctoSense-org/makepad.git",
-      "revision": "b0cbc9bcfb204ade5d8ceecb66e0a58e972c70f1"
+      "revision": "75e3e24dbfb37381edb2745f62eba3615b335897"
     },
     "octoscript": {
       "url": "https://github.com/OctoSense-org/Octoscript.git",
