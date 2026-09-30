@@ -84,7 +84,7 @@ Each new theme is just more variants in `octoscript-widgets` + a `.octoscript` c
 Building + running the `kit-host` against upstream surfaced exactly **one** thing upstream doesn't have: a **`Splash` main-VM-mount option**. Upstream's `Splash` always allocates an *isolate* VM (`alloc_splash_vm_with_network(allow_net)`), but the light theme and a shared heap live on the app's **main** VM. The fix is the small `isolate: false` field this project's fork added to `widgets/src/splash.rs` — upstreaming it lets a trusted, app-generated kit mount on the main VM (correct theme, no isolate-heap animator panics). Until then the kit mounts on an isolate (dark-default theme). That is the *only* upstream change needed; everything else runs against upstream `dev` as-is.
 
 These notes date from the `kit-host` bring-up. The workspace now builds against the
-`OctoSense-org/makepad` revision locked in `runtime.json` (`92a19b67`); that `Splash` has
+`OctoSense-org/makepad` revision locked in `runtime.json` (`1f3b1ded`); that `Splash` has
 no `isolate` field, so the kit mounts on an isolate.
 
 ## Shared runtime for OctoSense apps
