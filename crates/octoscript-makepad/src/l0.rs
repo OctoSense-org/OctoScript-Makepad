@@ -26,7 +26,7 @@ pub fn inspectable(tree: &mut octoscript_render::UiNode) -> Vec<serde_json::Valu
             "kind": format!("{:?}", n.kind), "kit": a.kit, "kit_index": a.kit_index, "text": a.text, "placeholder": a.placeholder,
             "image": a.src, "icon": a.icon_name, "width": a.w, "height": a.h,
             "enabled": a.enabled, "selected": a.selected, "on": a.on, "value": a.value, "value2": a.value2,
-            "focused": a.focused, "password": a.password}),
+            "focused": a.focused, "password": a.password, "ai": a.ai}),
         );
         for (i, child) in n.children.iter_mut().enumerate() {
             visit(child, format!("{path}_{i}"), Some(id.clone()), out);

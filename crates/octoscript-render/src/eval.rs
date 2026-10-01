@@ -206,6 +206,8 @@ fn walk_inner(
         countries: string_prop(vm, value, id!(countries)),
         indicator: string_prop(vm, value, id!(indicator)),
         years: f32_prop(vm, value, id!(years)),
+        // The AI-written stamp `l0_ai_text` puts on a node (§4.2).
+        ai: int_prop(vm, value, id!(ai)),
     };
 
     let mut children = Vec::new();

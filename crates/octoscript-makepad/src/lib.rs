@@ -59,6 +59,7 @@ fn theme() -> material::Roles {
 pub fn to_makepad_ui(root: &UiNode) -> String {
     material::reset_slider_index();
     let mut root = root.clone();
+    octoscript_render::ai::expand_ai_marks(&mut root);
     resolve_ink_planes(&mut root, None, None);
     let mut out = String::new();
     emit(&root, &mut out, 0, false, None);
@@ -80,6 +81,9 @@ pub fn to_makepad_l0_ui_with_events(root: &UiNode, event_channel: &str) -> Strin
 
 fn to_makepad_l0_ui_inner(root: &UiNode, event_channel: Option<&str>) -> String {
     let mut root = root.clone();
+    // Model-written text gets its mark (§4.2) before anything is emitted, and
+    // before the ink pass, so the mark's ink is contrast-checked like any text.
+    octoscript_render::ai::expand_ai_marks(&mut root);
     resolve_ink_planes(&mut root, None, None);
     let mut out = String::new();
     emit(&root, &mut out, 0, true, event_channel);

@@ -24,7 +24,7 @@ pub use eval::{add_global_fn, build, num_prop, prop, string_prop};
 /// already has one, and octos-one could not take this crate for exactly that
 /// reason. Re-exported so every existing consumer of `octoscript_render::UiNode`
 /// keeps working — the split is a packaging change, not an API one.
-pub use octoscript_node::{state, Attrs, NodeKind, UiNode};
+pub use octoscript_node::{ai, state, Attrs, NodeKind, UiNode};
 
 /// Re-exported so backends and hosts can name VM types (for capability
 /// registration) without taking their own makepad-script dependency/version.

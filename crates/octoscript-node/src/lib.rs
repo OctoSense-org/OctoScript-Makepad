@@ -16,6 +16,7 @@
 //! of producing it.** A second host writes its own evaluator against its own VM
 //! and produces the same tree.
 
+pub mod ai;
 mod node;
 pub mod state;
 pub mod units;
