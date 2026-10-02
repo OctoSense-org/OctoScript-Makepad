@@ -790,6 +790,18 @@ fn l0_live(node, call) {
     return node
 }
 
+// Words the MODEL wrote (§4.2): a digest summary, a draft, the agent's side of
+// a chat. The lowering wraps exactly those text slots, innermost, so the stamp
+// lands on the text node itself — or, for a chat bubble, on the bubble.
+//
+// Like `l0_live` it only stamps the node. What AI-written looks like is the
+// renderer's (`octoscript_node::ai`), so every backend draws the same mark, and
+// the text stays a plain label: no markup, no links.
+fn l0_ai_text(node) {
+    node.ai = 1
+    return node
+}
+
 fn l0_tap(target, node) {
     return {t: "column", fillw: 1, tapto: target, c: [node]}
 }

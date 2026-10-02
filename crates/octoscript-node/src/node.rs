@@ -506,6 +506,17 @@ pub struct Attrs {
     pub countries: Option<String>,
     pub indicator: Option<String>,
     pub years: Option<f32>,
+
+    // ---- provenance ------------------------------------------------------------
+    /// The MODEL wrote this node's text (`ui-profile-l0.md` §4.2), so it must be
+    /// shown as AI-written. Stamped by the kit's `l0_ai_text(node)` — `ai: 1` —
+    /// on the node the lowering wrapped: a text role, a `TextInput` holding a
+    /// draft, or a model chat bubble's outer column.
+    ///
+    /// A flag and not a look. What AI-written LOOKS like is
+    /// [`crate::ai::expand_ai_marks`], which every backend runs before it
+    /// emits, so the mark cannot differ between them.
+    pub ai: Option<i32>,
 }
 
 /// One node in the backend-agnostic tree.
