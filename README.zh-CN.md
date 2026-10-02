@@ -8,6 +8,9 @@
 
 用纯数据形式的 Octoscript DSL 编写一次 UI：它在 makepad-script VM 中求值，被翻译成 makepad 自身的控件方言，并在运行时挂载为**真正的 makepad 原生控件**（支持设备上热重载）。本仓库既存放渲染管线，**也**存放基于这条管线的各套主题组件：目前是 Material 3，**iOS** 和 **liquid-glass** 在计划中。
 
+面向初级 Rust 开发者的[源码导读与运行步骤](docs/architecture-walkthrough.md)
+说明 L0、设计稿、原生挂载、状态与 agent 的边界；贡献约定见 [AGENTS.md](AGENTS.md)。
+
 ## 渲染管线
 
 ```
@@ -15,10 +18,11 @@ Octoscript DSL  ──►  octoscript-render  ──►  UiNode tree  ──► 
 {t:"column",       (makepad-script VM,   (backend-       (pure translation)     View{…}/Label{…}/…
  c:[ … ]}           renderer-free)        agnostic)                              │
                                                                                  ▼
-                                                          makepad `Splash` widget .set_text() → live native widgets
+                                                          host main VM → View → Splash.view → live native widgets
 ```
 
-- **`crates/octoscript-render`**：与后端无关的核心。在 makepad-script VM 中对 Octoscript DSL 求值，并遍历生成 `UiNode` 树。只依赖 `makepad-script`，有单元测试。
+- **`crates/octoscript-node`**：无依赖的 `UiNode`/`Attrs` 数据模型，供各渲染后端共享。
+- **`crates/octoscript-render`**：与后端无关的核心。在 makepad-script VM 中对 Octoscript DSL 求值，并遍历生成 `UiNode` 树。依赖 `makepad-script`、便携节点模型与 `serde_json`，不依赖 platform/draw/widgets；有单元测试。
 - **`crates/octoscript-makepad`**：makepad 后端。`to_makepad_ui(&UiNode) -> String` 把这棵树转换成 makepad 的 `View{}/Label{}/…` 方言。纯函数，有单元测试，构建和测试都不需要 makepad-platform/draw。
 - **`crates/octoscript-widgets`**：**主题化原生控件套件**（目前是 Material 3，之后是 iOS / liquid-glass），以**外部 `script_mod!` 变体的形式扩展 makepad 控件**（见下文*无需 fork 的主题化*）。
 - **`crates/makepad-d3`**：**以原生控件实现的 d3 语法**（比例尺、形状、布局、层级、地理、3D），在 VM 中注册到 `mod.d3.*` 下。于 2026-08-09 连同提交历史一起并入（原为 `mofa-org/makepad-d3`）。
@@ -65,11 +69,15 @@ makepad 的原生控件（复选框、开关、单选、滑块、文本框）由
 
 每个新主题只是在 `octoscript-widgets` 中多加一些变体，再加一个 `.octoscript` 组件库，不需要为每个主题 fork 一次 makepad。
 
-### 唯一一个上游 PR
+### 当前的挂载方式
 
-基于上游构建并运行 `kit-host` 时，只暴露出**一处**上游缺少的东西：**`Splash` 在主 VM 上挂载的选项**。上游的 `Splash` 总是分配一个 *isolate* VM（`alloc_splash_vm_with_network(allow_net)`），但浅色主题和共享堆都位于应用的**主** VM 上。修复方法是本项目的 fork 在 `widgets/src/splash.rs` 中新增的一个小字段 `isolate: false`；把它合入上游后，受信任的、由应用生成的套件就能挂载到主 VM 上（主题正确，也不会出现 isolate 堆上的 animator panic）。在此之前，套件挂载在 isolate 上（默认深色主题）。这是*唯一*需要的上游改动；其他一切都可以直接基于上游 `dev` 运行。
+`kit-host::App::mount` 与 `beauty-host::App::mount_request` 通过 `cx.with_vm`
+在宿主的**主 VM** 上求值生成的控件源码，构建 `View` 后赋给 `Splash.view`。
+字体与主题控件因此位于同一个 VM；这两个宿主当前不通过 `Splash::set_text` 挂载。
 
-以上记录来自 `kit-host` 初建时期。现在本工作区基于 `runtime.json` 锁定的 `OctoSense-org/makepad` 版本（`e29a0eaa`）构建；该版本的 `Splash` 没有 `isolate` 字段，所以套件挂载在 isolate 上。
+早期记录中的 isolate 挂载和拟议的 `isolate: false` 字段不是当前前提。
+锁定的 Makepad 没有该字段，但宿主已经自行实现主 VM 挂载。复制旧示例前请读
+[源码导读](docs/architecture-walkthrough.md)；其他消费者仍需单独核对挂载路径。
 
 ## OctoSense 应用的共享运行时
 
@@ -87,16 +95,13 @@ makepad 的原生控件（复选框、开关、单选、滑块、文本框）由
 
 `cargo test --release -p octoscript-node -p octoscript-render -p octoscript-makepad` 检查可移植的渲染管线和组件契约。
 
-## 状态
+## 状态与验证范围
 
-以下状态记录于 `kit-host` 初建时期，其中的“上游”指当时的上游 Makepad。如今本仓库的所有 crate 都基于 `runtime.json` 中的版本构建。
-
-- ✅ `octoscript-render` + `octoscript-makepad`：可移植渲染管线；**基于上游 `makepad-script` 编译并通过测试**（修订版本 `e1c2164b`），无 fork
-- ✅ **Material 3 套件**：`components/material/catalog.octoscript`，约 35 个组件（按钮、FAB、卡片、纸片、导航栏/导航轨/抽屉、应用栏，以**真正可交互的浮层**实现的对话框/菜单/面板，选择器、标签页、徽标、工具栏），M3 设计令牌（颜色、字号体系 + Medium 字重、形状、海拔、表面色调），Font-Awesome 单色图标，以及真正的动画（环形加载指示器 + 形状变形加载指示器）
-- ✅ `octoscript-widgets`：Material 3 原生控件变体（复选框/开关/单选/滑块/文本框）+ `LoadingMorph`，无需 fork；**基于上游 `makepad-widgets` 编译通过**
-- ✅ **`apps/kit-host`**：通用应用外壳，**基于上游 makepad 构建并运行**（桌面端，约 37 MB 二进制），无需 fork，通过 `octoscript_widgets::widgets_mod` 挂载 Material 套件
-- ⏳ **唯一一个上游 PR：** `Splash` 主 VM 挂载选项（见上文），这是正确渲染浅色主题所需的唯一改动
-- ⏳ **下一步：** 提交该 PR（或者修复 isolate VM 的主题/堆问题，让隔离挂载也能正常工作）；通过 `cargo-makepad` 构建 Android；以 `RippleButton` 变体实现按钮**触摸涟漪**；**iOS** + **liquid-glass** 套件
+源码包含有执行预算的求值器、主题与设计稿翻译器、Material 控件、L0 原生套件、
+图表以及原生目录/预览宿主。当前依赖以 `runtime.json` 为准，不能用早期上游版本
+代替。上文的历史设备观察不代表本次文档修订重新验证了设备；发布前应运行便携
+测试和原生验收。运行目录使用 `cargo run -p kit-host --bin kit-host`；预览宿主还需
+`BEAUTY_REQUEST` JSON 文件提供 card/data 路径和视口尺寸，完整步骤见源码导读。
 
 ## 许可证
 
