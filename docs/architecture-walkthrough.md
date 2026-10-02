@@ -140,7 +140,7 @@ persistent database. L0 `InstanceStore` supplies per-instance UI state. The
 host owns app records, network services and agent integration, and passes
 approved values and capabilities into evaluation. For production app stores and
 peer routing, continue with the
-[OctoSense walkthrough](https://github.com/OctoSense-org/OctoSense/blob/docs/junior-architecture-walkthrough/docs/architecture-walkthrough.md).
+[OctoSense walkthrough](https://github.com/OctoSense-org/OctoSense/blob/c3011a2057ec59738b79466f48ff2ad8d0e60130/docs/architecture-walkthrough.md).
 
 Schedule blocking network requests and model inference outside the Makepad UI
 thread, then send completions back to update state and redraw. The consuming
