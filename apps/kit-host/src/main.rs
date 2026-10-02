@@ -73,12 +73,9 @@ script_mod! {
                         flow: Down
                         show_bg: true
                         draw_bg +: { color: #101417ff }
-                        // Upstream `Splash` always allocates an isolate VM. The
-                        // material kit needs the mount on the app's MAIN VM (light
-                        // theme + shared heap live there), which requires the one
-                        // upstream PR: a `Splash` main-VM-mount option (the
-                        // `isolate: false` field this fork added). Until then the
-                        // kit mounts on an isolate (dark-default theme).
+                        // App::mount evaluates the widget source on the main VM
+                        // and assigns the resulting View to this Splash container,
+                        // keeping the registered fonts and theme on the same heap.
                         host := Splash{ width: Fill, height: Fit }
                     }
                     // Routing signal the mounted kit writes; the app reads it each frame.

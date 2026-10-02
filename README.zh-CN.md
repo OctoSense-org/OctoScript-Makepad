@@ -1,20 +1,20 @@
-# Octoscript-Makepad
+# OctoScript-Makepad
 
 [English](README.md) | 简体中文
 
 > **要开发 OctoSense 应用？** 你不需要在这个仓库里工作。它是所有 OctoSense 外壳和 `card-host` 共同依赖的 UI 运行时；OctoScript-App-Design-Flow 的 `tools/setup-native.py` 会按固定版本把它检出为同级目录 `octoscript-makepad/`。请按 [OctoSense 组织主页](https://github.com/OctoSense-org)给出的顺序阅读：[OctoScript-App-Design-Flow `AGENTS.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/AGENTS.md) → [`flows/README.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/flows/README.md) → [`docs/QUICKSTART.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/docs/QUICKSTART.md)。
 
-面向 **Octoscript DSL → makepad 原生控件**渲染器所构建应用的主题化、跨平台**组件套件**。
+面向 **OctoScript DSL → makepad 原生控件**渲染器所构建应用的主题化、跨平台**组件套件**。
 
-用纯数据形式的 Octoscript DSL 编写一次 UI：它在 makepad-script VM 中求值，被翻译成 makepad 自身的控件方言，并在运行时挂载为**真正的 makepad 原生控件**（支持设备上热重载）。本仓库既存放渲染管线，**也**存放基于这条管线的各套主题组件：目前是 Material 3，**iOS** 和 **liquid-glass** 在计划中。
+用纯数据形式的 OctoScript DSL 编写一次 UI：它在 makepad-script VM 中求值，被翻译成 makepad 自身的控件方言，并在运行时挂载为**真正的 makepad 原生控件**（支持设备上热重载）。本仓库既存放渲染管线，**也**存放基于这条管线的各套主题组件：目前是 Material 3，**iOS** 和 **liquid-glass** 在计划中。
 
-面向初级 Rust 开发者的[源码导读与运行步骤](docs/architecture-walkthrough.md)
+[源码导读与运行步骤](docs/architecture-walkthrough.md)
 说明 L0、设计稿、原生挂载、状态与 agent 的边界；贡献约定见 [AGENTS.md](AGENTS.md)。
 
 ## 渲染管线
 
 ```
-Octoscript DSL  ──►  octoscript-render  ──►  UiNode tree  ──►  octoscript-makepad  ──►  makepad dialect string
+OctoScript DSL  ──►  octoscript-render  ──►  UiNode tree  ──►  octoscript-makepad  ──►  makepad dialect string
 {t:"column",       (makepad-script VM,   (backend-       (pure translation)     View{…}/Label{…}/…
  c:[ … ]}           renderer-free)        agnostic)                              │
                                                                                  ▼
@@ -22,7 +22,7 @@ Octoscript DSL  ──►  octoscript-render  ──►  UiNode tree  ──► 
 ```
 
 - **`crates/octoscript-node`**：无依赖的 `UiNode`/`Attrs` 数据模型，供各渲染后端共享。
-- **`crates/octoscript-render`**：与后端无关的核心。在 makepad-script VM 中对 Octoscript DSL 求值，并遍历生成 `UiNode` 树。依赖 `makepad-script`、便携节点模型与 `serde_json`，不依赖 platform/draw/widgets；有单元测试。
+- **`crates/octoscript-render`**：与后端无关的核心。在 makepad-script VM 中对 OctoScript DSL 求值，并遍历生成 `UiNode` 树。依赖 `makepad-script`、便携节点模型与 `serde_json`，不依赖 platform/draw/widgets；有单元测试。
 - **`crates/octoscript-makepad`**：makepad 后端。`to_makepad_ui(&UiNode) -> String` 把这棵树转换成 makepad 的 `View{}/Label{}/…` 方言。纯函数，有单元测试，构建和测试都不需要 makepad-platform/draw。
 - **`crates/octoscript-widgets`**：**主题化原生控件套件**（目前是 Material 3，之后是 iOS / liquid-glass），以**外部 `script_mod!` 变体的形式扩展 makepad 控件**（见下文*无需 fork 的主题化*）。
 - **`crates/makepad-d3`**：**以原生控件实现的 d3 语法**（比例尺、形状、布局、层级、地理、3D），在 VM 中注册到 `mod.d3.*` 下。于 2026-08-09 连同提交历史一起并入（原为 `mofa-org/makepad-d3`）。
@@ -58,7 +58,7 @@ tools/visual-qa.sh               # screenshot all 108 on the device
 
 ## 无需 fork 的主题化（关键设计点）
 
-makepad 的原生控件（复选框、开关、单选、滑块、文本框）由它们各自的 MPSL 着色器绘制；它们的外观**无法**从 Octoscript DSL 触及。外部 crate **可以**触及，但只有一种方式可行：
+makepad 的原生控件（复选框、开关、单选、滑块、文本框）由它们各自的 MPSL 着色器绘制；它们的外观**无法**从 OctoScript DSL 触及。外部 crate **可以**触及，但只有一种方式可行：
 
 | 机制 | 结果 |
 |---|---|
@@ -89,7 +89,10 @@ makepad 的原生控件（复选框、开关、单选、滑块、文本框）由
 
 ### 原生应用验证
 
-在本工作区中运行 `cargo build --release -p kit-host --bin beauty-host` 进行构建。用 `--remote` 启动独立宿主；自动化流程会设置 `MAKEPAD_HIDE_WINDOWS=1`，并在原生 GPU 后端上使用内置的 HTTP 探测接口。用 `/snap`、输入路由和 `/g` 检查所控制的应用；最后调用 `/gq` 并确认进程已退出。Studio 不属于这个流程。
+先准备并验证上文的锁定依赖。运行组件目录使用
+`cargo run -p kit-host --bin kit-host`。预览宿主使用
+`cargo build --release -p kit-host --bin beauty-host` 构建，并设置 `BEAUTY_REQUEST`
+指向包含 card/data 文件路径和视口尺寸的 JSON；完整步骤见[源码导读](docs/architecture-walkthrough.md)。用 `--remote` 启动独立宿主；自动化流程会设置 `MAKEPAD_HIDE_WINDOWS=1`，并在原生 GPU 后端上使用内置的 HTTP 探测接口。用 `/snap`、输入路由和 `/g` 检查所控制的应用；最后调用 `/gq` 并确认进程已退出。Studio 不属于这个流程。
 
 宿主接受经过测量的 AppCard 设计和 L0 卡片，在重新挂载时保留文本选区和滚动状态，并在导航时回收平台 WebView。在 macOS 上，它的自定义事件探针会暴露所控制 WebView 的内容、滚动范围、快照和生命周期，供应用验收检查使用。
 
@@ -98,10 +101,8 @@ makepad 的原生控件（复选框、开关、单选、滑块、文本框）由
 ## 状态与验证范围
 
 源码包含有执行预算的求值器、主题与设计稿翻译器、Material 控件、L0 原生套件、
-图表以及原生目录/预览宿主。当前依赖以 `runtime.json` 为准，不能用早期上游版本
-代替。上文的历史设备观察不代表本次文档修订重新验证了设备；发布前应运行便携
-测试和原生验收。运行目录使用 `cargo run -p kit-host --bin kit-host`；预览宿主还需
-`BEAUTY_REQUEST` JSON 文件提供 card/data 路径和视口尺寸，完整步骤见源码导读。
+图表以及原生目录/预览宿主。当前依赖以 [runtime.json](runtime.json) 为准。
+上文设备结果早于当前锁定版本；发布前请重新运行便携测试和原生验收。
 
 ## 许可证
 

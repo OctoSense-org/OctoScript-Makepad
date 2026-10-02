@@ -1,21 +1,21 @@
-# Octoscript-Makepad
+# OctoScript-Makepad
 
 English | [简体中文](README.zh-CN.md)
 
 > **Building an OctoSense app?** You do not need to work in this repository. It is the shared UI runtime every OctoSense shell and `card-host` build against; `tools/setup-native.py` in OctoScript-App-Design-Flow checks it out for you as the sibling `octoscript-makepad/` at the pinned revision. Start from the [OctoSense organization profile](https://github.com/OctoSense-org)'s reading order: [OctoScript-App-Design-Flow `AGENTS.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/AGENTS.md) → [`flows/README.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/flows/README.md) → [`docs/QUICKSTART.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/docs/QUICKSTART.md).
 
-Themed, cross-platform **component kits** for apps built on the **Octoscript DSL → makepad native-widget** renderer.
+Themed, cross-platform **component kits** for apps built on the **OctoScript DSL → makepad native-widget** renderer.
 
-Author a UI once as plain-data Octoscript DSL; it is evaluated in the makepad-script VM, translated to makepad's own widget dialect, and mounted as **real native makepad widgets** at runtime (with on-device hot reload). This repo is the home for the render pipeline **and** the themed component sets that ride on it — Material 3 today; **iOS** and **liquid-glass** planned.
+Author a UI once as plain-data OctoScript DSL; it is evaluated in the makepad-script VM, translated to makepad's own widget dialect, and mounted as **real native makepad widgets** at runtime (with on-device hot reload). This repo is the home for the render pipeline **and** the themed component sets that ride on it — Material 3 today; **iOS** and **liquid-glass** planned.
 
 For a source-by-source introduction and runnable examples, read the
-[junior Rust code walkthrough](docs/architecture-walkthrough.md). Contributor
+[code walkthrough](docs/architecture-walkthrough.md). Contributor
 guidance is in [AGENTS.md](AGENTS.md).
 
 ## The pipeline
 
 ```
-Octoscript DSL  ──►  octoscript-render  ──►  UiNode tree  ──►  octoscript-makepad  ──►  makepad dialect string
+OctoScript DSL  ──►  octoscript-render  ──►  UiNode tree  ──►  octoscript-makepad  ──►  makepad dialect string
 {t:"column",       (makepad-script VM,   (backend-       (pure translation)     View{…}/Label{…}/…
  c:[ … ]}           renderer-free)        agnostic)                              │
                                                                                  ▼
@@ -23,7 +23,7 @@ Octoscript DSL  ──►  octoscript-render  ──►  UiNode tree  ──► 
 ```
 
 - **`crates/octoscript-node`** — dependency-free `UiNode`/`Attrs` model shared by render backends.
-- **`crates/octoscript-render`** — backend-agnostic core: evaluates the Octoscript DSL in the makepad-script VM and walks it into a `UiNode` tree. Depends on `makepad-script`, the portable node model and `serde_json`; it has no platform/draw/widgets dependency. Unit-tested.
+- **`crates/octoscript-render`** — backend-agnostic core: evaluates the OctoScript DSL in the makepad-script VM and walks it into a `UiNode` tree. Depends on `makepad-script`, the portable node model and `serde_json`; it has no platform/draw/widgets dependency. Unit-tested.
 - **`crates/octoscript-makepad`** — the makepad backend: `to_makepad_ui(&UiNode) -> String` turns the tree into makepad's `View{}/Label{}/…` dialect. Pure, unit-tested — no makepad-platform/draw needed to build or test.
 - **`crates/octoscript-widgets`** — the **themed native-widget kits** (Material 3 now; iOS / liquid-glass later), as **external `script_mod!` variants of makepad's widgets** (see *Fork-free theming* below).
 - **`crates/makepad-d3`** — the **d3 grammar as native widgets** (scales, shapes, layouts, hierarchies, geo, 3D), registered into the VM under `mod.d3.*`. Grafted in with its history 2026-08-09 (was `mofa-org/makepad-d3`).
@@ -73,7 +73,7 @@ because the `Splash` isolate resolves `ui` against its own view root, the
 
 ## Fork-free theming (the key design point)
 
-makepad's native controls — checkbox, switch, radio, slider, text field — are drawn by their own MPSL shaders; their look is **not** reachable from the Octoscript DSL. It **is** reachable from an external crate, but only one way works:
+makepad's native controls — checkbox, switch, radio, slider, text field — are drawn by their own MPSL shaders; their look is **not** reachable from the OctoScript DSL. It **is** reachable from an external crate, but only one way works:
 
 | Mechanism | Result |
 |---|---|
@@ -141,10 +141,8 @@ checks the portable render pipeline and component contracts.
 
 The source includes checked evaluation, themed and measured-design translation,
 Material widgets, L0 native kits, chart widgets, and native catalog/preview
-hosts. Current pins are in `runtime.json`; old upstream bring-up revisions are
-not the build contract. The catalog's historical device observations above are
-not a new device verification of this checkout. Run the portable tests and
-native acceptance workflow for the revision you intend to ship.
+hosts. Current pins are in [runtime.json](runtime.json). Device results above
+predate the current pins; rerun portable tests and native acceptance before shipping.
 
 ## License
 
