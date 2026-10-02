@@ -1,102 +1,173 @@
 # Code walkthrough: from app source to native widgets
 
-[runtime.json](../runtime.json) selects Makepad and OctoScript revisions;
-[Cargo.toml](../Cargo.toml) declares the crates and sibling overrides. Check the
-consuming app's runtime lock before changing its framework checkout.
+OctoSense is a shell that hosts apps. Octos runs their agents. This repository
+turns UI descriptions into native Makepad widgets. Follow a small text label
+through that process first, then use the later sections for L0 cards, previews
+and application state.
 
 ## What this repository runs
 
-OctoSense is a shell that hosts apps. Octos is the agent kernel. This repository
-is the shared UI renderer. Agents, network access and storage come from the
-host's adapters and grants.
-
 A native Rust application is compiled into a binary with Makepad widgets and
 Rust event handlers. An OctoScript app supplies source and data to such a host;
-the host evaluates it and mounts native widgets. Both end up on Makepad's UI
-event loop.
+the host evaluates it and mounts native widgets. Both use Makepad's UI event
+loop. Agents, network access and storage come from the host's adapters and grants.
 
-There are distinct source paths:
+A **DSL** is a language designed for a particular task; here it describes a UI.
+The plain-data DSL represents each element as an object with a tag (`t`),
+attributes such as `text`, and optional children (`c`). A **VM**, or virtual
+machine, evaluates that source. The renderer converts its result into ordinary
+Rust data before a backend creates widget source.
+
+<a id="read-the-code-in-this-order"></a>
+
+## Follow one label from source to screen
+
+This illustrative Rust fragment uses the public renderer APIs. It was checked
+against the source and an existing test, but has not been executed here. It
+needs no host capabilities:
+
+```rust
+let source = r#"{t:"text", text:"Hello", h:28}"#;
+let tree = octoscript_render::build(source, |_| {}).expect("valid UI source");
+assert_eq!(tree.kind, octoscript_node::NodeKind::Text);
+assert_eq!(tree.attrs.text.as_deref(), Some("Hello"));
+let widget_source = octoscript_makepad::to_makepad_ui(&tree);
+```
+
+1. **Evaluate the source.** In [eval.rs](../crates/octoscript-render/src/eval.rs),
+   `build` creates a fresh `ScriptVm` and evaluates the object. Its `walk_inner`
+   function reads `t` as the node kind, `text` as an attribute, and `h` as height.
+   The result is a `UiNode` with kind `Text`, text `Hello`, height `28` and no
+   children. The [node model](../crates/octoscript-node/src/node.rs) is portable
+   Rust data with no renderer dependency.
+2. **Translate the tree.** In [lib.rs](../crates/octoscript-makepad/src/lib.rs),
+   `to_makepad_ui` clones the tree, expands marks for AI-authored text, resolves
+   text contrast, then emits widget source. `widget_name` maps `Text` to `Label`;
+   `emit_attrs` writes the text property. The `Label` portion is shown below;
+   surrounding layout and generated font properties are omitted:
+
+   ```text
+   Label {
+       text: "Hello"
+   }
+   ```
+
+3. **Mount the widgets.** The string still needs a native host. In the
+   [catalog host](../apps/kit-host/src/main.rs), `App::mount` evaluates generated
+   widget source on the app's **main VM** through `cx.with_vm`, then assigns the
+   resulting `View` to `Splash.view`. Splash is the container that displays it.
+   The earlier evaluation built a data tree; this evaluation creates the live UI.
+4. **Handle the next action.** `handle_actions` and `handle_event` receive UI
+   actions, update Rust-held state and remount the UI when needed. The host
+   supplies the current values again because each `build` uses a fresh VM.
+   Rendering once does not subscribe the label to a database.
+
+For a larger version of this path, read `column_of_text_becomes_view_with_label`
+in the [translator tests](../crates/octoscript-makepad/src/lib.rs). It checks
+that a styled column emits a `RoundedView` containing a `Label` and the
+expected text.
+
+## Where L0 cards and measured designs enter
+
+An **L0 card** is a checked UI description that can refer to app data and
+instance state. **Realization** checks those references against the supplied
+values and produces a complete card tree. **Lowering** converts that tree into
+the more detailed UI source needed by a rendering backend. A **kit** supplies
+the component definitions and styling used during that conversion.
 
 | Input | Entry point | Output |
 | --- | --- | --- |
-| Plain-data UI DSL, such as `{t:"text", text:"Hello"}` | `octoscript_render::build` | Portable `UiNode` tree |
+| Plain-data UI DSL, as in the label above | `octoscript_render::build` | Portable `UiNode` tree |
 | L0 card, data and optional instance state | `octoscript_makepad::l0::prepare_with_state` | Realized and lowered source plus `UiNode` |
-| Source-measured design | `octoscript_makepad::design::prepare` | Checked `UiNode`, preserving explicit geometry |
+| Design source with explicit positions and sizes | `octoscript_makepad::design::prepare` | Checked `UiNode`, preserving that geometry |
 | `UiNode` | `to_makepad_ui`, `to_makepad_l0_ui`, or `design::to_makepad_ui` | Makepad widget source for a host to mount |
 
-`design::to_makepad_ui` preserves
-measured geometry and validates semantic kit bindings; the themed translation
-applies its own widget mapping. Native L0 kits choose the design path internally.
+In [l0.rs](../crates/octoscript-makepad/src/l0.rs), `prepare_with_state` calls
+`realize_with_state`, then `complete_root` refuses incomplete output. Preparation
+then takes one of two paths:
 
-## Read the code in this order
+- Native kit components load `native/<mood>/kit.json`. `kit_pack::lower` produces
+  design source, and `design::prepare` builds its tree.
+- Other components load the palette, theme choices such as radius and density
+  (the code calls these **theme axes**), helpers that derive style values, and
+  `_kit.octoscript`. The assembled source is then evaluated into a tree.
 
-1. [Workspace manifest](../Cargo.toml) and [runtime lock](../runtime.json): one
-   Makepad source set and one OctoScript L0 revision. The sibling patches are
-   intentional. Two Makepad copies can produce incompatible Rust types and
-   separate VM heaps; matching package names alone does not make them one crate.
-2. [Node model](../crates/octoscript-node/src/node.rs): `UiNode` contains a
-   `NodeKind`, optional `Attrs`, and child nodes. This crate has no dependencies.
-   It is the portable data boundary between backends. The same crate contains
-   [ai.rs](../crates/octoscript-node/src/ai.rs), which expands AI-authored text
-   marks; [state.rs](../crates/octoscript-node/src/state.rs), which provides
-   numeric widget state; and [units.rs](../crates/octoscript-node/src/units.rs),
-   which implements shared unit conversions.
-3. [Evaluator](../crates/octoscript-render/src/eval.rs): `build` creates a fresh
-   `ScriptVm`, lets the host register capabilities, installs pure L0 helpers,
-   calls `eval_checked` with an instruction budget, and walks the returned
-   object into the tree. Unknown tags, bad children and exhausted depth/node
-   budgets fail the whole build (`None`). The limits come from `octoscript_node`:
-   2,000,000 evaluation instructions, depth 128 and 65,536 nodes. The host
-   supplies state on each evaluation because `build` creates a fresh VM.
-4. [L0 preparation](../crates/octoscript-makepad/src/l0.rs):
-   `realize_with_state` checks the card against data and state, then `complete_root`
-   refuses incomplete output. Native kit components load `native/<mood>/kit.json`
-   and use `kit_pack::lower` plus `design::prepare`. The other path loads the
-   palette, ordered theme axes, derivation helpers and `_kit.octoscript`, then
-   evaluates the lowered source with explicit host data. `PreparedCard.native_components` tells the host which renderer
-   to use. `realize_with_state`, `InstanceStore` and `kit_pack` belong to the
-   external `octoscript-ui-l0` crate in the
-   [OctoScript repository](https://github.com/OctoSense-org/Octoscript/tree/main/crates/octoscript-ui-l0);
-   use this workspace's runtime lock to select its source revision.
-5. [Translation](../crates/octoscript-makepad/src/lib.rs) and
-   [design translation](../crates/octoscript-makepad/src/design.rs):
-   `to_makepad_ui` and the L0 translation path clone the tree, run
-   `ai::expand_ai_marks` to place visible marks beside AI-authored text, resolve
-   ink contrast, then emit Makepad widget source. The AI-mark pass is
-   idempotent. The measured-design translator has its own emission path.
-   `to_makepad_l0_ui_with_events` provides a
-   host-selected event channel; the host is responsible for handling events,
-   updating state and data, and deciding when to render again.
-6. [Native themes](../crates/octoscript-widgets/src/lib.rs): compiled
-   `script_mod!` modules register themed widgets and their compiled shaders.
-   [makepad-d3](../crates/makepad-d3/README.md) and
-   [makepad-plot](../crates/makepad-plot/README.md) provide chart widgets,
-   registered under `mod.d3.*` and `mod.plot.*` on the same Makepad source set.
-7. [Catalog host](../apps/kit-host/src/main.rs): `App::mount` builds source from
-   the route and Rust-held state, evaluates it, translates the tree, evaluates
-   the widget source on the app's **main VM** with `cx.with_vm`, and assigns the
-   resulting `View` to `Splash.view`. `handle_actions` and `handle_event` turn UI
-   actions into updates and remounts. Its initial tree evaluation uses the
-   checked renderer, but final widget-source evaluation uses
-   `eval_with_append_source`, without an explicit instruction budget.
-8. [Preview host](../apps/kit-host/src/beauty.rs): `mount_request` reads the
-   `BEAUTY_REQUEST` JSON file, prepares a design or L0 card, assigns inspectable
-   IDs, builds a `View` using `eval_checked(sm, 2_000_000)` on the main VM,
-   and replaces `Splash.view`. It retains the old view through replacement drawing, retires
-   overlays and WebViews, and restores focus, selection and scroll state.
+`PreparedCard.native_components` tells the host which translator to use.
+`realize_with_state`, `InstanceStore` and `kit_pack` belong to the external
+`octoscript-ui-l0` crate in the
+[OctoScript repository](https://github.com/OctoSense-org/Octoscript/tree/main/crates/octoscript-ui-l0).
+This workspace's [runtime lock](../runtime.json) selects that crate's revision.
 
-Both hosts use Splash as a container for a main-VM `View`; their mounting
-paths differ in final evaluation budgets as described above.
+The [design translator](../crates/octoscript-makepad/src/design.rs) preserves
+explicit geometry. It also checks **semantic kit bindings**: mappings from a
+component's role, such as an input field, to the actual child widget that fills
+that role. For example, `kit_contract` requires an `input` binding to name a
+native `TextInput`. This lets a styled component retain real input behavior.
+
+The regular and L0 translators both expand AI text marks before resolving
+contrast and emitting source; expanding the marks again does not duplicate
+them. The measured-design translator has its own emission path. For L0 events,
+`to_makepad_l0_ui_with_events` embeds a host-selected event channel. The host
+handles the events, updates data and state, and decides when to render again.
+
+## Runtime limits and native host details
+
+The two evaluation stages have separate limits:
+
+| Stage | Behavior |
+| --- | --- |
+| Source → `UiNode` through `build` | `eval_checked` allows 2,000,000 instructions. Tree walking allows depth 128 and 65,536 nodes. Evaluation errors, unknown tags, malformed children or exhausted limits fail the whole build with `None`. |
+| Widget source → live UI in catalog `kit-host` | Uses `eval_with_append_source` on the main VM, without an explicit instruction budget. |
+| Widget source → live UI in preview `beauty-host` | Uses `eval_checked(sm, 2_000_000)` on the main VM. |
+
+The [preview host](../apps/kit-host/src/beauty.rs) adds inspection and replacement
+handling around the normal rendering steps. `mount_request` reads the
+`BEAUTY_REQUEST` JSON file, prepares a design or L0 card, assigns inspectable IDs,
+and replaces `Splash.view`. It retains the old view through replacement drawing,
+retires overlays and WebViews, and restores focus, selection and scroll state.
+
+[Native themes](../crates/octoscript-widgets/src/lib.rs) register compiled widgets
+and shaders through `script_mod!` modules.
+[makepad-d3](../crates/makepad-d3/README.md) and
+[makepad-plot](../crates/makepad-plot/README.md) add chart widgets under `mod.d3.*`
+and `mod.plot.*`. The node crate also supplies
+[AI text marks](../crates/octoscript-node/src/ai.rs),
+[numeric widget state](../crates/octoscript-node/src/state.rs) and
+[unit conversions](../crates/octoscript-node/src/units.rs).
+
+Keep the source set consistent when building a host.
+[runtime.json](../runtime.json) selects Makepad and OctoScript revisions;
+[Cargo.toml](../Cargo.toml) declares the crates and sibling overrides. Two
+Makepad copies can create incompatible Rust types and separate VM heaps.
+Check a consuming app's runtime lock before changing its framework checkout.
 
 ## Run the framework examples
 
+The commands below are source-checked recipes. Their build, GUI and device
+execution is **unverified** in this documentation pass.
+
 Run from this repository after installing Rust, Cargo and Makepad's native
-build prerequisites. Dependency preparation uses Git and network access.
+build prerequisites. First prepare and check the dependencies; preparation uses
+Git and network access.
 
 ```sh
 python3 tools/runtime.py prepare
 python3 tools/runtime.py verify --cargo-manifest Cargo.toml
 cargo test --release -p octoscript-node -p octoscript-render -p octoscript-makepad
+```
+
+To inspect generated widget source without opening a window, run the
+[translate example](../crates/octoscript-makepad/examples/translate.rs). It uses
+a built-in sample; append `-- /absolute/path/example.octoscript` to read your
+own source instead.
+
+```sh
+cargo run -p octoscript-makepad --example translate
+```
+
+Choose a native viewer below. Each command runs until you close that viewer:
+
+```sh
 cargo run -p kit-host --bin kit-host
 SPLASH_ROUTE=l0/weather cargo run -p kit-host --bin kit-host
 cargo run -p flutter-samples

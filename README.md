@@ -8,9 +8,10 @@ Themed, cross-platform **component kits** for apps built on the **OctoScript DSL
 
 Author a UI once as plain-data OctoScript DSL; it is evaluated in the makepad-script VM, translated to makepad's own widget dialect, and mounted as **real native makepad widgets** at runtime (with on-device hot reload). This repo is the home for the render pipeline **and** the themed component sets that ride on it — Material 3 today; **iOS** and **liquid-glass** planned.
 
-For a source-by-source introduction and runnable examples, read the
-[code walkthrough](docs/architecture-walkthrough.md). Contributor
-guidance is in [AGENTS.md](AGENTS.md).
+Follow a text label from source to native widgets in the
+[code walkthrough](docs/architecture-walkthrough.md), then explore L0 cards,
+preview commands, state and agent boundaries. Contributor guidance is in
+[AGENTS.md](AGENTS.md).
 
 ## The pipeline
 

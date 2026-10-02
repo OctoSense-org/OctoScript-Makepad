@@ -8,8 +8,8 @@
 
 用纯数据形式的 OctoScript DSL 编写一次 UI：它在 makepad-script VM 中求值，被翻译成 makepad 自身的控件方言，并在运行时挂载为**真正的 makepad 原生控件**（支持设备上热重载）。本仓库既存放渲染管线，**也**存放基于这条管线的各套主题组件：目前是 Material 3，**iOS** 和 **liquid-glass** 在计划中。
 
-[源码导读与运行步骤](docs/architecture-walkthrough.md)
-说明 L0、设计稿、原生挂载、状态与 agent 的边界；贡献约定见 [AGENTS.md](AGENTS.md)。
+[源码导读与运行步骤](docs/architecture-walkthrough.md)先用一个文本标签说明源码如何变成原生控件，
+再介绍 L0 卡片、预览命令、状态与 agent 的边界。贡献约定见 [AGENTS.md](AGENTS.md)。
 
 ## 渲染管线
 
