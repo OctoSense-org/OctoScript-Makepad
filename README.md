@@ -1,24 +1,30 @@
-# Octoscript-Makepad
+# OctoScript-Makepad
 
 English | [简体中文](README.zh-CN.md)
 
 > **Building an OctoSense app?** You do not need to work in this repository. It is the shared UI runtime every OctoSense shell and `card-host` build against; `tools/setup-native.py` in OctoScript-App-Design-Flow checks it out for you as the sibling `octoscript-makepad/` at the pinned revision. Start from the [OctoSense organization profile](https://github.com/OctoSense-org)'s reading order: [OctoScript-App-Design-Flow `AGENTS.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/AGENTS.md) → [`flows/README.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/flows/README.md) → [`docs/QUICKSTART.md`](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/docs/QUICKSTART.md).
 
-Themed, cross-platform **component kits** for apps built on the **Octoscript DSL → makepad native-widget** renderer.
+Themed, cross-platform **component kits** for apps built on the **OctoScript DSL → makepad native-widget** renderer.
 
-Author a UI once as plain-data Octoscript DSL; it is evaluated in the makepad-script VM, translated to makepad's own widget dialect, and mounted as **real native makepad widgets** at runtime (with on-device hot reload). This repo is the home for the render pipeline **and** the themed component sets that ride on it — Material 3 today; **iOS** and **liquid-glass** planned.
+Author a UI once as plain-data OctoScript DSL; it is evaluated in the makepad-script VM, translated to makepad's own widget dialect, and mounted as **real native makepad widgets** at runtime (with on-device hot reload). This repo is the home for the render pipeline **and** the themed component sets that ride on it — Material 3 today; **iOS** and **liquid-glass** planned.
+
+Follow a text label from source to native widgets in the
+[code walkthrough](docs/architecture-walkthrough.md), then explore L0 cards,
+preview commands, state and agent boundaries. Contributor guidance is in
+[AGENTS.md](AGENTS.md).
 
 ## The pipeline
 
 ```
-Octoscript DSL  ──►  octoscript-render  ──►  UiNode tree  ──►  octoscript-makepad  ──►  makepad dialect string
+OctoScript DSL  ──►  octoscript-render  ──►  UiNode tree  ──►  octoscript-makepad  ──►  makepad dialect string
 {t:"column",       (makepad-script VM,   (backend-       (pure translation)     View{…}/Label{…}/…
  c:[ … ]}           renderer-free)        agnostic)                              │
                                                                                  ▼
-                                                          makepad `Splash` widget .set_text() → live native widgets
+                                                          host main VM → View → Splash.view → live native widgets
 ```
 
-- **`crates/octoscript-render`** — backend-agnostic core: evaluates the Octoscript DSL in the makepad-script VM and walks it into a `UiNode` tree. Depends only on `makepad-script`. Unit-tested.
+- **`crates/octoscript-node`** — dependency-free `UiNode`/`Attrs` model shared by render backends.
+- **`crates/octoscript-render`** — backend-agnostic core: evaluates the OctoScript DSL in the makepad-script VM and walks it into a `UiNode` tree. Depends on `makepad-script`, the portable node model and `serde_json`; it has no platform/draw/widgets dependency. Unit-tested.
 - **`crates/octoscript-makepad`** — the makepad backend: `to_makepad_ui(&UiNode) -> String` turns the tree into makepad's `View{}/Label{}/…` dialect. Pure, unit-tested — no makepad-platform/draw needed to build or test.
 - **`crates/octoscript-widgets`** — the **themed native-widget kits** (Material 3 now; iOS / liquid-glass later), as **external `script_mod!` variants of makepad's widgets** (see *Fork-free theming* below).
 - **`crates/makepad-d3`** — the **d3 grammar as native widgets** (scales, shapes, layouts, hierarchies, geo, 3D), registered into the VM under `mod.d3.*`. Grafted in with its history 2026-08-09 (was `mofa-org/makepad-d3`).
@@ -68,7 +74,7 @@ because the `Splash` isolate resolves `ui` against its own view root, the
 
 ## Fork-free theming (the key design point)
 
-makepad's native controls — checkbox, switch, radio, slider, text field — are drawn by their own MPSL shaders; their look is **not** reachable from the Octoscript DSL. It **is** reachable from an external crate, but only one way works:
+makepad's native controls — checkbox, switch, radio, slider, text field — are drawn by their own MPSL shaders; their look is **not** reachable from the OctoScript DSL. It **is** reachable from an external crate, but only one way works:
 
 | Mechanism | Result |
 |---|---|
@@ -79,13 +85,18 @@ The `script_mod!` macro compiles the MPSL at build time; a runtime string never 
 
 Each new theme is just more variants in `octoscript-widgets` + a `.octoscript` component library — no makepad fork per theme.
 
-### The one upstream PR
+### Current mount ownership
 
-Building + running the `kit-host` against upstream surfaced exactly **one** thing upstream doesn't have: a **`Splash` main-VM-mount option**. Upstream's `Splash` always allocates an *isolate* VM (`alloc_splash_vm_with_network(allow_net)`), but the light theme and a shared heap live on the app's **main** VM. The fix is the small `isolate: false` field this project's fork added to `widgets/src/splash.rs` — upstreaming it lets a trusted, app-generated kit mount on the main VM (correct theme, no isolate-heap animator panics). Until then the kit mounts on an isolate (dark-default theme). That is the *only* upstream change needed; everything else runs against upstream `dev` as-is.
+`kit-host::App::mount` and `beauty-host::App::mount_request` evaluate the generated
+widget source on the host's **main VM** using `cx.with_vm`, construct a `View`,
+and assign it to `Splash.view`. This keeps registered fonts and themed widgets
+in the same VM. They do not currently mount through `Splash::set_text`.
 
-These notes date from the `kit-host` bring-up. The workspace now builds against the
-`OctoSense-org/makepad` revision locked in `runtime.json` (`e29a0eaa`); that `Splash` has
-no `isolate` field, so the kit mounts on an isolate.
+Older bring-up notes described an isolate mount and a proposed `isolate: false`
+field. The pinned Makepad has no such field, but these hosts no longer depend
+on that proposal: the current main-VM mount is implemented in the hosts. See
+[the walkthrough](docs/architecture-walkthrough.md) before copying an older
+mount recipe. Other consumers can choose a different mount path.
 
 ## Shared runtime for OctoSense apps
 
@@ -109,7 +120,11 @@ resolved Cargo graph.
 
 ### Native application validation
 
-Build `cargo build --release -p kit-host --bin beauty-host` from this workspace.
+Prepare and verify the pinned siblings as described above. To open the catalog,
+run `cargo run -p kit-host --bin kit-host`. For a preview, build
+`cargo build --release -p kit-host --bin beauty-host` from this workspace.
+Set `BEAUTY_REQUEST` to a request JSON file containing card/data paths and
+viewport dimensions; see the [complete recipe](docs/architecture-walkthrough.md).
 Launch the standalone host with `--remote`; automation sets
 `MAKEPAD_HIDE_WINDOWS=1` and uses the built-in HTTP instrument on the native GPU
 backend. Use `/snap`, input routes and `/g` to inspect the owned application;
@@ -123,16 +138,12 @@ extent, snapshot and lifecycle for application acceptance checks.
 `cargo test --release -p octoscript-node -p octoscript-render -p octoscript-makepad`
 checks the portable render pipeline and component contracts.
 
-## Status
+## Status and validation scope
 
-Status as of the `kit-host` bring-up; "upstream" below means upstream Makepad at that time. Today every crate here builds against the revisions in `runtime.json`.
-
-- ✅ `octoscript-render` + `octoscript-makepad` — portable render pipeline; **compile + test against upstream `makepad-script`** (rev `e1c2164b`), no fork
-- ✅ **Material 3 kit** — `components/material/catalog.octoscript`: ~35 components (buttons, FABs, cards, chips, nav bar/rail/drawer, app bars, dialog/menu/sheets as **real interactive overlays**, pickers, tabs, badges, toolbars), M3 tokens (colour, type scale + Medium weight, shape, elevation, surface tones), Font-Awesome monochrome icons, and real animation (circular spinner + shape-morph loading indicator)
-- ✅ `octoscript-widgets` — Material 3 native-control variants (checkbox/switch/radio/slider/text field) + `LoadingMorph`, fork-free; **compiles against upstream `makepad-widgets`**
-- ✅ **`apps/kit-host`** — generic app shell that **builds + runs against upstream makepad** (desktop, ~37 MB binary), fork-free, mounting the Material kit via `octoscript_widgets::widgets_mod`
-- ⏳ **The one upstream PR:** the `Splash` main-VM-mount option (see above) — the single change needed for correct light-theme rendering
-- ⏳ **Next:** that PR (or an isolate-VM theme/heap fix so the mount works isolated); Android build via `cargo-makepad`; Button **touch-ripple** as a `RippleButton` variant; **iOS** + **liquid-glass** kits
+The source includes checked evaluation, themed and measured-design translation,
+Material widgets, L0 native kits, chart widgets, and native catalog/preview
+hosts. Current pins are in [runtime.json](runtime.json). Device results above
+predate the current pins; rerun portable tests and native acceptance before shipping.
 
 ## License
 
