@@ -428,7 +428,19 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                 } else if single_line {
                     // A single Sketch line must not wrap a whole word because
                     // native font advances differ by a fraction of a point.
-                    writeln!(out, "flow: Right").unwrap();
+                    // A line that fills its width cannot know how long its
+                    // text will be (a reusable row binds a title of any
+                    // length), so it ends in an ellipsis when it overflows. A
+                    // measured line keeps its measured box and clips as before.
+                    if a.fillw == Some(1) {
+                        writeln!(
+                            out,
+                            "flow: Right max_lines: 1 text_overflow: TextOverflow.Ellipsis"
+                        )
+                        .unwrap();
+                    } else {
+                        writeln!(out, "flow: Right").unwrap();
+                    }
                 }
                 // Use real font metrics and a measured line height. The
                 // bundled families' natural line box is supplied by importer.
@@ -736,6 +748,18 @@ mod tests {
         assert!(!paragraph.contains("flow: Right"), "{paragraph}");
         let line = lower(format!("{{t:\"text\" text:\"A\" w:40 h:20 {font}}}"));
         assert!(line.contains("flow: Right"), "{line}");
+    }
+
+    #[test]
+    fn a_filled_single_line_ends_in_an_ellipsis() {
+        let font = r#"size:14 line_height:20 font_src:"self:resources/Inter.ttf""#;
+        let lower = |source: String| to_makepad_ui(&prepare(&source).unwrap()).unwrap();
+        let filled = lower(format!("{{t:\"text\" text:\"A\" w:4 h:20 fillw:1 {font}}}"));
+        let ellipsis = "flow: Right max_lines: 1 text_overflow: TextOverflow.Ellipsis\n";
+        assert!(filled.contains(ellipsis), "{filled}");
+        let measured = lower(format!("{{t:\"text\" text:\"A\" w:40 h:20 {font}}}"));
+        assert!(measured.contains("flow: Right\n"), "{measured}");
+        assert!(!measured.contains("max_lines"), "{measured}");
     }
 
     #[test]
