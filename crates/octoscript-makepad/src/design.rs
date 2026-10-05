@@ -186,6 +186,25 @@ impl Frame {
 }
 
 pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
+    lower(tree, None)
+}
+
+/// [`to_makepad_ui`] for a tree mounted in a slot of a larger UI, rather
+/// than as the whole window.
+///
+/// makepad places a widget with `abs_pos` at that position as given, not
+/// relative to its parent. That suits a tree that is the window, as in
+/// beauty-host, but a tree mounted anywhere else would be drawn as if its
+/// slot were at the window origin, and the slot's clip would discard it.
+/// Here the root and every node below it are placed by margins relative to
+/// their parents instead, so the tree lays out the same inside the slot.
+pub fn to_makepad_ui_in_slot(tree: &UiNode) -> Result<String, String> {
+    lower(tree, Some((0., 0.)))
+}
+
+/// Lower `tree`; `origin` places the root by a margin from that point
+/// rather than by `abs_pos`.
+fn lower(tree: &UiNode, origin: Option<(f64, f64)>) -> Result<String, String> {
     // `in_flow` is set for the children of a `row`/`col` stack: the parent's
     // flow places them, so they emit neither `abs_pos` nor a margin.
     // `parent` is the frame of the node's parent; the root's parent is the
@@ -695,7 +714,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         w: tree.attrs.w.unwrap_or(0.).into(),
     };
     let mut out = String::new();
-    emit(tree, &mut out, None, false, mount)?;
+    emit(tree, &mut out, origin, false, mount)?;
     Ok(out)
 }
 
@@ -1038,6 +1057,33 @@ mod tests {
         assert!(ui.contains(play), "{ui}");
         let track = "margin: Inset{left: 12 top: 36 right: 12}";
         assert!(ui.contains(track), "{ui}");
+    }
+
+    #[test]
+    fn a_tree_in_a_slot_is_placed_relative_to_its_parents() {
+        let tree = prepare(
+            r#"{t:"stack" id:"bubble" w:300 h:80 bg:4294967295 c:[
+            {t:"text" id:"line" text:"Hello" x:16 y:12 w:200 h:20 size:14 line_height:20
+             font_src:"self:resources/Inter.ttf"}
+            {t:"stack" id:"badge" x:240 y:40 w:40 h:20}
+        ]}"#,
+        )
+        .unwrap();
+        let window = to_makepad_ui(&tree).unwrap();
+        let root = "bubble := DesignSurface {\nwidth: 300 height: 80\nabs_pos: vec2(0, 0)\n";
+        assert!(window.contains(root), "{window}");
+        let slot = to_makepad_ui_in_slot(&tree).unwrap();
+        assert!(!slot.contains("abs_pos"), "{slot}");
+        let at = |x, y| format!("margin: Inset{{left: {x} top: {y} right: 0 bottom: 0}}");
+        let (bubble, line, badge) = (at(0, 0), at(16, 12), at(240, 40));
+        for node in [
+            format!("bubble := DesignSurface {{\nwidth: 300 height: 80\n{bubble}\n"),
+            format!("View {{width: 200 height: 20 {line} flow: Overlay"),
+            "line := Label {\nwidth: 200 height: 20\nmargin: 0\n".to_string(),
+            format!("badge := View {{\nwidth: 40 height: 20\n{badge}\n"),
+        ] {
+            assert!(slot.contains(&node), "{node:?} in {slot}");
+        }
     }
 
     #[test]
