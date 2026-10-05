@@ -237,14 +237,28 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         let right_anchor = a.alignx == Some(1.0)
             && !in_flow
             && !matches!(n.kind, NodeKind::Text | NodeKind::Input);
+        // A text or stack that fills its width outside a flow is placed by a
+        // wrapper too. Pinned with `abs_pos` in an Overlay, a `Fill` extent
+        // resolves to nothing when the parent's height is `Fit`, and a label
+        // gets no width to end its line with an ellipsis. Text aligned other
+        // than left places its own run, and a markdown region is meant to be
+        // laid out by a `row`/`col` flow.
+        let fill_text = n.kind == NodeKind::Text
+            && a.fillw == Some(1)
+            && a.alignx.unwrap_or(0.) == 0.
+            && !markdown;
+        let fill_stack = n.kind == NodeKind::Stack && a.fillw == Some(1) && !right_anchor;
+        let fill = fill_text || fill_stack;
         // Leaf widgets may reuse their Walk for internal text layout. Keep the
         // positioning margin on a wrapper so it cannot be applied twice.
-        let wrapped = (flow_origin.is_some() || right_anchor)
+        let wrapped = (flow_origin.is_some() || right_anchor || fill)
             && !in_flow
-            && (n.kind != NodeKind::Stack || right_anchor);
-        // The node's offset in its parent.
+            && (n.kind != NodeKind::Stack || right_anchor || fill_stack);
+        // The node's offset in its parent, and its gap to the parent's right
+        // edge.
         let left = a.x.unwrap_or(0.) - parent.x;
         let top = a.y.unwrap_or(0.) - parent.y;
+        let right = (parent.w - left - f64::from(a.w.unwrap_or(0.))).max(0.) as f32;
         if wrapped {
             if right_anchor {
                 // makepad ignores `align` on a child of an Overlay, so a
@@ -253,6 +267,14 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                 writeln!(
                     out,
                     "View {{width: Fill height: {height} margin: Inset{{top: {top}}} align: Align{{x: 1.0}}"
+                )
+                .unwrap();
+            } else if fill {
+                // The wrapper keeps the node's insets on both sides, which
+                // gives the node a finite width to fill.
+                writeln!(
+                    out,
+                    "View {{width: Fill height: {height} margin: Inset{{left: {left} top: {top} right: {right}}} flow: Overlay padding: 0 clip_x: false clip_y: false"
                 )
                 .unwrap();
             } else {
@@ -335,9 +357,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             // The parent's flow places this node.
         } else if wrapped {
             if right_anchor {
-                let w = f64::from(a.w.unwrap_or(0.));
-                let gap = (parent.w - left - w).max(0.) as f32;
-                writeln!(out, "margin: Inset{{right: {gap}}}").unwrap();
+                writeln!(out, "margin: Inset{{right: {right}}}").unwrap();
             } else {
                 writeln!(out, "margin: 0").unwrap();
             }
@@ -969,6 +989,35 @@ mod tests {
         let ui = to_makepad_ui(&label).unwrap();
         assert!(ui.starts_with("Label {\n"), "{ui}");
         assert!(ui.contains("align: Align{x: 1 y: 0.5}"), "{ui}");
+    }
+
+    #[test]
+    fn fill_width_text_and_stacks_are_placed_by_a_wrapper() {
+        let font = r#"size:14 line_height:20 font_src:"self:resources/Inter.ttf""#;
+        let tree = prepare(&format!(
+            r#"{{t:"stack" id:"cell" w:360 h:120 c:[
+            {{t:"stack" id:"console" x:12 y:8 w:336 h:60 fillw:1 fith:1 bg:4294967295}}
+            {{t:"text" id:"title" text:"A long title" x:16 y:80 w:200 h:20 fillw:1 {font}}}
+            {{t:"text" id:"prose" variant:"markdown" text:"Body" x:16 y:100 w:300 h:20 fillw:1 {font}}}
+        ]}}"#
+        ))
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        let wrapper = "flow: Overlay padding: 0 clip_x: false clip_y: false\n";
+        // The wrapper keeps the measured insets on both sides.
+        let console = format!(
+            "View {{width: Fill height: Fit margin: Inset{{left: 12 top: 8 right: 12}} {wrapper}\
+            console := DesignSurface {{\nwidth: Fill height: Fit\nmargin: 0\n"
+        );
+        assert!(ui.contains(&console), "{ui}");
+        let title = format!(
+            "View {{width: Fill height: 20 margin: Inset{{left: 16 top: 80 right: 144}} {wrapper}\
+            title := Label {{\nwidth: Fill height: 20\nmargin: 0\n"
+        );
+        assert!(ui.contains(&title), "{ui}");
+        // A markdown region is not wrapped.
+        let prose = "prose := Markdown {\nwidth: Fill height: 20\nabs_pos: vec2(16, 100)\n";
+        assert!(ui.contains(prose), "{ui}");
     }
 
     #[test]
