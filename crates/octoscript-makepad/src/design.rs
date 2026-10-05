@@ -200,13 +200,26 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         if let Some(config)=&contract {
             writeln!(out,"contract: {:?} glass: {}",config.to_string(),a.variant.as_deref()==Some("glass_group")).unwrap();
         }
-        writeln!(
-            out,
-            "width: {} height: {}",
-            a.w.ok_or("design width required")?,
-            a.h.ok_or("design height required")?
-        )
-        .unwrap();
+        // A fill or fit flag replaces the measured extent with makepad's `Fill`
+        // or `Fit`, so a reusable component can fill the width of its slot and
+        // take its height from its content. Fill wins over fit on each axis.
+        // Without a flag the measured size is emitted, which keeps fixed chrome
+        // exact.
+        let width = if a.fillw == Some(1) {
+            "Fill".to_string()
+        } else if a.fitw == Some(1) {
+            "Fit".to_string()
+        } else {
+            a.w.ok_or("design width required")?.to_string()
+        };
+        let height = if a.fillh == Some(1) {
+            "Fill".to_string()
+        } else if a.fith == Some(1) {
+            "Fit".to_string()
+        } else {
+            a.h.ok_or("design height required")?.to_string()
+        };
+        writeln!(out, "width: {width} height: {height}").unwrap();
         // Source frames stay window-local. Inside a scroll viewport, convert
         // them to parent-relative overlay margins so native layout applies the
         // scroll offset and measures the complete content extent.
@@ -364,7 +377,12 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             }
             NodeKind::Text | NodeKind::Input => {
                 let size = a.size.ok_or("design font size required")?;
-                let font = a.font_src.as_ref().ok_or("design font resource required")?;
+                // An empty resource names no font at all.
+                let font = a
+                    .font_src
+                    .as_deref()
+                    .filter(|font| !font.is_empty())
+                    .ok_or("design font resource required")?;
                 let weight = a.weight.unwrap_or(400);
                 if let Some(rotation)=a.rotation {
                     writeln!(out,"draw_text.rotation: {}",rotation.to_radians()).unwrap();
@@ -380,6 +398,12 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                 } else {
                     "align"
                 };
+                // A measured box no taller than one line holds a single line.
+                // Text with no measured height takes it from its content, so
+                // it wraps unless it is marked `single_line`.
+                let one_line = a.line_height.unwrap_or(size * 1.3) + 0.5;
+                let single_line = a.variant.as_deref() == Some("single_line")
+                    || a.h.is_some_and(|h| h <= one_line);
                 writeln!(
                     out,
                     "padding: 0 text: {:?} {align_property}: Align{{x: {} y: 0.5}}",
@@ -401,7 +425,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                         a.password.unwrap_or(0) != 0
                     )
                     .unwrap();
-                } else if a.variant.as_deref()==Some("single_line") || a.h.unwrap_or(0.) <= a.line_height.unwrap_or(size * 1.3) + 0.5 {
+                } else if single_line {
                     // A single Sketch line must not wrap a whole word because
                     // native font advances differ by a fraction of a point.
                     writeln!(out, "flow: Right").unwrap();
@@ -456,11 +480,16 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                 // Sketch graphic canvases are exported at exactly 2x. Sample
                 // premultiplied texels before interpolation to preserve alpha
                 // edges without introducing dark fringes at fractional frames.
+                // A filled or fitted image without a measured frame must state
+                // its raster size, since the shader samples by it.
+                let dim_w = a.image_width.or(a.w.map(|w| w * 2.));
+                let dim_h = a.image_height.or(a.h.map(|h| h * 2.));
+                let (Some(dim_w), Some(dim_h)) = (dim_w, dim_h) else {
+                    return Err("design image size required".into());
+                };
                 writeln!(
                     out,
-                    "draw_bg.image_dim_w: {:.1} draw_bg.image_dim_h: {:.1}",
-                    a.image_width.unwrap_or(a.w.unwrap() * 2.),
-                    a.image_height.unwrap_or(a.h.unwrap() * 2.)
+                    "draw_bg.image_dim_w: {dim_w:.1} draw_bg.image_dim_h: {dim_h:.1}"
                 )
                 .unwrap();
             }
@@ -675,5 +704,55 @@ mod tests {
         ] {
             assert!(ui.contains(child), "{ui}");
         }
+    }
+
+    #[test]
+    fn fill_and_fit_flags_replace_the_measured_extent() {
+        let tree = prepare(
+            r#"{t:"stack" id:"card" w:360 h:120 fillw:1 fith:1 c:[
+            {t:"stack" id:"chip" x:10 y:10 w:80 h:24 fitw:1}
+            {t:"stack" id:"control" w:360 h:120 fillw:1 fillh:1}
+        ]}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        for node in [
+            "card := View {\nwidth: Fill height: Fit\n",
+            "chip := View {\nwidth: Fit height: 24\n",
+            "control := View {\nwidth: Fill height: Fill\n",
+        ] {
+            assert!(ui.contains(node), "{ui}");
+        }
+        // A flag stands in for a missing measurement; an axis with neither fails.
+        let unmeasured = prepare(r#"{t:"stack" fillw:1 fith:1}"#).unwrap();
+        assert!(to_makepad_ui(&unmeasured).is_ok());
+        let no_height = prepare(r#"{t:"stack" fillw:1}"#).unwrap();
+        let error = to_makepad_ui(&no_height).unwrap_err();
+        assert_eq!(error, "design height required");
+        // Text sized by its content wraps; a measured single line does not.
+        let font = r#"size:14 line_height:20 font_src:"self:resources/Inter.ttf""#;
+        let lower = |source: String| to_makepad_ui(&prepare(&source).unwrap()).unwrap();
+        let paragraph = lower(format!("{{t:\"text\" text:\"A\" fillw:1 fith:1 {font}}}"));
+        assert!(!paragraph.contains("flow: Right"), "{paragraph}");
+        let line = lower(format!("{{t:\"text\" text:\"A\" w:40 h:20 {font}}}"));
+        assert!(line.contains("flow: Right"), "{line}");
+    }
+
+    #[test]
+    fn unsized_images_and_empty_font_resources_fail_closed() {
+        let src = r#"src:"http://127.0.0.1:8794/photo.png""#;
+        let image = prepare(&format!("{{t:\"image\" fillw:1 fillh:1 {src}}}")).unwrap();
+        let error = to_makepad_ui(&image).unwrap_err();
+        assert_eq!(error, "design image size required");
+        let sized = prepare(&format!(
+            "{{t:\"image\" fillw:1 fillh:1 image_width:200 image_height:100 {src}}}"
+        ))
+        .unwrap();
+        let ui = to_makepad_ui(&sized).unwrap();
+        let dims = "draw_bg.image_dim_w: 200.0 draw_bg.image_dim_h: 100.0";
+        assert!(ui.contains(dims), "{ui}");
+        let text = prepare(r#"{t:"text" text:"Hi" fillw:1 fith:1 size:14 font_src:""}"#).unwrap();
+        let error = to_makepad_ui(&text).unwrap_err();
+        assert_eq!(error, "design font resource required");
     }
 }
