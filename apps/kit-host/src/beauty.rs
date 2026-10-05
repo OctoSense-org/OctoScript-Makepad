@@ -17,6 +17,10 @@ script_mod! {
             main_window := Window {
                 show_caption_bar: false
                 window.inner_size: vec2(393, 852)
+                // Measured designs are drawn on a white artboard. Without this
+                // the window clears to the theme's app background, and a
+                // component with no fill of its own previews on that grey.
+                pass +: { clear_color: #fff }
                 body +: {
                     flow: Overlay
                     host := Splash { width: Fill height: Fill }
