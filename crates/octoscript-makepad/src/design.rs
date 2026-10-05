@@ -8,9 +8,10 @@ use std::fmt::Write;
 /// The symbol face every design text style falls back to.
 const SYMBOLS: &str = "crate_resource(\"makepad_widgets:resources/jetbrains_mono_variable.ttf\")";
 
-/// The largest advance between the wrapped lines of a markdown region, as a
-/// multiple of the font size. The source `line_height` of such a region is
-/// the distance between its paragraphs, which can be twice the font size.
+/// The largest advance between the wrapped lines of a markdown region, and
+/// of other wrapping text when [`Options::cap_wrapped_line_spacing`] is set,
+/// as a multiple of the font size. The source `line_height` of such text can
+/// be the distance between its paragraphs, twice the font size.
 const WRAPPED_LINE_PITCH: f32 = 1.4;
 
 /// The line advance of makepad's `TextFlow` at `line_spacing: 1`, as a
@@ -185,8 +186,22 @@ impl Frame {
     }
 }
 
+/// How [`to_makepad_ui_with`] lowers a tree. The default lowers it as
+/// [`to_makepad_ui`] does.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Options {
+    /// Place the tree relative to the slot it is mounted in, as
+    /// [`to_makepad_ui_in_slot`] does.
+    pub in_slot: bool,
+    /// Advance the wrapped lines of wrapping text by at most 1.4 times the
+    /// font size, as in a markdown region. For sources whose `line_height`
+    /// on multi-line text is the distance between paragraphs, which would
+    /// otherwise open a gap under every wrapped line.
+    pub cap_wrapped_line_spacing: bool,
+}
+
 pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
-    lower(tree, None)
+    to_makepad_ui_with(tree, Options::default())
 }
 
 /// [`to_makepad_ui`] for a tree mounted in a slot of a larger UI, rather
@@ -199,12 +214,15 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
 /// Here the root and every node below it are placed by margins relative to
 /// their parents instead, so the tree lays out the same inside the slot.
 pub fn to_makepad_ui_in_slot(tree: &UiNode) -> Result<String, String> {
-    lower(tree, Some((0., 0.)))
+    let options = Options {
+        in_slot: true,
+        ..Options::default()
+    };
+    to_makepad_ui_with(tree, options)
 }
 
-/// Lower `tree`; `origin` places the root by a margin from that point
-/// rather than by `abs_pos`.
-fn lower(tree: &UiNode, origin: Option<(f64, f64)>) -> Result<String, String> {
+/// [`to_makepad_ui`] with [`Options`].
+pub fn to_makepad_ui_with(tree: &UiNode, options: Options) -> Result<String, String> {
     // `in_flow` is set for the children of a `row`/`col` stack: the parent's
     // flow places them, so they emit neither `abs_pos` nor a margin.
     // `parent` is the frame of the node's parent; the root's parent is the
@@ -215,6 +233,7 @@ fn lower(tree: &UiNode, origin: Option<(f64, f64)>) -> Result<String, String> {
         flow_origin: Option<(f64, f64)>,
         in_flow: bool,
         parent: Frame,
+        options: Options,
     ) -> Result<(), String> {
         let a = &n.attrs;
         let scroll_y = n.kind == NodeKind::Stack && a.variant.as_deref() == Some("scroll_y");
@@ -504,7 +523,7 @@ fn lower(tree: &UiNode, origin: Option<(f64, f64)>) -> Result<String, String> {
                         writeln!(out, "selected: {}", selected != 0).unwrap();
                     }
                     for c in &n.children {
-                        emit(c, out, None, true, Frame::of(a))?;
+                        emit(c, out, None, true, Frame::of(a), options)?;
                     }
                 } else {
                     let clip = scroll_y || a.variant.as_deref() == Some("clip");
@@ -528,7 +547,7 @@ fn lower(tree: &UiNode, origin: Option<(f64, f64)>) -> Result<String, String> {
                         } else {
                             None
                         };
-                        emit(c, out, origin, false, Frame::of(a))?;
+                        emit(c, out, origin, false, Frame::of(a), options)?;
                     }
                 }
             }
@@ -638,7 +657,16 @@ fn lower(tree: &UiNode, origin: Option<(f64, f64)>) -> Result<String, String> {
                 }
                 // Use real font metrics and a measured line height.
                 let line_box = natural_line_box(font);
-                let spacing = if a.font_asc.is_some() {1.0} else {a.line_height.unwrap_or(size * line_box) / (size * line_box)};
+                let mut line_height = a.line_height.unwrap_or(size * line_box);
+                // The caller may cap the advance between wrapped lines.
+                if options.cap_wrapped_line_spacing && n.kind == NodeKind::Text && !single_line {
+                    line_height = line_height.min(size * WRAPPED_LINE_PITCH);
+                }
+                let spacing = if a.font_asc.is_some() {
+                    1.0
+                } else {
+                    line_height / (size * line_box)
+                };
                 let shift = if a
                     .text
                     .as_deref()
@@ -713,8 +741,11 @@ fn lower(tree: &UiNode, origin: Option<(f64, f64)>) -> Result<String, String> {
         y: 0.,
         w: tree.attrs.w.unwrap_or(0.).into(),
     };
+    // In a slot the root is placed by a margin from the slot's origin, which
+    // puts every node below it on parent-relative margins too.
+    let origin = options.in_slot.then_some((0., 0.));
     let mut out = String::new();
-    emit(tree, &mut out, origin, false, mount)?;
+    emit(tree, &mut out, origin, false, mount, options)?;
     Ok(out)
 }
 
@@ -1084,6 +1115,30 @@ mod tests {
         ] {
             assert!(slot.contains(&node), "{node:?} in {slot}");
         }
+    }
+
+    #[test]
+    fn wrapped_line_spacing_is_capped_only_when_asked() {
+        let font = "self:resources/Inter.ttf";
+        let style = format!("size:20 line_height:44 font_src:{font:?}");
+        let text = |h| format!("{{t:\"text\" text:\"A\" w:300 h:{h} {style}}}");
+        let paragraph = prepare(&text(90)).unwrap();
+        let capped = Options {
+            cap_wrapped_line_spacing: true,
+            ..Options::default()
+        };
+        let line_box = natural_line_box(font);
+        // By default the measured line height is kept.
+        let measured = 44. / (20. * line_box);
+        let ui = to_makepad_ui(&paragraph).unwrap();
+        assert!(ui.contains(&format!("line_spacing: {measured} ")), "{ui}");
+        // Asked, wrapped lines advance by at most 1.4 times the font size.
+        let cap = 20. * WRAPPED_LINE_PITCH / (20. * line_box);
+        let ui = to_makepad_ui_with(&paragraph, capped).unwrap();
+        assert!(ui.contains(&format!("line_spacing: {cap} ")), "{ui}");
+        // A single line keeps its measured spacing either way.
+        let line = prepare(&text(44)).unwrap();
+        assert_eq!(to_makepad_ui_with(&line, capped), to_makepad_ui(&line));
     }
 
     #[test]
