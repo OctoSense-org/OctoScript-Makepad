@@ -108,12 +108,28 @@ pub fn prepare(source: &str) -> Result<UiNode, String> {
 }
 
 pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
-    fn emit(n: &UiNode, out: &mut String, flow_origin: Option<(f64, f64)>) -> Result<(), String> {
+    // `in_flow` is set for the children of a `row`/`col` stack: the parent's
+    // flow places them, so they emit neither `abs_pos` nor a margin.
+    fn emit(
+        n: &UiNode,
+        out: &mut String,
+        flow_origin: Option<(f64, f64)>,
+        in_flow: bool,
+    ) -> Result<(), String> {
         let a = &n.attrs;
         let scroll_y = n.kind == NodeKind::Stack && a.variant.as_deref() == Some("scroll_y");
+        // A `row` or `col` stack lays its children out along one axis, so they
+        // follow its size instead of each keeping its measured frame. Measured
+        // sources describe every container as a `stack`, so the flow is a stack
+        // variant rather than a node kind.
+        let flow_dir = match (n.kind, a.variant.as_deref()) {
+            (NodeKind::Stack, Some("row")) => Some("Right"),
+            (NodeKind::Stack, Some("col")) => Some("Down"),
+            _ => None,
+        };
         // Leaf widgets may reuse their Walk for internal text layout. Keep the
         // positioning margin on a wrapper so it cannot be applied twice.
-        let wrapped = flow_origin.is_some() && n.kind != NodeKind::Stack;
+        let wrapped = flow_origin.is_some() && !in_flow && n.kind != NodeKind::Stack;
         if wrapped {
             let (x, y) = flow_origin.unwrap();
             writeln!(out, "View {{width: {} height: {} margin: Inset{{left: {} top: {} right: 0 bottom: 0}} flow: Overlay padding: 0 clip_x: false clip_y: false",
@@ -194,7 +210,9 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         // Source frames stay window-local. Inside a scroll viewport, convert
         // them to parent-relative overlay margins so native layout applies the
         // scroll offset and measures the complete content extent.
-        if wrapped {
+        if in_flow {
+            // The parent's flow places this node.
+        } else if wrapped {
             writeln!(out, "margin: 0").unwrap();
         } else if let Some((x, y)) = flow_origin {
             writeln!(out, "margin: Inset{{left: {} top: {} right: 0 bottom: 0}}",
@@ -292,19 +310,56 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                     )
                     .unwrap();
                 }
-                let clip=scroll_y || a.variant.as_deref()==Some("clip");
-                writeln!(out, "flow: Overlay padding: 0 clip_x: {clip} clip_y: {clip}").unwrap();
-                if let Some(bg) = a.bg {
-                    writeln!(out, "show_bg: true draw_bg.color: {}", super::hex_rgba(bg)).unwrap();
-                }
-                if let Some(selected) = a.selected {
-                    writeln!(out, "selected: {}", selected != 0).unwrap();
-                }
-                for c in &n.children {
-                    let origin = if scroll_y || flow_origin.is_some() {
-                        Some((a.x.unwrap_or(0.), a.y.unwrap_or(0.)))
-                    } else { None };
-                    emit(c, out, origin)?;
+                if let Some(dir) = flow_dir {
+                    let px = a.padx.or(a.pad).unwrap_or(0.);
+                    let py = a.pady.or(a.pad).unwrap_or(0.);
+                    writeln!(
+                        out,
+                        "flow: {dir} padding: Inset{{left: {px} top: {py} right: {px} bottom: {py}}}"
+                    )
+                    .unwrap();
+                    if let Some(spacing) = a.spacing {
+                        writeln!(out, "spacing: {spacing}").unwrap();
+                    }
+                    if let Some(bg) = a.bg {
+                        // A filled stack is a `DesignSurface`, so the radius
+                        // rounds the fill.
+                        writeln!(
+                            out,
+                            "show_bg: true draw_bg.color: {} draw_bg.radius: {}",
+                            super::hex_rgba(bg),
+                            a.radius.unwrap_or(0.)
+                        )
+                        .unwrap();
+                    }
+                    if let Some(selected) = a.selected {
+                        writeln!(out, "selected: {}", selected != 0).unwrap();
+                    }
+                    for c in &n.children {
+                        emit(c, out, None, true)?;
+                    }
+                } else {
+                    let clip = scroll_y || a.variant.as_deref() == Some("clip");
+                    writeln!(
+                        out,
+                        "flow: Overlay padding: 0 clip_x: {clip} clip_y: {clip}"
+                    )
+                    .unwrap();
+                    if let Some(bg) = a.bg {
+                        writeln!(out, "show_bg: true draw_bg.color: {}", super::hex_rgba(bg))
+                            .unwrap();
+                    }
+                    if let Some(selected) = a.selected {
+                        writeln!(out, "selected: {}", selected != 0).unwrap();
+                    }
+                    for c in &n.children {
+                        let origin = if scroll_y || flow_origin.is_some() {
+                            Some((a.x.unwrap_or(0.), a.y.unwrap_or(0.)))
+                        } else {
+                            None
+                        };
+                        emit(c, out, origin, false)?;
+                    }
                 }
             }
             NodeKind::Text | NodeKind::Input => {
@@ -427,7 +482,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         Ok(())
     }
     let mut out = String::new();
-    emit(tree, &mut out, None)?;
+    emit(tree, &mut out, None, false)?;
     Ok(out)
 }
 
@@ -585,5 +640,40 @@ mod tests {
         let ui = to_makepad_ui(&tree).unwrap();
         assert!(ui.contains("logo := DesignImage"));
         assert!(ui.contains("draw_bg.image_dim_w: 100.0 draw_bg.image_dim_h: 40.0"));
+    }
+
+    #[test]
+    fn row_and_col_stacks_place_their_children_in_a_flow() {
+        let tree = prepare(
+            r#"{t:"stack" id:"page" w:300 h:200 c:[
+            {t:"stack" id:"toolbar" variant:"row" x:10 y:20 w:280 h:40 padx:12 pady:6
+             spacing:8 bg:4294967295 radius:10 c:[
+                {t:"stack" id:"icon" x:22 y:26 w:28 h:28}
+                {t:"text" id:"title" text:"Inbox" x:58 y:30 w:60 h:20 size:14 line_height:20
+                 font_src:"self:resources/taskplan/PlusJakartaSans.ttf"}
+            ]}
+            {t:"stack" id:"list" variant:"col" x:10 y:70 w:280 h:120 pad:4 c:[
+                {t:"stack" id:"item" x:14 y:74 w:272 h:20}
+            ]}
+        ]}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        // The container keeps its own frame and lays its children out.
+        let toolbar = "toolbar := DesignSurface {\nwidth: 280 height: 40\nabs_pos: vec2(10, 20)\n\
+            flow: Right padding: Inset{left: 12 top: 6 right: 12 bottom: 6}\nspacing: 8\n\
+            show_bg: true draw_bg.color: #ffffffff draw_bg.radius: 10\n";
+        assert!(ui.contains(toolbar), "{ui}");
+        let list = "list := View {\nwidth: 280 height: 120\nabs_pos: vec2(10, 70)\n\
+            flow: Down padding: Inset{left: 4 top: 4 right: 4 bottom: 4}\n";
+        assert!(ui.contains(list), "{ui}");
+        // Its children are placed by the flow: no `abs_pos`, margin or wrapper.
+        for child in [
+            "icon := View {\nwidth: 28 height: 28\nflow: Overlay",
+            "title := Label {\nwidth: 60 height: 20\npadding: 0",
+            "item := View {\nwidth: 272 height: 20\nflow: Overlay",
+        ] {
+            assert!(ui.contains(child), "{ui}");
+        }
     }
 }
