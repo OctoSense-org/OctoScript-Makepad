@@ -139,6 +139,7 @@ fn walk_inner(
         padleft: f32_prop(vm, value, id!(padleft)),
         padtop: f32_prop(vm, value, id!(padtop)),
         padbottom: f32_prop(vm, value, id!(padbottom)),
+        padright: f32_prop(vm, value, id!(padright)),
         spacing: f32_prop(vm, value, id!(spacing)),
         margin: f32_prop(vm, value, id!(margin)),
         marginx: f32_prop(vm, value, id!(marginx)),

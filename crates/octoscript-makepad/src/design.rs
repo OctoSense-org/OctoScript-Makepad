@@ -231,9 +231,9 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             a.h.ok_or("design height required")?.to_string()
         };
         // A non-text node with `alignx: 1` is anchored to its parent's right
-        // edge: it keeps its measured gap to that edge, so it follows the
-        // parent's width rather than staying at its measured x. On text,
-        // `alignx` aligns the run inside the label instead.
+        // edge: it keeps its inset from that edge (`right` below), so it
+        // follows the parent's width rather than staying at its measured x.
+        // On text, `alignx` aligns the run inside the label instead.
         let right_anchor = a.alignx == Some(1.0)
             && !in_flow
             && !matches!(n.kind, NodeKind::Text | NodeKind::Input);
@@ -254,16 +254,18 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         let wrapped = (flow_origin.is_some() || right_anchor || fill)
             && !in_flow
             && (n.kind != NodeKind::Stack || right_anchor || fill_stack);
-        // The node's offset in its parent, and its gap to the parent's right
-        // edge.
+        // The node's offset in its parent, and its inset from the parent's
+        // right edge: `padright` when the source states it, otherwise the
+        // measured gap.
         let left = a.x.unwrap_or(0.) - parent.x;
         let top = a.y.unwrap_or(0.) - parent.y;
-        let right = (parent.w - left - f64::from(a.w.unwrap_or(0.))).max(0.) as f32;
+        let gap = (parent.w - left - f64::from(a.w.unwrap_or(0.))).max(0.) as f32;
+        let right = a.padright.unwrap_or(gap);
         if wrapped {
             if right_anchor {
                 // makepad ignores `align` on a child of an Overlay, so a
                 // full-width wrapper aligns the node to the right, and the
-                // node's right margin keeps its gap to the parent's edge.
+                // node's right margin keeps its inset from the parent's edge.
                 writeln!(
                     out,
                     "View {{width: Fill height: {height} margin: Inset{{top: {top}}} align: Align{{x: 1.0}}"
@@ -1018,6 +1020,24 @@ mod tests {
         // A markdown region is not wrapped.
         let prose = "prose := Markdown {\nwidth: Fill height: 20\nabs_pos: vec2(16, 100)\n";
         assert!(ui.contains(prose), "{ui}");
+    }
+
+    #[test]
+    fn padright_sets_the_inset_from_the_parent_right_edge() {
+        let tree = prepare(
+            r#"{t:"stack" id:"row" w:358 h:44 c:[
+            {t:"stack" id:"play" alignx:1 padright:40 x:290 y:4 w:30 h:30}
+            {t:"stack" id:"track" x:12 y:36 w:300 h:4 fillw:1 padright:12}
+        ]}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        // Measured, the gaps would be 38 and 46.
+        let play = "View {width: Fill height: 30 margin: Inset{top: 4} align: Align{x: 1.0}\n\
+            play := View {\nwidth: 30 height: 30\nmargin: Inset{right: 40}\n";
+        assert!(ui.contains(play), "{ui}");
+        let track = "margin: Inset{left: 12 top: 36 right: 12}";
+        assert!(ui.contains(track), "{ui}");
     }
 
     #[test]

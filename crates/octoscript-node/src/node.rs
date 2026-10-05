@@ -343,6 +343,10 @@ pub struct Attrs {
     /// row below it and read as a layout bug rather than as a missing inset.
     pub padtop: Option<f32>,
     pub padbottom: Option<f32>,
+    /// The inset a source-measured node keeps from its parent's right edge
+    /// when it fills its width or is anchored to that edge (`alignx: 1`).
+    /// Without it the node keeps its measured gap.
+    pub padright: Option<f32>,
     pub spacing: Option<f32>,
     pub margin: Option<f32>,
     /// Per-axis margin, overriding `margin` on its axis. Every section heading in
