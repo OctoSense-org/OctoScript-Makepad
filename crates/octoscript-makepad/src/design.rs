@@ -1,8 +1,68 @@
 //! Source-measured Splash designs. Geometry is in logical pixels, text sizes
 //! in CSS/Sketch pixels (Makepad's text API uses points, hence 72/96).
-//! This path preserves explicit design styles; it does not apply a theme.
-use octoscript_render::{NodeKind, UiNode};
+//! This path preserves explicit design styles; it does not apply a theme,
+//! except that inline code in a markdown region takes the theme's code style.
+use octoscript_render::{Attrs, NodeKind, UiNode};
 use std::fmt::Write;
+
+/// The symbol face every design text style falls back to.
+const SYMBOLS: &str = "crate_resource(\"makepad_widgets:resources/jetbrains_mono_variable.ttf\")";
+
+/// The largest advance between the wrapped lines of a markdown region, as a
+/// multiple of the font size. The source `line_height` of such a region is
+/// the distance between its paragraphs, which can be twice the font size.
+const WRAPPED_LINE_PITCH: f32 = 1.4;
+
+/// The line advance of makepad's `TextFlow` at `line_spacing: 1`, as a
+/// multiple of the design font size, measured with Inter. A `Label` advances
+/// by its family's natural line box instead.
+const TEXT_FLOW_LINE_ADVANCE: f32 = 1.1303;
+
+/// The font size and font resource a design text node must state.
+fn text_font(a: &Attrs) -> Result<(f32, &str), String> {
+    let size = a.size.ok_or("design font size required")?;
+    // An empty resource names no font at all.
+    let font = a
+        .font_src
+        .as_deref()
+        .filter(|font| !font.is_empty())
+        .ok_or("design font resource required")?;
+    Ok((size, font))
+}
+
+/// The resource expression for a design font. `file:` names an absolute
+/// platform path; anything else is a crate resource.
+fn font_resource(font: &str) -> Result<String, String> {
+    if let Some(path) = font.strip_prefix("file:") {
+        if !std::path::Path::new(path).is_absolute() {
+            return Err("platform font path must be absolute".into());
+        }
+        Ok(format!("file_resource({path:?})"))
+    } else {
+        Ok(format!("crate_resource({font:?})"))
+    }
+}
+
+/// The natural line box of a bundled design family, as a multiple of the
+/// font size. The importer supplies it with the family.
+fn natural_line_box(font: &str) -> f32 {
+    if font.contains("PlusJakarta") {
+        1.26
+    } else if font.contains("Poppins") {
+        1.5
+    } else {
+        2478. / 2048.
+    }
+}
+
+/// The colour emoji face every design text style falls back to.
+fn emoji_resource() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "file_resource(\"/System/Library/Fonts/Apple Color Emoji.ttc\")"
+    } else {
+        "crate_resource(\"makepad_widgets:resources/NotoColorEmoji.ttf\")"
+    }
+}
 
 fn design_asset_allowed(src: &str) -> bool {
     if src.starts_with("http://127.0.0.1:") { return true; }
@@ -127,6 +187,9 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             (NodeKind::Stack, Some("col")) => Some("Down"),
             _ => None,
         };
+        // A `markdown` text node is a region of prose whose body is markdown:
+        // makepad's `Markdown` parses it and draws inline code as chips.
+        let markdown = n.kind == NodeKind::Text && a.variant.as_deref() == Some("markdown");
         // Leaf widgets may reuse their Walk for internal text layout. Keep the
         // positioning margin on a wrapper so it cannot be applied twice.
         let wrapped = flow_origin.is_some() && !in_flow && n.kind != NodeKind::Stack;
@@ -154,6 +217,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             NodeKind::Stack if matches!(a.variant.as_deref(),Some("surface" | "ellipse")) => "DesignSurface",
             NodeKind::Stack if a.bg.is_some() => "DesignSurface",
             NodeKind::Stack => "View",
+            NodeKind::Text if markdown => "Markdown",
             NodeKind::Text if a.rotation.is_some() => "DesignRotatedLabel",
             NodeKind::Text => "Label",
             NodeKind::Web => "Browser",
@@ -375,14 +439,51 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                     }
                 }
             }
+            NodeKind::Text if markdown => {
+                let (size, font) = text_font(a)?;
+                let weight = a.weight.unwrap_or(400);
+                // The source `line_height` of a region is the distance between
+                // its paragraphs; wrapped lines advance by at most
+                // `WRAPPED_LINE_PITCH`. `TextFlow` scales `line_spacing`
+                // against its own line advance, not the family's line box.
+                let spacing = if a.font_asc.is_some() {
+                    1.0
+                } else {
+                    let pitch = a.line_height.unwrap_or(size * natural_line_box(font));
+                    pitch.min(size * WRAPPED_LINE_PITCH) / (size * TEXT_FLOW_LINE_ADVANCE)
+                };
+                let style = format!(
+                    "TextStyle{{font_family: FontFamily{{latin := FontMember{{res: {} asc: 0.04 desc: 0.04 weight: {weight}}} symbols := FontMember{{res: {SYMBOLS} asc: 0 desc: 0 weight: 400}} emoji := FontMember{{res: {} asc: 0 desc: 0}}}} font_size: {} line_spacing: {spacing}}}",
+                    font_resource(font)?,
+                    emoji_resource(),
+                    size * 0.75
+                );
+                writeln!(out, "body: {:?}", a.text.as_deref().unwrap_or("")).unwrap();
+                // `TextFlow` sizes every run by its own `font_size` rather than
+                // by the style's, so the label's point size goes here.
+                writeln!(out, "font_size: {}", size * 0.75).unwrap();
+                let paragraph = a.line_height.unwrap_or(size * 1.45);
+                writeln!(out, "paragraph_spacing: {paragraph}").unwrap();
+                writeln!(out, "text_style_normal: {style}").unwrap();
+                // Inline code is set in the theme's code style, as in makepad's
+                // own `Markdown`, at the size and spacing of the prose.
+                writeln!(
+                    out,
+                    "text_style_fixed: mod.theme.font_code{{font_size: {} line_spacing: {spacing}}}",
+                    size * 0.75
+                )
+                .unwrap();
+                // `TextFlow` paints each run with its `font_color`, so that is
+                // where the ink goes, not `draw_text.color`.
+                let ink = super::hex_rgba(a.color.unwrap_or(0xff111927));
+                writeln!(out, "font_color: {ink}").unwrap();
+                // The node's fill colours the inline-code chips. Their padding
+                // and margin are the theme's.
+                let chip = super::hex_rgba(a.bg.unwrap_or(0xfff4f4f5));
+                writeln!(out, "draw_block +: {{code_color: {chip}}}").unwrap();
+            }
             NodeKind::Text | NodeKind::Input => {
-                let size = a.size.ok_or("design font size required")?;
-                // An empty resource names no font at all.
-                let font = a
-                    .font_src
-                    .as_deref()
-                    .filter(|font| !font.is_empty())
-                    .ok_or("design font resource required")?;
+                let (size, font) = text_font(a)?;
                 let weight = a.weight.unwrap_or(400);
                 if let Some(rotation)=a.rotation {
                     writeln!(out,"draw_text.rotation: {}",rotation.to_radians()).unwrap();
@@ -442,15 +543,8 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                         writeln!(out, "flow: Right").unwrap();
                     }
                 }
-                // Use real font metrics and a measured line height. The
-                // bundled families' natural line box is supplied by importer.
-                let line_box = if font.contains("PlusJakarta") {
-                    1.26
-                } else if font.contains("Poppins") {
-                    1.5
-                } else {
-                    2478. / 2048.
-                };
+                // Use real font metrics and a measured line height.
+                let line_box = natural_line_box(font);
                 let spacing = if a.font_asc.is_some() {1.0} else {a.line_height.unwrap_or(size * line_box) / (size * line_box)};
                 let shift = if a
                     .text
@@ -464,18 +558,17 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                 } else {
                     0.18
                 };
-                let emoji = if cfg!(target_os = "macos") {
-                    "file_resource(\"/System/Library/Fonts/Apple Color Emoji.ttc\")"
-                } else {
-                    "crate_resource(\"makepad_widgets:resources/NotoColorEmoji.ttf\")"
-                };
+                let emoji = emoji_resource();
                 let asc=a.font_asc.unwrap_or(shift);
                 let desc=a.font_desc.unwrap_or(shift);
-                let resource=if let Some(path)=font.strip_prefix("file:") {
-                    if !std::path::Path::new(path).is_absolute() {return Err("platform font path must be absolute".into());}
-                    format!("file_resource({path:?})")
-                } else {format!("crate_resource({font:?})")};
-                writeln!(out, "draw_text.text_style: TextStyle{{font_family: FontFamily{{latin := FontMember{{res: {resource} asc: {asc} desc: {desc} weight: {weight}}} symbols := FontMember{{res: crate_resource(\"makepad_widgets:resources/jetbrains_mono_variable.ttf\") asc: 0 desc: 0 weight: 400}} emoji := FontMember{{res: {emoji} asc: 0 desc: 0}}}} font_size: {} line_spacing: {spacing} letter_spacing: {}}}", size * 0.75,a.tracking.unwrap_or(0.)).unwrap();
+                let resource = font_resource(font)?;
+                writeln!(
+                    out,
+                    "draw_text.text_style: TextStyle{{font_family: FontFamily{{latin := FontMember{{res: {resource} asc: {asc} desc: {desc} weight: {weight}}} symbols := FontMember{{res: {SYMBOLS} asc: 0 desc: 0 weight: 400}} emoji := FontMember{{res: {emoji} asc: 0 desc: 0}}}} font_size: {} line_spacing: {spacing} letter_spacing: {}}}",
+                    size * 0.75,
+                    a.tracking.unwrap_or(0.)
+                )
+                .unwrap();
                 writeln!(
                     out,
                     "draw_text.color: {}",
@@ -760,6 +853,33 @@ mod tests {
         let measured = lower(format!("{{t:\"text\" text:\"A\" w:40 h:20 {font}}}"));
         assert!(measured.contains("flow: Right\n"), "{measured}");
         assert!(!measured.contains("max_lines"), "{measured}");
+    }
+
+    #[test]
+    fn markdown_text_sets_inline_code_in_the_theme_code_style() {
+        let tree = prepare(
+            r#"{t:"text" id:"answer" variant:"markdown" text:"Run `cargo test` first."
+            x:20 y:40 w:356 h:120 size:17.5 line_height:38 color:4280098079 bg:4294243573
+            font_src:"self:resources/Inter-400.ttf"}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        // The source pitch separates paragraphs; wrapped lines are capped.
+        let spacing = 17.5 * WRAPPED_LINE_PITCH / (17.5 * TEXT_FLOW_LINE_ADVANCE);
+        let prose = "text_style_normal: TextStyle{font_family: FontFamily{latin := FontMember{\
+            res: crate_resource(\"self:resources/Inter-400.ttf\") asc: 0.04 desc: 0.04 weight: 400}";
+        for line in [
+            "answer := Markdown {\nwidth: 356 height: 120\n".to_string(),
+            "body: \"Run `cargo test` first.\"\nfont_size: 13.125\n".to_string(),
+            "paragraph_spacing: 38\n".to_string(),
+            prose.to_string(),
+            format!("font_size: 13.125 line_spacing: {spacing}}}\n"),
+            format!("text_style_fixed: mod.theme.font_code{{font_size: 13.125 line_spacing: {spacing}}}\n"),
+            "font_color: #1d1d1fff\n".to_string(),
+            "draw_block +: {code_color: #f4f4f5ff}\n".to_string(),
+        ] {
+            assert!(ui.contains(&line), "{line:?} in {ui}");
+        }
     }
 
     #[test]
