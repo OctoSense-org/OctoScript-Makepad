@@ -167,14 +167,35 @@ pub fn prepare(source: &str) -> Result<UiNode, String> {
         .ok_or_else(|| "design failed checked Splash evaluation".into())
 }
 
+/// A node's source frame, in the tree's window-local coordinates.
+#[derive(Clone, Copy)]
+struct Frame {
+    x: f64,
+    y: f64,
+    w: f64,
+}
+
+impl Frame {
+    fn of(a: &Attrs) -> Self {
+        Frame {
+            x: a.x.unwrap_or(0.),
+            y: a.y.unwrap_or(0.),
+            w: a.w.unwrap_or(0.).into(),
+        }
+    }
+}
+
 pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
     // `in_flow` is set for the children of a `row`/`col` stack: the parent's
     // flow places them, so they emit neither `abs_pos` nor a margin.
+    // `parent` is the frame of the node's parent; the root's parent is the
+    // mount, at the origin and as wide as the root.
     fn emit(
         n: &UiNode,
         out: &mut String,
         flow_origin: Option<(f64, f64)>,
         in_flow: bool,
+        parent: Frame,
     ) -> Result<(), String> {
         let a = &n.attrs;
         let scroll_y = n.kind == NodeKind::Stack && a.variant.as_deref() == Some("scroll_y");
@@ -190,14 +211,56 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         // A `markdown` text node is a region of prose whose body is markdown:
         // makepad's `Markdown` parses it and draws inline code as chips.
         let markdown = n.kind == NodeKind::Text && a.variant.as_deref() == Some("markdown");
+        // A fill or fit flag replaces the measured extent with makepad's `Fill`
+        // or `Fit`, so a reusable component can fill the width of its slot and
+        // take its height from its content. Fill wins over fit on each axis.
+        // Without a flag the measured size is emitted, which keeps fixed chrome
+        // exact.
+        let width = if a.fillw == Some(1) {
+            "Fill".to_string()
+        } else if a.fitw == Some(1) {
+            "Fit".to_string()
+        } else {
+            a.w.ok_or("design width required")?.to_string()
+        };
+        let height = if a.fillh == Some(1) {
+            "Fill".to_string()
+        } else if a.fith == Some(1) {
+            "Fit".to_string()
+        } else {
+            a.h.ok_or("design height required")?.to_string()
+        };
+        // A non-text node with `alignx: 1` is anchored to its parent's right
+        // edge: it keeps its measured gap to that edge, so it follows the
+        // parent's width rather than staying at its measured x. On text,
+        // `alignx` aligns the run inside the label instead.
+        let right_anchor = a.alignx == Some(1.0)
+            && !in_flow
+            && !matches!(n.kind, NodeKind::Text | NodeKind::Input);
         // Leaf widgets may reuse their Walk for internal text layout. Keep the
         // positioning margin on a wrapper so it cannot be applied twice.
-        let wrapped = flow_origin.is_some() && !in_flow && n.kind != NodeKind::Stack;
+        let wrapped = (flow_origin.is_some() || right_anchor)
+            && !in_flow
+            && (n.kind != NodeKind::Stack || right_anchor);
+        // The node's offset in its parent.
+        let left = a.x.unwrap_or(0.) - parent.x;
+        let top = a.y.unwrap_or(0.) - parent.y;
         if wrapped {
-            let (x, y) = flow_origin.unwrap();
-            writeln!(out, "View {{width: {} height: {} margin: Inset{{left: {} top: {} right: 0 bottom: 0}} flow: Overlay padding: 0 clip_x: false clip_y: false",
-                a.w.ok_or("design width required")?, a.h.ok_or("design height required")?,
-                a.x.unwrap_or(0.) - x, a.y.unwrap_or(0.) - y).unwrap();
+            if right_anchor {
+                // makepad ignores `align` on a child of an Overlay, so a
+                // full-width wrapper aligns the node to the right, and the
+                // node's right margin keeps its gap to the parent's edge.
+                writeln!(
+                    out,
+                    "View {{width: Fill height: {height} margin: Inset{{top: {top}}} align: Align{{x: 1.0}}"
+                )
+                .unwrap();
+            } else {
+                let (x, y) = flow_origin.unwrap();
+                writeln!(out, "View {{width: {} height: {} margin: Inset{{left: {} top: {} right: 0 bottom: 0}} flow: Overlay padding: 0 clip_x: false clip_y: false",
+                    a.w.ok_or("design width required")?, a.h.ok_or("design height required")?,
+                    a.x.unwrap_or(0.) - x, a.y.unwrap_or(0.) - y).unwrap();
+            }
         }
         let contract = kit_contract(n)?;
         let glass = matches!(a.variant.as_deref(),Some("glass_surface" | "glass_overlay"));
@@ -264,25 +327,6 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         if let Some(config)=&contract {
             writeln!(out,"contract: {:?} glass: {}",config.to_string(),a.variant.as_deref()==Some("glass_group")).unwrap();
         }
-        // A fill or fit flag replaces the measured extent with makepad's `Fill`
-        // or `Fit`, so a reusable component can fill the width of its slot and
-        // take its height from its content. Fill wins over fit on each axis.
-        // Without a flag the measured size is emitted, which keeps fixed chrome
-        // exact.
-        let width = if a.fillw == Some(1) {
-            "Fill".to_string()
-        } else if a.fitw == Some(1) {
-            "Fit".to_string()
-        } else {
-            a.w.ok_or("design width required")?.to_string()
-        };
-        let height = if a.fillh == Some(1) {
-            "Fill".to_string()
-        } else if a.fith == Some(1) {
-            "Fit".to_string()
-        } else {
-            a.h.ok_or("design height required")?.to_string()
-        };
         writeln!(out, "width: {width} height: {height}").unwrap();
         // Source frames stay window-local. Inside a scroll viewport, convert
         // them to parent-relative overlay margins so native layout applies the
@@ -290,7 +334,13 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         if in_flow {
             // The parent's flow places this node.
         } else if wrapped {
-            writeln!(out, "margin: 0").unwrap();
+            if right_anchor {
+                let w = f64::from(a.w.unwrap_or(0.));
+                let gap = (parent.w - left - w).max(0.) as f32;
+                writeln!(out, "margin: Inset{{right: {gap}}}").unwrap();
+            } else {
+                writeln!(out, "margin: 0").unwrap();
+            }
         } else if let Some((x, y)) = flow_origin {
             writeln!(out, "margin: Inset{{left: {} top: {} right: 0 bottom: 0}}",
                 a.x.unwrap_or(0.) - x, a.y.unwrap_or(0.) - y).unwrap();
@@ -413,7 +463,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                         writeln!(out, "selected: {}", selected != 0).unwrap();
                     }
                     for c in &n.children {
-                        emit(c, out, None, true)?;
+                        emit(c, out, None, true, Frame::of(a))?;
                     }
                 } else {
                     let clip = scroll_y || a.variant.as_deref() == Some("clip");
@@ -430,12 +480,14 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                         writeln!(out, "selected: {}", selected != 0).unwrap();
                     }
                     for c in &n.children {
-                        let origin = if scroll_y || flow_origin.is_some() {
+                        // A right-anchored node no longer sits at its source x,
+                        // so its children are placed relative to it.
+                        let origin = if scroll_y || flow_origin.is_some() || right_anchor {
                             Some((a.x.unwrap_or(0.), a.y.unwrap_or(0.)))
                         } else {
                             None
                         };
-                        emit(c, out, origin, false)?;
+                        emit(c, out, origin, false, Frame::of(a))?;
                     }
                 }
             }
@@ -615,8 +667,13 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         if wrapped { writeln!(out, "}}").unwrap(); }
         Ok(())
     }
+    let mount = Frame {
+        x: 0.,
+        y: 0.,
+        w: tree.attrs.w.unwrap_or(0.).into(),
+    };
     let mut out = String::new();
-    emit(tree, &mut out, None, false)?;
+    emit(tree, &mut out, None, false, mount)?;
     Ok(out)
 }
 
@@ -880,6 +937,38 @@ mod tests {
         ] {
             assert!(ui.contains(&line), "{line:?} in {ui}");
         }
+    }
+
+    #[test]
+    fn right_anchored_nodes_keep_their_gap_to_the_parent_edge() {
+        let tree = prepare(
+            r#"{t:"stack" id:"composer" w:374 h:120 c:[
+            {t:"stack" id:"dock" x:0 y:40 w:374 h:80 c:[
+                {t:"stack" id:"send" alignx:1 x:328 y:60 w:36 h:36 bg:4278190080 c:[
+                    {t:"svg" id:"arrow" x:338 y:70 w:16 h:16 src:"http://127.0.0.1:8794/a.svg"}
+                ]}
+            ]}
+        ]}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        // A full-width wrapper aligns the node right, and its margin keeps the
+        // measured 10px gap. Offsets are relative to the parent.
+        let send = "View {width: Fill height: 36 margin: Inset{top: 20} align: Align{x: 1.0}\n\
+            send := DesignSurface {\nwidth: 36 height: 36\nmargin: Inset{right: 10}\n";
+        assert!(ui.contains(send), "{ui}");
+        // Its children move with it.
+        let arrow = "margin: Inset{left: 10 top: 10 right: 0 bottom: 0}";
+        assert!(ui.contains(arrow), "{ui}");
+        // Text right-aligns its own run instead.
+        let label = prepare(
+            r#"{t:"text" text:"9:41" alignx:1 x:300 w:60 h:20 size:14 line_height:20
+            font_src:"self:resources/Inter.ttf"}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&label).unwrap();
+        assert!(ui.starts_with("Label {\n"), "{ui}");
+        assert!(ui.contains("align: Align{x: 1 y: 0.5}"), "{ui}");
     }
 
     #[test]
