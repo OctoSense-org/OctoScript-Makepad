@@ -1,8 +1,69 @@
 //! Source-measured Splash designs. Geometry is in logical pixels, text sizes
 //! in CSS/Sketch pixels (Makepad's text API uses points, hence 72/96).
-//! This path preserves explicit design styles; it does not apply a theme.
-use octoscript_render::{NodeKind, UiNode};
+//! This path preserves explicit design styles; it does not apply a theme,
+//! except that inline code in a markdown region takes the theme's code style.
+use octoscript_render::{Attrs, NodeKind, UiNode};
 use std::fmt::Write;
+
+/// The symbol face every design text style falls back to.
+const SYMBOLS: &str = "crate_resource(\"makepad_widgets:resources/jetbrains_mono_variable.ttf\")";
+
+/// The largest advance between the wrapped lines of a markdown region, and
+/// of other wrapping text when [`Options::cap_wrapped_line_spacing`] is set,
+/// as a multiple of the font size. The source `line_height` of such text can
+/// be the distance between its paragraphs, twice the font size.
+const WRAPPED_LINE_PITCH: f32 = 1.4;
+
+/// The line advance of makepad's `TextFlow` at `line_spacing: 1`, as a
+/// multiple of the design font size, measured with Inter. A `Label` advances
+/// by its family's natural line box instead.
+const TEXT_FLOW_LINE_ADVANCE: f32 = 1.1303;
+
+/// The font size and font resource a design text node must state.
+fn text_font(a: &Attrs) -> Result<(f32, &str), String> {
+    let size = a.size.ok_or("design font size required")?;
+    // An empty resource names no font at all.
+    let font = a
+        .font_src
+        .as_deref()
+        .filter(|font| !font.is_empty())
+        .ok_or("design font resource required")?;
+    Ok((size, font))
+}
+
+/// The resource expression for a design font. `file:` names an absolute
+/// platform path; anything else is a crate resource.
+fn font_resource(font: &str) -> Result<String, String> {
+    if let Some(path) = font.strip_prefix("file:") {
+        if !std::path::Path::new(path).is_absolute() {
+            return Err("platform font path must be absolute".into());
+        }
+        Ok(format!("file_resource({path:?})"))
+    } else {
+        Ok(format!("crate_resource({font:?})"))
+    }
+}
+
+/// The natural line box of a bundled design family, as a multiple of the
+/// font size. The importer supplies it with the family.
+fn natural_line_box(font: &str) -> f32 {
+    if font.contains("PlusJakarta") {
+        1.26
+    } else if font.contains("Poppins") {
+        1.5
+    } else {
+        2478. / 2048.
+    }
+}
+
+/// The colour emoji face every design text style falls back to.
+fn emoji_resource() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "file_resource(\"/System/Library/Fonts/Apple Color Emoji.ttc\")"
+    } else {
+        "crate_resource(\"makepad_widgets:resources/NotoColorEmoji.ttf\")"
+    }
+}
 
 fn design_asset_allowed(src: &str) -> bool {
     if src.starts_with("http://127.0.0.1:") { return true; }
@@ -107,18 +168,161 @@ pub fn prepare(source: &str) -> Result<UiNode, String> {
         .ok_or_else(|| "design failed checked Splash evaluation".into())
 }
 
+/// A node's source frame, in the tree's window-local coordinates.
+#[derive(Clone, Copy)]
+struct Frame {
+    x: f64,
+    y: f64,
+    w: f64,
+}
+
+impl Frame {
+    fn of(a: &Attrs) -> Self {
+        Frame {
+            x: a.x.unwrap_or(0.),
+            y: a.y.unwrap_or(0.),
+            w: a.w.unwrap_or(0.).into(),
+        }
+    }
+}
+
+/// How [`to_makepad_ui_with`] lowers a tree. The default lowers it as
+/// [`to_makepad_ui`] does.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Options {
+    /// Place the tree relative to the slot it is mounted in, as
+    /// [`to_makepad_ui_in_slot`] does.
+    pub in_slot: bool,
+    /// Advance the wrapped lines of wrapping text by at most 1.4 times the
+    /// font size, as in a markdown region. For sources whose `line_height`
+    /// on multi-line text is the distance between paragraphs, which would
+    /// otherwise open a gap under every wrapped line.
+    pub cap_wrapped_line_spacing: bool,
+}
+
 pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
-    fn emit(n: &UiNode, out: &mut String, flow_origin: Option<(f64, f64)>) -> Result<(), String> {
+    to_makepad_ui_with(tree, Options::default())
+}
+
+/// [`to_makepad_ui`] for a tree mounted in a slot of a larger UI, rather
+/// than as the whole window.
+///
+/// makepad places a widget with `abs_pos` at that position as given, not
+/// relative to its parent. That suits a tree that is the window, as in
+/// beauty-host, but a tree mounted anywhere else would be drawn as if its
+/// slot were at the window origin, and the slot's clip would discard it.
+/// Here the root and every node below it are placed by margins relative to
+/// their parents instead, so the tree lays out the same inside the slot.
+pub fn to_makepad_ui_in_slot(tree: &UiNode) -> Result<String, String> {
+    let options = Options {
+        in_slot: true,
+        ..Options::default()
+    };
+    to_makepad_ui_with(tree, options)
+}
+
+/// [`to_makepad_ui`] with [`Options`].
+pub fn to_makepad_ui_with(tree: &UiNode, options: Options) -> Result<String, String> {
+    // `in_flow` is set for the children of a `row`/`col` stack: the parent's
+    // flow places them, so they emit neither `abs_pos` nor a margin.
+    // `parent` is the frame of the node's parent; the root's parent is the
+    // mount, at the origin and as wide as the root.
+    fn emit(
+        n: &UiNode,
+        out: &mut String,
+        flow_origin: Option<(f64, f64)>,
+        in_flow: bool,
+        parent: Frame,
+        options: Options,
+    ) -> Result<(), String> {
         let a = &n.attrs;
         let scroll_y = n.kind == NodeKind::Stack && a.variant.as_deref() == Some("scroll_y");
+        // A `row` or `col` stack lays its children out along one axis, so they
+        // follow its size instead of each keeping its measured frame. Measured
+        // sources describe every container as a `stack`, so the flow is a stack
+        // variant rather than a node kind.
+        let flow_dir = match (n.kind, a.variant.as_deref()) {
+            (NodeKind::Stack, Some("row")) => Some("Right"),
+            (NodeKind::Stack, Some("col")) => Some("Down"),
+            _ => None,
+        };
+        // A `markdown` text node is a region of prose whose body is markdown:
+        // makepad's `Markdown` parses it and draws inline code as chips.
+        let markdown = n.kind == NodeKind::Text && a.variant.as_deref() == Some("markdown");
+        // A fill or fit flag replaces the measured extent with makepad's `Fill`
+        // or `Fit`, so a reusable component can fill the width of its slot and
+        // take its height from its content. Fill wins over fit on each axis.
+        // Without a flag the measured size is emitted, which keeps fixed chrome
+        // exact.
+        let width = if a.fillw == Some(1) {
+            "Fill".to_string()
+        } else if a.fitw == Some(1) {
+            "Fit".to_string()
+        } else {
+            a.w.ok_or("design width required")?.to_string()
+        };
+        let height = if a.fillh == Some(1) {
+            "Fill".to_string()
+        } else if a.fith == Some(1) {
+            "Fit".to_string()
+        } else {
+            a.h.ok_or("design height required")?.to_string()
+        };
+        // A non-text node with `alignx: 1` is anchored to its parent's right
+        // edge: it keeps its inset from that edge (`right` below), so it
+        // follows the parent's width rather than staying at its measured x.
+        // On text, `alignx` aligns the run inside the label instead.
+        let right_anchor = a.alignx == Some(1.0)
+            && !in_flow
+            && !matches!(n.kind, NodeKind::Text | NodeKind::Input);
+        // A text or stack that fills its width outside a flow is placed by a
+        // wrapper too. Pinned with `abs_pos` in an Overlay, a `Fill` extent
+        // resolves to nothing when the parent's height is `Fit`, and a label
+        // gets no width to end its line with an ellipsis. Text aligned other
+        // than left places its own run, and a markdown region is meant to be
+        // laid out by a `row`/`col` flow.
+        let fill_text = n.kind == NodeKind::Text
+            && a.fillw == Some(1)
+            && a.alignx.unwrap_or(0.) == 0.
+            && !markdown;
+        let fill_stack = n.kind == NodeKind::Stack && a.fillw == Some(1) && !right_anchor;
+        let fill = fill_text || fill_stack;
         // Leaf widgets may reuse their Walk for internal text layout. Keep the
         // positioning margin on a wrapper so it cannot be applied twice.
-        let wrapped = flow_origin.is_some() && n.kind != NodeKind::Stack;
+        let wrapped = (flow_origin.is_some() || right_anchor || fill)
+            && !in_flow
+            && (n.kind != NodeKind::Stack || right_anchor || fill_stack);
+        // The node's offset in its parent, and its inset from the parent's
+        // right edge: `padright` when the source states it, otherwise the
+        // measured gap.
+        let left = a.x.unwrap_or(0.) - parent.x;
+        let top = a.y.unwrap_or(0.) - parent.y;
+        let gap = (parent.w - left - f64::from(a.w.unwrap_or(0.))).max(0.) as f32;
+        let right = a.padright.unwrap_or(gap);
         if wrapped {
-            let (x, y) = flow_origin.unwrap();
-            writeln!(out, "View {{width: {} height: {} margin: Inset{{left: {} top: {} right: 0 bottom: 0}} flow: Overlay padding: 0 clip_x: false clip_y: false",
-                a.w.ok_or("design width required")?, a.h.ok_or("design height required")?,
-                a.x.unwrap_or(0.) - x, a.y.unwrap_or(0.) - y).unwrap();
+            if right_anchor {
+                // makepad ignores `align` on a child of an Overlay, so a
+                // full-width wrapper aligns the node to the right, and the
+                // node's right margin keeps its inset from the parent's edge.
+                writeln!(
+                    out,
+                    "View {{width: Fill height: {height} margin: Inset{{top: {top}}} align: Align{{x: 1.0}}"
+                )
+                .unwrap();
+            } else if fill {
+                // The wrapper keeps the node's insets on both sides, which
+                // gives the node a finite width to fill.
+                writeln!(
+                    out,
+                    "View {{width: Fill height: {height} margin: Inset{{left: {left} top: {top} right: {right}}} flow: Overlay padding: 0 clip_x: false clip_y: false"
+                )
+                .unwrap();
+            } else {
+                let (x, y) = flow_origin.unwrap();
+                writeln!(out, "View {{width: {} height: {} margin: Inset{{left: {} top: {} right: 0 bottom: 0}} flow: Overlay padding: 0 clip_x: false clip_y: false",
+                    a.w.ok_or("design width required")?, a.h.ok_or("design height required")?,
+                    a.x.unwrap_or(0.) - x, a.y.unwrap_or(0.) - y).unwrap();
+            }
         }
         let contract = kit_contract(n)?;
         let glass = matches!(a.variant.as_deref(),Some("glass_surface" | "glass_overlay"));
@@ -138,6 +342,7 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
             NodeKind::Stack if matches!(a.variant.as_deref(),Some("surface" | "ellipse")) => "DesignSurface",
             NodeKind::Stack if a.bg.is_some() => "DesignSurface",
             NodeKind::Stack => "View",
+            NodeKind::Text if markdown => "Markdown",
             NodeKind::Text if a.rotation.is_some() => "DesignRotatedLabel",
             NodeKind::Text => "Label",
             NodeKind::Web => "Browser",
@@ -184,18 +389,18 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         if let Some(config)=&contract {
             writeln!(out,"contract: {:?} glass: {}",config.to_string(),a.variant.as_deref()==Some("glass_group")).unwrap();
         }
-        writeln!(
-            out,
-            "width: {} height: {}",
-            a.w.ok_or("design width required")?,
-            a.h.ok_or("design height required")?
-        )
-        .unwrap();
+        writeln!(out, "width: {width} height: {height}").unwrap();
         // Source frames stay window-local. Inside a scroll viewport, convert
         // them to parent-relative overlay margins so native layout applies the
         // scroll offset and measures the complete content extent.
-        if wrapped {
-            writeln!(out, "margin: 0").unwrap();
+        if in_flow {
+            // The parent's flow places this node.
+        } else if wrapped {
+            if right_anchor {
+                writeln!(out, "margin: Inset{{right: {right}}}").unwrap();
+            } else {
+                writeln!(out, "margin: 0").unwrap();
+            }
         } else if let Some((x, y)) = flow_origin {
             writeln!(out, "margin: Inset{{left: {} top: {} right: 0 bottom: 0}}",
                 a.x.unwrap_or(0.) - x, a.y.unwrap_or(0.) - y).unwrap();
@@ -292,24 +497,105 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                     )
                     .unwrap();
                 }
-                let clip=scroll_y || a.variant.as_deref()==Some("clip");
-                writeln!(out, "flow: Overlay padding: 0 clip_x: {clip} clip_y: {clip}").unwrap();
-                if let Some(bg) = a.bg {
-                    writeln!(out, "show_bg: true draw_bg.color: {}", super::hex_rgba(bg)).unwrap();
-                }
-                if let Some(selected) = a.selected {
-                    writeln!(out, "selected: {}", selected != 0).unwrap();
-                }
-                for c in &n.children {
-                    let origin = if scroll_y || flow_origin.is_some() {
-                        Some((a.x.unwrap_or(0.), a.y.unwrap_or(0.)))
-                    } else { None };
-                    emit(c, out, origin)?;
+                if let Some(dir) = flow_dir {
+                    let px = a.padx.or(a.pad).unwrap_or(0.);
+                    let py = a.pady.or(a.pad).unwrap_or(0.);
+                    writeln!(
+                        out,
+                        "flow: {dir} padding: Inset{{left: {px} top: {py} right: {px} bottom: {py}}}"
+                    )
+                    .unwrap();
+                    if let Some(spacing) = a.spacing {
+                        writeln!(out, "spacing: {spacing}").unwrap();
+                    }
+                    if let Some(bg) = a.bg {
+                        // A filled stack is a `DesignSurface`, so the radius
+                        // rounds the fill.
+                        writeln!(
+                            out,
+                            "show_bg: true draw_bg.color: {} draw_bg.radius: {}",
+                            super::hex_rgba(bg),
+                            a.radius.unwrap_or(0.)
+                        )
+                        .unwrap();
+                    }
+                    if let Some(selected) = a.selected {
+                        writeln!(out, "selected: {}", selected != 0).unwrap();
+                    }
+                    for c in &n.children {
+                        emit(c, out, None, true, Frame::of(a), options)?;
+                    }
+                } else {
+                    let clip = scroll_y || a.variant.as_deref() == Some("clip");
+                    writeln!(
+                        out,
+                        "flow: Overlay padding: 0 clip_x: {clip} clip_y: {clip}"
+                    )
+                    .unwrap();
+                    if let Some(bg) = a.bg {
+                        writeln!(out, "show_bg: true draw_bg.color: {}", super::hex_rgba(bg))
+                            .unwrap();
+                    }
+                    if let Some(selected) = a.selected {
+                        writeln!(out, "selected: {}", selected != 0).unwrap();
+                    }
+                    for c in &n.children {
+                        // A right-anchored node no longer sits at its source x,
+                        // so its children are placed relative to it.
+                        let origin = if scroll_y || flow_origin.is_some() || right_anchor {
+                            Some((a.x.unwrap_or(0.), a.y.unwrap_or(0.)))
+                        } else {
+                            None
+                        };
+                        emit(c, out, origin, false, Frame::of(a), options)?;
+                    }
                 }
             }
+            NodeKind::Text if markdown => {
+                let (size, font) = text_font(a)?;
+                let weight = a.weight.unwrap_or(400);
+                // The source `line_height` of a region is the distance between
+                // its paragraphs; wrapped lines advance by at most
+                // `WRAPPED_LINE_PITCH`. `TextFlow` scales `line_spacing`
+                // against its own line advance, not the family's line box.
+                let spacing = if a.font_asc.is_some() {
+                    1.0
+                } else {
+                    let pitch = a.line_height.unwrap_or(size * natural_line_box(font));
+                    pitch.min(size * WRAPPED_LINE_PITCH) / (size * TEXT_FLOW_LINE_ADVANCE)
+                };
+                let style = format!(
+                    "TextStyle{{font_family: FontFamily{{latin := FontMember{{res: {} asc: 0.04 desc: 0.04 weight: {weight}}} symbols := FontMember{{res: {SYMBOLS} asc: 0 desc: 0 weight: 400}} emoji := FontMember{{res: {} asc: 0 desc: 0}}}} font_size: {} line_spacing: {spacing}}}",
+                    font_resource(font)?,
+                    emoji_resource(),
+                    size * 0.75
+                );
+                writeln!(out, "body: {:?}", a.text.as_deref().unwrap_or("")).unwrap();
+                // `TextFlow` sizes every run by its own `font_size` rather than
+                // by the style's, so the label's point size goes here.
+                writeln!(out, "font_size: {}", size * 0.75).unwrap();
+                let paragraph = a.line_height.unwrap_or(size * 1.45);
+                writeln!(out, "paragraph_spacing: {paragraph}").unwrap();
+                writeln!(out, "text_style_normal: {style}").unwrap();
+                // Inline code is set in the theme's code style, as in makepad's
+                // own `Markdown`, at the size and spacing of the prose.
+                writeln!(
+                    out,
+                    "text_style_fixed: mod.theme.font_code{{font_size: {} line_spacing: {spacing}}}",
+                    size * 0.75
+                )
+                .unwrap();
+                // `TextFlow` paints each run with its `font_color`, so that is
+                // where the ink goes, not `draw_text.color`.
+                let ink = super::hex_rgba(a.color.unwrap_or(0xff111927));
+                writeln!(out, "font_color: {ink}").unwrap();
+                // The node's fill colours the inline-code chips. Their padding
+                // and margin are the theme's.
+                let chip = super::hex_rgba(a.bg.unwrap_or(0xfff4f4f5));
+                writeln!(out, "draw_block +: {{code_color: {chip}}}").unwrap();
+            }
             NodeKind::Text | NodeKind::Input => {
-                let size = a.size.ok_or("design font size required")?;
-                let font = a.font_src.as_ref().ok_or("design font resource required")?;
+                let (size, font) = text_font(a)?;
                 let weight = a.weight.unwrap_or(400);
                 if let Some(rotation)=a.rotation {
                     writeln!(out,"draw_text.rotation: {}",rotation.to_radians()).unwrap();
@@ -325,6 +611,12 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                 } else {
                     "align"
                 };
+                // A measured box no taller than one line holds a single line.
+                // Text with no measured height takes it from its content, so
+                // it wraps unless it is marked `single_line`.
+                let one_line = a.line_height.unwrap_or(size * 1.3) + 0.5;
+                let single_line = a.variant.as_deref() == Some("single_line")
+                    || a.h.is_some_and(|h| h <= one_line);
                 writeln!(
                     out,
                     "padding: 0 text: {:?} {align_property}: Align{{x: {} y: 0.5}}",
@@ -346,21 +638,35 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                         a.password.unwrap_or(0) != 0
                     )
                     .unwrap();
-                } else if a.variant.as_deref()==Some("single_line") || a.h.unwrap_or(0.) <= a.line_height.unwrap_or(size * 1.3) + 0.5 {
+                } else if single_line {
                     // A single Sketch line must not wrap a whole word because
                     // native font advances differ by a fraction of a point.
-                    writeln!(out, "flow: Right").unwrap();
+                    // A line that fills its width cannot know how long its
+                    // text will be (a reusable row binds a title of any
+                    // length), so it ends in an ellipsis when it overflows. A
+                    // measured line keeps its measured box and clips as before.
+                    if a.fillw == Some(1) {
+                        writeln!(
+                            out,
+                            "flow: Right max_lines: 1 text_overflow: TextOverflow.Ellipsis"
+                        )
+                        .unwrap();
+                    } else {
+                        writeln!(out, "flow: Right").unwrap();
+                    }
                 }
-                // Use real font metrics and a measured line height. The
-                // bundled families' natural line box is supplied by importer.
-                let line_box = if font.contains("PlusJakarta") {
-                    1.26
-                } else if font.contains("Poppins") {
-                    1.5
+                // Use real font metrics and a measured line height.
+                let line_box = natural_line_box(font);
+                let mut line_height = a.line_height.unwrap_or(size * line_box);
+                // The caller may cap the advance between wrapped lines.
+                if options.cap_wrapped_line_spacing && n.kind == NodeKind::Text && !single_line {
+                    line_height = line_height.min(size * WRAPPED_LINE_PITCH);
+                }
+                let spacing = if a.font_asc.is_some() {
+                    1.0
                 } else {
-                    2478. / 2048.
+                    line_height / (size * line_box)
                 };
-                let spacing = if a.font_asc.is_some() {1.0} else {a.line_height.unwrap_or(size * line_box) / (size * line_box)};
                 let shift = if a
                     .text
                     .as_deref()
@@ -373,18 +679,17 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                 } else {
                     0.18
                 };
-                let emoji = if cfg!(target_os = "macos") {
-                    "file_resource(\"/System/Library/Fonts/Apple Color Emoji.ttc\")"
-                } else {
-                    "crate_resource(\"makepad_widgets:resources/NotoColorEmoji.ttf\")"
-                };
+                let emoji = emoji_resource();
                 let asc=a.font_asc.unwrap_or(shift);
                 let desc=a.font_desc.unwrap_or(shift);
-                let resource=if let Some(path)=font.strip_prefix("file:") {
-                    if !std::path::Path::new(path).is_absolute() {return Err("platform font path must be absolute".into());}
-                    format!("file_resource({path:?})")
-                } else {format!("crate_resource({font:?})")};
-                writeln!(out, "draw_text.text_style: TextStyle{{font_family: FontFamily{{latin := FontMember{{res: {resource} asc: {asc} desc: {desc} weight: {weight}}} symbols := FontMember{{res: crate_resource(\"makepad_widgets:resources/jetbrains_mono_variable.ttf\") asc: 0 desc: 0 weight: 400}} emoji := FontMember{{res: {emoji} asc: 0 desc: 0}}}} font_size: {} line_spacing: {spacing} letter_spacing: {}}}", size * 0.75,a.tracking.unwrap_or(0.)).unwrap();
+                let resource = font_resource(font)?;
+                writeln!(
+                    out,
+                    "draw_text.text_style: TextStyle{{font_family: FontFamily{{latin := FontMember{{res: {resource} asc: {asc} desc: {desc} weight: {weight}}} symbols := FontMember{{res: {SYMBOLS} asc: 0 desc: 0 weight: 400}} emoji := FontMember{{res: {emoji} asc: 0 desc: 0}}}} font_size: {} line_spacing: {spacing} letter_spacing: {}}}",
+                    size * 0.75,
+                    a.tracking.unwrap_or(0.)
+                )
+                .unwrap();
                 writeln!(
                     out,
                     "draw_text.color: {}",
@@ -401,11 +706,16 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
                 // Sketch graphic canvases are exported at exactly 2x. Sample
                 // premultiplied texels before interpolation to preserve alpha
                 // edges without introducing dark fringes at fractional frames.
+                // A filled or fitted image without a measured frame must state
+                // its raster size, since the shader samples by it.
+                let dim_w = a.image_width.or(a.w.map(|w| w * 2.));
+                let dim_h = a.image_height.or(a.h.map(|h| h * 2.));
+                let (Some(dim_w), Some(dim_h)) = (dim_w, dim_h) else {
+                    return Err("design image size required".into());
+                };
                 writeln!(
                     out,
-                    "draw_bg.image_dim_w: {:.1} draw_bg.image_dim_h: {:.1}",
-                    a.image_width.unwrap_or(a.w.unwrap() * 2.),
-                    a.image_height.unwrap_or(a.h.unwrap() * 2.)
+                    "draw_bg.image_dim_w: {dim_w:.1} draw_bg.image_dim_h: {dim_h:.1}"
                 )
                 .unwrap();
             }
@@ -426,8 +736,16 @@ pub fn to_makepad_ui(tree: &UiNode) -> Result<String, String> {
         if wrapped { writeln!(out, "}}").unwrap(); }
         Ok(())
     }
+    let mount = Frame {
+        x: 0.,
+        y: 0.,
+        w: tree.attrs.w.unwrap_or(0.).into(),
+    };
+    // In a slot the root is placed by a margin from the slot's origin, which
+    // puts every node below it on parent-relative margins too.
+    let origin = options.in_slot.then_some((0., 0.));
     let mut out = String::new();
-    emit(tree, &mut out, None)?;
+    emit(tree, &mut out, origin, false, mount, options)?;
     Ok(out)
 }
 
@@ -585,5 +903,259 @@ mod tests {
         let ui = to_makepad_ui(&tree).unwrap();
         assert!(ui.contains("logo := DesignImage"));
         assert!(ui.contains("draw_bg.image_dim_w: 100.0 draw_bg.image_dim_h: 40.0"));
+    }
+
+    #[test]
+    fn row_and_col_stacks_place_their_children_in_a_flow() {
+        let tree = prepare(
+            r#"{t:"stack" id:"page" w:300 h:200 c:[
+            {t:"stack" id:"toolbar" variant:"row" x:10 y:20 w:280 h:40 padx:12 pady:6
+             spacing:8 bg:4294967295 radius:10 c:[
+                {t:"stack" id:"icon" x:22 y:26 w:28 h:28}
+                {t:"text" id:"title" text:"Inbox" x:58 y:30 w:60 h:20 size:14 line_height:20
+                 font_src:"self:resources/taskplan/PlusJakartaSans.ttf"}
+            ]}
+            {t:"stack" id:"list" variant:"col" x:10 y:70 w:280 h:120 pad:4 c:[
+                {t:"stack" id:"item" x:14 y:74 w:272 h:20}
+            ]}
+        ]}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        // The container keeps its own frame and lays its children out.
+        let toolbar = "toolbar := DesignSurface {\nwidth: 280 height: 40\nabs_pos: vec2(10, 20)\n\
+            flow: Right padding: Inset{left: 12 top: 6 right: 12 bottom: 6}\nspacing: 8\n\
+            show_bg: true draw_bg.color: #ffffffff draw_bg.radius: 10\n";
+        assert!(ui.contains(toolbar), "{ui}");
+        let list = "list := View {\nwidth: 280 height: 120\nabs_pos: vec2(10, 70)\n\
+            flow: Down padding: Inset{left: 4 top: 4 right: 4 bottom: 4}\n";
+        assert!(ui.contains(list), "{ui}");
+        // Its children are placed by the flow: no `abs_pos`, margin or wrapper.
+        for child in [
+            "icon := View {\nwidth: 28 height: 28\nflow: Overlay",
+            "title := Label {\nwidth: 60 height: 20\npadding: 0",
+            "item := View {\nwidth: 272 height: 20\nflow: Overlay",
+        ] {
+            assert!(ui.contains(child), "{ui}");
+        }
+    }
+
+    #[test]
+    fn fill_and_fit_flags_replace_the_measured_extent() {
+        let tree = prepare(
+            r#"{t:"stack" id:"card" w:360 h:120 fillw:1 fith:1 c:[
+            {t:"stack" id:"chip" x:10 y:10 w:80 h:24 fitw:1}
+            {t:"stack" id:"control" w:360 h:120 fillw:1 fillh:1}
+        ]}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        for node in [
+            "card := View {\nwidth: Fill height: Fit\n",
+            "chip := View {\nwidth: Fit height: 24\n",
+            "control := View {\nwidth: Fill height: Fill\n",
+        ] {
+            assert!(ui.contains(node), "{ui}");
+        }
+        // A flag stands in for a missing measurement; an axis with neither fails.
+        let unmeasured = prepare(r#"{t:"stack" fillw:1 fith:1}"#).unwrap();
+        assert!(to_makepad_ui(&unmeasured).is_ok());
+        let no_height = prepare(r#"{t:"stack" fillw:1}"#).unwrap();
+        let error = to_makepad_ui(&no_height).unwrap_err();
+        assert_eq!(error, "design height required");
+        // Text sized by its content wraps; a measured single line does not.
+        let font = r#"size:14 line_height:20 font_src:"self:resources/Inter.ttf""#;
+        let lower = |source: String| to_makepad_ui(&prepare(&source).unwrap()).unwrap();
+        let paragraph = lower(format!("{{t:\"text\" text:\"A\" fillw:1 fith:1 {font}}}"));
+        assert!(!paragraph.contains("flow: Right"), "{paragraph}");
+        let line = lower(format!("{{t:\"text\" text:\"A\" w:40 h:20 {font}}}"));
+        assert!(line.contains("flow: Right"), "{line}");
+    }
+
+    #[test]
+    fn a_filled_single_line_ends_in_an_ellipsis() {
+        let font = r#"size:14 line_height:20 font_src:"self:resources/Inter.ttf""#;
+        let lower = |source: String| to_makepad_ui(&prepare(&source).unwrap()).unwrap();
+        let filled = lower(format!("{{t:\"text\" text:\"A\" w:4 h:20 fillw:1 {font}}}"));
+        let ellipsis = "flow: Right max_lines: 1 text_overflow: TextOverflow.Ellipsis\n";
+        assert!(filled.contains(ellipsis), "{filled}");
+        let measured = lower(format!("{{t:\"text\" text:\"A\" w:40 h:20 {font}}}"));
+        assert!(measured.contains("flow: Right\n"), "{measured}");
+        assert!(!measured.contains("max_lines"), "{measured}");
+    }
+
+    #[test]
+    fn markdown_text_sets_inline_code_in_the_theme_code_style() {
+        let tree = prepare(
+            r#"{t:"text" id:"answer" variant:"markdown" text:"Run `cargo test` first."
+            x:20 y:40 w:356 h:120 size:17.5 line_height:38 color:4280098079 bg:4294243573
+            font_src:"self:resources/Inter-400.ttf"}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        // The source pitch separates paragraphs; wrapped lines are capped.
+        let spacing = 17.5 * WRAPPED_LINE_PITCH / (17.5 * TEXT_FLOW_LINE_ADVANCE);
+        let prose = "text_style_normal: TextStyle{font_family: FontFamily{latin := FontMember{\
+            res: crate_resource(\"self:resources/Inter-400.ttf\") asc: 0.04 desc: 0.04 weight: 400}";
+        for line in [
+            "answer := Markdown {\nwidth: 356 height: 120\n".to_string(),
+            "body: \"Run `cargo test` first.\"\nfont_size: 13.125\n".to_string(),
+            "paragraph_spacing: 38\n".to_string(),
+            prose.to_string(),
+            format!("font_size: 13.125 line_spacing: {spacing}}}\n"),
+            format!("text_style_fixed: mod.theme.font_code{{font_size: 13.125 line_spacing: {spacing}}}\n"),
+            "font_color: #1d1d1fff\n".to_string(),
+            "draw_block +: {code_color: #f4f4f5ff}\n".to_string(),
+        ] {
+            assert!(ui.contains(&line), "{line:?} in {ui}");
+        }
+    }
+
+    #[test]
+    fn right_anchored_nodes_keep_their_gap_to_the_parent_edge() {
+        let tree = prepare(
+            r#"{t:"stack" id:"composer" w:374 h:120 c:[
+            {t:"stack" id:"dock" x:0 y:40 w:374 h:80 c:[
+                {t:"stack" id:"send" alignx:1 x:328 y:60 w:36 h:36 bg:4278190080 c:[
+                    {t:"svg" id:"arrow" x:338 y:70 w:16 h:16 src:"http://127.0.0.1:8794/a.svg"}
+                ]}
+            ]}
+        ]}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        // A full-width wrapper aligns the node right, and its margin keeps the
+        // measured 10px gap. Offsets are relative to the parent.
+        let send = "View {width: Fill height: 36 margin: Inset{top: 20} align: Align{x: 1.0}\n\
+            send := DesignSurface {\nwidth: 36 height: 36\nmargin: Inset{right: 10}\n";
+        assert!(ui.contains(send), "{ui}");
+        // Its children move with it.
+        let arrow = "margin: Inset{left: 10 top: 10 right: 0 bottom: 0}";
+        assert!(ui.contains(arrow), "{ui}");
+        // Text right-aligns its own run instead.
+        let label = prepare(
+            r#"{t:"text" text:"9:41" alignx:1 x:300 w:60 h:20 size:14 line_height:20
+            font_src:"self:resources/Inter.ttf"}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&label).unwrap();
+        assert!(ui.starts_with("Label {\n"), "{ui}");
+        assert!(ui.contains("align: Align{x: 1 y: 0.5}"), "{ui}");
+    }
+
+    #[test]
+    fn fill_width_text_and_stacks_are_placed_by_a_wrapper() {
+        let font = r#"size:14 line_height:20 font_src:"self:resources/Inter.ttf""#;
+        let tree = prepare(&format!(
+            r#"{{t:"stack" id:"cell" w:360 h:120 c:[
+            {{t:"stack" id:"console" x:12 y:8 w:336 h:60 fillw:1 fith:1 bg:4294967295}}
+            {{t:"text" id:"title" text:"A long title" x:16 y:80 w:200 h:20 fillw:1 {font}}}
+            {{t:"text" id:"prose" variant:"markdown" text:"Body" x:16 y:100 w:300 h:20 fillw:1 {font}}}
+        ]}}"#
+        ))
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        let wrapper = "flow: Overlay padding: 0 clip_x: false clip_y: false\n";
+        // The wrapper keeps the measured insets on both sides.
+        let console = format!(
+            "View {{width: Fill height: Fit margin: Inset{{left: 12 top: 8 right: 12}} {wrapper}\
+            console := DesignSurface {{\nwidth: Fill height: Fit\nmargin: 0\n"
+        );
+        assert!(ui.contains(&console), "{ui}");
+        let title = format!(
+            "View {{width: Fill height: 20 margin: Inset{{left: 16 top: 80 right: 144}} {wrapper}\
+            title := Label {{\nwidth: Fill height: 20\nmargin: 0\n"
+        );
+        assert!(ui.contains(&title), "{ui}");
+        // A markdown region is not wrapped.
+        let prose = "prose := Markdown {\nwidth: Fill height: 20\nabs_pos: vec2(16, 100)\n";
+        assert!(ui.contains(prose), "{ui}");
+    }
+
+    #[test]
+    fn padright_sets_the_inset_from_the_parent_right_edge() {
+        let tree = prepare(
+            r#"{t:"stack" id:"row" w:358 h:44 c:[
+            {t:"stack" id:"play" alignx:1 padright:40 x:290 y:4 w:30 h:30}
+            {t:"stack" id:"track" x:12 y:36 w:300 h:4 fillw:1 padright:12}
+        ]}"#,
+        )
+        .unwrap();
+        let ui = to_makepad_ui(&tree).unwrap();
+        // Measured, the gaps would be 38 and 46.
+        let play = "View {width: Fill height: 30 margin: Inset{top: 4} align: Align{x: 1.0}\n\
+            play := View {\nwidth: 30 height: 30\nmargin: Inset{right: 40}\n";
+        assert!(ui.contains(play), "{ui}");
+        let track = "margin: Inset{left: 12 top: 36 right: 12}";
+        assert!(ui.contains(track), "{ui}");
+    }
+
+    #[test]
+    fn a_tree_in_a_slot_is_placed_relative_to_its_parents() {
+        let tree = prepare(
+            r#"{t:"stack" id:"bubble" w:300 h:80 bg:4294967295 c:[
+            {t:"text" id:"line" text:"Hello" x:16 y:12 w:200 h:20 size:14 line_height:20
+             font_src:"self:resources/Inter.ttf"}
+            {t:"stack" id:"badge" x:240 y:40 w:40 h:20}
+        ]}"#,
+        )
+        .unwrap();
+        let window = to_makepad_ui(&tree).unwrap();
+        let root = "bubble := DesignSurface {\nwidth: 300 height: 80\nabs_pos: vec2(0, 0)\n";
+        assert!(window.contains(root), "{window}");
+        let slot = to_makepad_ui_in_slot(&tree).unwrap();
+        assert!(!slot.contains("abs_pos"), "{slot}");
+        let at = |x, y| format!("margin: Inset{{left: {x} top: {y} right: 0 bottom: 0}}");
+        let (bubble, line, badge) = (at(0, 0), at(16, 12), at(240, 40));
+        for node in [
+            format!("bubble := DesignSurface {{\nwidth: 300 height: 80\n{bubble}\n"),
+            format!("View {{width: 200 height: 20 {line} flow: Overlay"),
+            "line := Label {\nwidth: 200 height: 20\nmargin: 0\n".to_string(),
+            format!("badge := View {{\nwidth: 40 height: 20\n{badge}\n"),
+        ] {
+            assert!(slot.contains(&node), "{node:?} in {slot}");
+        }
+    }
+
+    #[test]
+    fn wrapped_line_spacing_is_capped_only_when_asked() {
+        let font = "self:resources/Inter.ttf";
+        let style = format!("size:20 line_height:44 font_src:{font:?}");
+        let text = |h| format!("{{t:\"text\" text:\"A\" w:300 h:{h} {style}}}");
+        let paragraph = prepare(&text(90)).unwrap();
+        let capped = Options {
+            cap_wrapped_line_spacing: true,
+            ..Options::default()
+        };
+        let line_box = natural_line_box(font);
+        // By default the measured line height is kept.
+        let measured = 44. / (20. * line_box);
+        let ui = to_makepad_ui(&paragraph).unwrap();
+        assert!(ui.contains(&format!("line_spacing: {measured} ")), "{ui}");
+        // Asked, wrapped lines advance by at most 1.4 times the font size.
+        let cap = 20. * WRAPPED_LINE_PITCH / (20. * line_box);
+        let ui = to_makepad_ui_with(&paragraph, capped).unwrap();
+        assert!(ui.contains(&format!("line_spacing: {cap} ")), "{ui}");
+        // A single line keeps its measured spacing either way.
+        let line = prepare(&text(44)).unwrap();
+        assert_eq!(to_makepad_ui_with(&line, capped), to_makepad_ui(&line));
+    }
+
+    #[test]
+    fn unsized_images_and_empty_font_resources_fail_closed() {
+        let src = r#"src:"http://127.0.0.1:8794/photo.png""#;
+        let image = prepare(&format!("{{t:\"image\" fillw:1 fillh:1 {src}}}")).unwrap();
+        let error = to_makepad_ui(&image).unwrap_err();
+        assert_eq!(error, "design image size required");
+        let sized = prepare(&format!(
+            "{{t:\"image\" fillw:1 fillh:1 image_width:200 image_height:100 {src}}}"
+        ))
+        .unwrap();
+        let ui = to_makepad_ui(&sized).unwrap();
+        let dims = "draw_bg.image_dim_w: 200.0 draw_bg.image_dim_h: 100.0";
+        assert!(ui.contains(dims), "{ui}");
+        let text = prepare(r#"{t:"text" text:"Hi" fillw:1 fith:1 size:14 font_src:""}"#).unwrap();
+        let error = to_makepad_ui(&text).unwrap_err();
+        assert_eq!(error, "design font resource required");
     }
 }
