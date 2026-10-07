@@ -845,9 +845,10 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize, resolved: bool, eve
             let w = a.weight.unwrap_or(400).max(1) as f32;
             let font = a.font_src.as_deref().filter(|s|!s.is_empty())
                 .unwrap_or("makepad_widgets:resources/Roboto-Regular.ttf");
+            let resource = design::host_font_resource(font).unwrap_or_else(|| format!("crate_resource({font:?})"));
             let _ = writeln!(
                 out,
-                "{ind}draw_text.text_style: TextStyle{{ font_family: FontFamily{{ latin := FontMember{{res: crate_resource({font:?}) asc: -0.1 desc: 0.0 weight: {w}}} cjk := FontMember{{res: crate_resource(\"makepad_widgets:resources/LXGWWenKaiRegular.ttf\") asc: 0.0 desc: 0.0}} emoji := FontMember{{res: crate_resource(\"makepad_widgets:resources/NotoColorEmoji.ttf\") asc: 0.0 desc: 0.0}} }} line_spacing: 1.45 font_size: {s} }}"
+                "{ind}draw_text.text_style: TextStyle{{ font_family: FontFamily{{ latin := FontMember{{res: {resource} asc: -0.1 desc: 0.0 weight: {w}}} cjk := FontMember{{res: crate_resource(\"makepad_widgets:resources/LXGWWenKaiRegular.ttf\") asc: 0.0 desc: 0.0}} emoji := FontMember{{res: crate_resource(\"makepad_widgets:resources/NotoColorEmoji.ttf\") asc: 0.0 desc: 0.0}} }} line_spacing: 1.45 font_size: {s} }}"
             );
         } else if a.icon == Some(1) {
             let _ = writeln!(
@@ -1077,6 +1078,15 @@ mod tests {
 
     fn tree(src: &str) -> UiNode {
         octoscript_render::build(src, |_vm| {}).expect("evaluates")
+    }
+
+    #[test]
+    fn host_served_fonts_use_the_network_resource_loader_in_regular_and_l0_text() {
+        let node=tree(r#"{t:"text" text:"Hello 中文" size:16 font_src:"http://127.0.0.1:12345/assets/Body.ttf"}"#);
+        for ui in [to_makepad_ui(&node),to_makepad_l0_ui(&node)] {
+            assert!(ui.contains("res: http_resource(\"http://127.0.0.1:12345/assets/Body.ttf\")"),"{ui}");
+            assert!(!ui.contains("crate_resource(\"http:"),"{ui}");
+        }
     }
 
     #[test]

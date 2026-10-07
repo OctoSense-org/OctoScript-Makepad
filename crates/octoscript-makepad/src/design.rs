@@ -7,6 +7,9 @@ use std::fmt::Write;
 
 /// The symbol face every design text style falls back to.
 const SYMBOLS: &str = "crate_resource(\"makepad_widgets:resources/jetbrains_mono_variable.ttf\")";
+/// Source designs need the same CJK coverage as ordinary cards. Keep the large
+/// fallback lazy so Latin-only cards do not load it on every app's first frame.
+const CJK: &str = "crate_resource(\"makepad_widgets:resources/LXGWWenKaiRegular.ttf\")";
 
 /// The largest advance between the wrapped lines of a markdown region, and
 /// of other wrapping text when [`Options::cap_wrapped_line_spacing`] is set,
@@ -34,6 +37,10 @@ fn text_font(a: &Attrs) -> Result<(f32, &str), String> {
 /// The resource expression for a design font. `file:` names an absolute
 /// platform path; anything else is a crate resource.
 fn font_resource(font: &str) -> Result<String, String> {
+    if let Some(resource) = host_font_resource(font) { return Ok(resource); }
+    if font.starts_with("http:") || font.starts_with("https:") {
+        return Err("design fonts require a host-served bundle asset".into());
+    }
     if let Some(path) = font.strip_prefix("file:") {
         if !std::path::Path::new(path).is_absolute() {
             return Err("platform font path must be absolute".into());
@@ -87,6 +94,14 @@ fn design_asset_allowed(src: &str) -> bool {
         }
     }
     false
+}
+
+/// App Hub rewrites bundle `assets/` references to its admitted asset origin.
+/// Those bytes must go through the asynchronous resource loader, not through
+/// crate_resource (which would interpret `http` as a crate name). The caller
+/// still owns bundle admission and the isolated resource network allowlist.
+pub(crate) fn host_font_resource(font: &str) -> Option<String> {
+    design_asset_allowed(font).then(|| format!("http_resource({font:?})"))
 }
 
 /// Turn template-local child paths into the IDs of this mounted instance.
@@ -565,7 +580,7 @@ pub fn to_makepad_ui_with(tree: &UiNode, options: Options) -> Result<String, Str
                     pitch.min(size * WRAPPED_LINE_PITCH) / (size * TEXT_FLOW_LINE_ADVANCE)
                 };
                 let style = format!(
-                    "TextStyle{{font_family: FontFamily{{latin := FontMember{{res: {} asc: 0.04 desc: 0.04 weight: {weight}}} symbols := FontMember{{res: {SYMBOLS} asc: 0 desc: 0 weight: 400}} emoji := FontMember{{res: {} asc: 0 desc: 0}}}} font_size: {} line_spacing: {spacing}}}",
+                    "TextStyle{{font_family: FontFamily{{latin := FontMember{{res: {} asc: 0.04 desc: 0.04 weight: {weight}}} symbols := FontMember{{res: {SYMBOLS} asc: 0 desc: 0 weight: 400}} cjk := FontMember{{res: {CJK} asc: 0 desc: 0 lazy: 1}} emoji := FontMember{{res: {} asc: 0 desc: 0}}}} font_size: {} line_spacing: {spacing}}}",
                     font_resource(font)?,
                     emoji_resource(),
                     size * 0.75
@@ -685,7 +700,7 @@ pub fn to_makepad_ui_with(tree: &UiNode, options: Options) -> Result<String, Str
                 let resource = font_resource(font)?;
                 writeln!(
                     out,
-                    "draw_text.text_style: TextStyle{{font_family: FontFamily{{latin := FontMember{{res: {resource} asc: {asc} desc: {desc} weight: {weight}}} symbols := FontMember{{res: {SYMBOLS} asc: 0 desc: 0 weight: 400}} emoji := FontMember{{res: {emoji} asc: 0 desc: 0}}}} font_size: {} line_spacing: {spacing} letter_spacing: {}}}",
+                    "draw_text.text_style: TextStyle{{font_family: FontFamily{{latin := FontMember{{res: {resource} asc: {asc} desc: {desc} weight: {weight}}} symbols := FontMember{{res: {SYMBOLS} asc: 0 desc: 0 weight: 400}} cjk := FontMember{{res: {CJK} asc: 0 desc: 0 lazy: 1}} emoji := FontMember{{res: {emoji} asc: 0 desc: 0}}}} font_size: {} line_spacing: {spacing} letter_spacing: {}}}",
                     size * 0.75,
                     a.tracking.unwrap_or(0.)
                 )
@@ -1139,6 +1154,19 @@ mod tests {
         // A single line keeps its measured spacing either way.
         let line = prepare(&text(44)).unwrap();
         assert_eq!(to_makepad_ui_with(&line, capped), to_makepad_ui(&line));
+    }
+
+    #[test]
+    fn bundle_fonts_use_http_resources_and_design_text_keeps_cjk_fallback() {
+        for variant in ["", "variant: \"markdown\""] {
+            let source=format!(r#"{{t:"text" text:"Hello 中文" w:220 h:80 size:16 line_height:24 font_src:"http://127.0.0.1:12345/assets/Body.ttf" {variant}}}"#);
+            let ui=to_makepad_ui(&prepare(&source).unwrap()).unwrap();
+            assert!(ui.contains("res: http_resource(\"http://127.0.0.1:12345/assets/Body.ttf\")"),"{ui}");
+            assert!(!ui.contains("crate_resource(\"http:"),"{ui}");
+            assert!(ui.contains("cjk := FontMember{res: crate_resource(\"makepad_widgets:resources/LXGWWenKaiRegular.ttf\") asc: 0 desc: 0 lazy: 1}"),"{ui}");
+        }
+        let remote=prepare(r#"{t:"text" text:"Hello" w:220 h:80 size:16 font_src:"https://example.invalid/font.ttf"}"#).unwrap();
+        assert!(to_makepad_ui(&remote).unwrap_err().contains("host-served"));
     }
 
     #[test]
