@@ -116,6 +116,31 @@ clean dependency checkouts. `python3 tools/runtime.py verify --cargo-manifest
 Cargo.toml` checks the source set and rejects multiple Makepad instances in the
 resolved Cargo graph.
 
+## Fonts in installed app cards
+
+`font_src` is a font resource string. App Hub rewrites a bundle font such as
+`assets/fonts/Body.ttf` to its own allowed asset-server URL before lowering.
+The regular, L0 and measured-design renderers use `http_resource` for these
+host-served URLs, so font bytes can arrive asynchronously. Crate fonts still
+use `crate_resource`; measured-design fonts may use `file_resource` only in
+hosts whose admission policy allows that source. This renderer does not grant
+filesystem or network access to an installed app.
+
+Measured-design labels and Markdown now include a lazy bundled CJK fallback,
+as well as their primary, symbol and emoji fonts. A Latin-only primary font
+therefore does not leave Chinese text dependent on the developer machine's
+system fonts. The host must package the CJK font asset, for example through
+the International font set; a package that omits that asset cannot provide the
+bundled fallback. Native kit `font_src: {"$token": "key"}` is resolved by the
+kit layer to the token's string value before the renderer sees it; arbitrary
+font-source objects are not part of the renderer's node contract.
+
+The `kit-host` native font test evaluates the generated widget source, supplies
+a deterministic HTTP completion, verifies the supplied font becomes primary,
+and shapes mixed English/Chinese text with system fallback disabled. This is
+a native resource and font-engine check; it does not claim a live network or
+phone screenshot acceptance run.
+
 ## Build
 
 ### Native application validation
