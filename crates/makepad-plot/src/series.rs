@@ -1,8 +1,8 @@
-//! `d3.series(f, n [, t])` — a data series computed by the Splash kernel JIT.
+//! `plot.series(f, n [, t])` — a data series computed by the Splash kernel JIT.
 //!
-//! Kept in sync with `makepad-plot/src/series.rs` (the `plot.series` copy);
-//! the two kits share no crate, so the adapter is mirrored the way the L0
-//! helpers are.
+//! Kept in sync with `makepad-d3/src/octoscript/series.rs` (the `d3.series`
+//! copy); the two kits share no crate, so the adapter is mirrored the way
+//! the L0 helpers are.
 //!
 //! Takes the document's own `fn(i)` (an element kernel body writing
 //! `out[i]`), compiles it once through `vm_kernel` with everything it
@@ -15,8 +15,8 @@
 //! let dx = 0.001
 //! fn wave(x) { return sin(x * 3.0) * 0.8 + sin(x * 37.0) * 0.1 }
 //! fn gen(i) { out[i] = wave(float(i) * dx) + t * 0.0 }
-//! ui.chart.set_data(d3.series(gen, 100000))
-//! // animated: d3.series(gen, 100000, frame_time) — same compiled kernel,
+//! ui.chart.script_call: set_data(plot.series(gen, 100000))
+//! // animated: plot.series(gen, 100000, frame_time) — same compiled kernel,
 //! // only the `t` parameter changes per call.
 //! ```
 //!
@@ -63,10 +63,10 @@ fn series_call(vm: &mut ScriptVm, args: ScriptObject, cache: &RefCell<Vec<(Scrip
     let n = script_value!(vm, args.n);
     let t = script_value!(vm, args.t).as_number().unwrap_or(0.0) as f32;
     let Some(entry) = f.as_object() else {
-        return script_err_invalid_args!(vm.bx.threads.cur_ref().trap, "d3.series takes (fn(i), n [, t])");
+        return script_err_invalid_args!(vm.bx.threads.cur_ref().trap, "plot.series takes (fn(i), n [, t])");
     };
     let Some(n) = n.as_number().filter(|n| *n >= 0.0) else {
-        return script_err_invalid_args!(vm.bx.threads.cur_ref().trap, "d3.series takes (fn(i), n [, t]) with n >= 0");
+        return script_err_invalid_args!(vm.bx.threads.cur_ref().trap, "plot.series takes (fn(i), n [, t]) with n >= 0");
     };
     let n = (n as usize).min(MAX_SERIES);
 
@@ -96,7 +96,7 @@ fn series_call(vm: &mut ScriptVm, args: ScriptObject, cache: &RefCell<Vec<(Scrip
                 }
                 Err(errors) => {
                     let message = errors.first().map(|e| e.message.clone()).unwrap_or_else(|| "kernel compile failed".into());
-                    return script_err_invalid_args!(vm.bx.threads.cur_ref().trap, "d3.series: {}", message);
+                    return script_err_invalid_args!(vm.bx.threads.cur_ref().trap, "plot.series: {}", message);
                 }
             }
         }
@@ -107,13 +107,13 @@ fn series_call(vm: &mut ScriptVm, args: ScriptObject, cache: &RefCell<Vec<(Scrip
         let mut call = kernel.call();
         call.set_param("t", t);
         if let Err(e) = call.output("out", &mut out) {
-            return script_err_invalid_args!(vm.bx.threads.cur_ref().trap, "d3.series: {:?}", e);
+            return script_err_invalid_args!(vm.bx.threads.cur_ref().trap, "plot.series: {:?}", e);
         }
         let threads = if n >= PARALLEL_FROM { std::thread::available_parallelism().map(|p| p.get()).unwrap_or(1).min(8) } else { 1 };
         let run = if threads > 1 { call.run_parallel(n, threads) } else { call.run(n) };
         drop(call);
         if let Err(e) = run {
-            return script_err_invalid_args!(vm.bx.threads.cur_ref().trap, "d3.series: {:?}", e);
+            return script_err_invalid_args!(vm.bx.threads.cur_ref().trap, "plot.series: {:?}", e);
         }
     }
 
@@ -125,7 +125,7 @@ fn series_call(vm: &mut ScriptVm, args: ScriptObject, cache: &RefCell<Vec<(Scrip
 }
 
 script_mod! {
-    mod.d3.series = #(make_series_fn(vm))
+    mod.plot.series = #(make_series_fn(vm))
 }
 
 #[cfg(test)]
@@ -141,13 +141,13 @@ mod tests {
     fn series_compiles_the_documents_fn_and_matches_it() {
         let host = Box::leak(Box::new(ScriptVmHost::new(0i32, ())));
         let mut vm = ScriptVm { host, bx: Box::new(ScriptVmBase::new()) };
-        let _ = crate::octoscript::script_mod(&mut vm);
+        vm.bx.heap.new_module(id!(plot));
         let _ = super::script_mod(&mut vm);
         // Two calls on one document: the second reuses the compiled kernel
         // (the cache is keyed by the fn value) with another `t`.
         let v = vm.eval(ScriptMod {
             file: "t".into(),
-            code: format!("{DOC}let a = mod.d3.series(gen, 1000, 0.25)\nlet b = mod.d3.series(gen, 8, 1.25)\n[a b]\n"),
+            code: format!("{DOC}let a = mod.plot.series(gen, 1000, 0.25)\nlet b = mod.plot.series(gen, 8, 1.25)\n[a b]\n"),
             ..Default::default()
         });
         let errs = vm.take_errors();
