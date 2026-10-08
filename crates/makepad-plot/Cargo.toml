@@ -9,6 +9,10 @@ autoexamples = false
 [dependencies]
 # The workspace's single makepad checkout (see makepad-d3's note).
 makepad-widgets = { workspace = true }
+# The Splash kernel JIT behind `plot.series` (see src/series.rs; kept in
+# sync with makepad-d3's copy).
+makepad-script-compute = { workspace = true, features = ["vm"] }
+makepad-script = { workspace = true }
 
 [[bin]]
 name = "plot_demo"

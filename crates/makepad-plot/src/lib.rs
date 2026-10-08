@@ -7,6 +7,7 @@ pub mod charts;
 pub mod chart_paint;
 pub use chart_paint::ChartPaint;
 pub mod plot_view;
+pub mod series;
 pub mod script_util;
 pub mod types;
 
@@ -29,6 +30,8 @@ pub use types::*;
 pub fn script_mod(vm: &mut ScriptVm) {
     vm.bx.heap.new_module(id!(plot));
     crate::types::script_mod(vm);
+    // The kernel-JIT series generator (mod.plot.series).
+    let _ = crate::series::script_mod(vm);
     crate::plot_view::script_mod(vm);
     crate::charts::line::script_mod(vm);
     crate::charts::line2::script_mod(vm);

@@ -88,6 +88,8 @@ pub fn script_mod(vm: &mut makepad_widgets::ScriptVm) {
     let _ = render3d::draw::script_mod(vm);
     // Sandboxed octoscript-body host (mod.d3.Octoscript).
     let _ = octoscript::host::script_mod(vm);
+    // The kernel-JIT series generator (mod.d3.series).
+    let _ = octoscript::series::script_mod(vm);
     // Chart widgets (mod.d3.BarChart, ...) + widgets-prelude injection.
     let _ = octoscript::charts::script_mod(vm);
     // Statistical charts (mod.d3.Histogram, Heatmap, RadarChart, BoxPlot).

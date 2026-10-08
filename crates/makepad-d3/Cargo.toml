@@ -17,6 +17,11 @@ categories = ["visualization", "gui", "graphics"]
 # copy under old/, so cargo sees two packages named makepad-widgets.
 # Integration design: docs/OCTOSCRIPT_INTEGRATION_DESIGN.md
 makepad-widgets = { workspace = true }
+# The Splash kernel JIT: `d3.series` compiles a script fn into native code
+# over the whole series instead of interpreting it per point (vm feature:
+# the entry fn is handed over as the VM's own fn object).
+makepad-script-compute = { workspace = true, features = ["vm"] }
+makepad-script = { workspace = true }
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

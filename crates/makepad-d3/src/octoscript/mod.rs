@@ -47,6 +47,7 @@ pub mod charts_hier;
 pub mod charts_net;
 pub mod charts_stat;
 pub mod host;
+pub mod series;
 pub mod vm_data;
 
 pub use charts::{D3AreaChart, D3BarChart, D3LineChart, D3PieChart, D3ScatterChart};

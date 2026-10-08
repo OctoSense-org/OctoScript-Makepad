@@ -19,6 +19,7 @@ members = [
 [workspace.dependencies]
 makepad-widgets = { git = "https://github.com/OctoSense-org/makepad.git", rev = "32d6415fb7476345ad36ee4f98d6f844d1f07fd2" }
 makepad-script = { git = "https://github.com/OctoSense-org/makepad.git", rev = "32d6415fb7476345ad36ee4f98d6f844d1f07fd2" }
+makepad-script-compute = { git = "https://github.com/OctoSense-org/makepad.git", rev = "32d6415fb7476345ad36ee4f98d6f844d1f07fd2" }
 # The VM-independent Octoscript node model, from the Octoscript repo itself.
 octoscript-ui-l0 = { git = "https://github.com/OctoSense-org/Octoscript.git", rev = "2e37d9e657a246f16718d9a475e167ccd2d5b5fa" }
 
@@ -32,6 +33,7 @@ codegen-units = 1
 [patch."https://github.com/OctoSense-org/makepad.git"]
 makepad-widgets = { path = "../makepad/widgets" }
 makepad-script = { path = "../makepad/platform/script" }
+makepad-script-compute = { path = "../makepad/platform/script/compute" }
 
 [patch."https://github.com/OctoSense-org/Octoscript.git"]
 octoscript-ui-l0 = { path = "../octoscript/crates/octoscript-ui-l0" }
