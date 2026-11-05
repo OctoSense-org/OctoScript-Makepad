@@ -80,15 +80,7 @@ impl D3Octoscript {
         let code = format!("{}{}", OCTOSCRIPT_PREFIX, body);
 
         // ScriptMod identity is stable (same file/line/column each call)
-        let script_mod = ScriptMod {
-            cargo_manifest_path: String::new(),
-            module_path: String::new(),
-            file: String::new(),
-            line: self_id,
-            column: 0,
-            code: String::new(),
-            values: vec![],
-        };
+        let script_mod = ScriptMod::new("", "", "", self_id, 0, "", &[]);
 
         let vm_id = self.vm_id;
         let new_view = cx.with_script_vm_id(vm_id, |vm| {

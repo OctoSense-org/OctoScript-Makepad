@@ -45,15 +45,7 @@ pub fn build(src: &str, register: impl FnOnce(&mut ScriptVm)) -> Option<UiNode> 
     vm.set_injected_global(id!(sys), sys.into());
 
     let value = jit3_eval_checked(vm, 
-        ScriptMod {
-            cargo_manifest_path: String::new(),
-            module_path: String::from("octoscript"),
-            file: String::from("splash.octoscript"),
-            line: 0,
-            column: 0,
-            code: src.to_string(),
-            values: Vec::new(),
-        },
+        ScriptMod::new("", "octoscript", "splash.octoscript", 0, 0, &src, &[]),
         octoscript_node::MAX_EVAL_INSTRUCTIONS,
     )?;
 
