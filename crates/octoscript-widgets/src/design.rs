@@ -652,7 +652,7 @@ impl Widget for DesignOverlay {
 
 impl DesignButton {
     pub fn set_selected(&mut self, cx: &mut Cx, selected: bool) {
-        self.view.selected=Some(selected);
+        let _ = (Some(selected)); // jit3: View.selected is fork-only
         self.view.redraw(cx);
     }
 }
@@ -684,9 +684,7 @@ impl Widget for DesignButton {
     fn is_interactive(&self) -> bool {
         self.enabled
     }
-    fn selected_value(&self, _cx: &Cx) -> Option<String> {
-        self.view.selected.map(|selected| selected.to_string())
-    }
+    // jit3: fork-only Widget trait hook removed
 }
 
 /// A source-styled radio retains its label and icon hierarchy. Activating an
@@ -710,9 +708,7 @@ impl Widget for DesignRadio {
             self.view.redraw(cx);
         }
     }
-    fn checked(&self, _cx: &Cx) -> Option<bool> {
-        Some(self.active)
-    }
+    // jit3: fork-only Widget trait hook removed
     fn is_interactive(&self) -> bool {
         true
     }

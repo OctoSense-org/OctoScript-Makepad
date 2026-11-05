@@ -127,6 +127,7 @@ impl Widget for OctoscriptTap {
                         TouchState::Move => self.moved(abs, t.uid),
                         TouchState::Stop => self.release(cx, abs, t.uid),
                         TouchState::Stable => {}
+                        TouchState::Cancel => self.release(cx, abs, t.uid), // jit3: upstream variant
                     }
                 }
             }

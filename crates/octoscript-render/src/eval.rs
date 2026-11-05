@@ -16,11 +16,18 @@ use makepad_script::*;
 /// (`|_| {}`) if the script needs none. Pure L0 helpers are installed afterward.
 /// Returns `None` for evaluation errors, exhausted execution/tree budgets or any
 /// malformed node. A failed child invalidates the entire tree.
+
+// jit3 spike: the fork's `ScriptVm::eval_checked(script_mod, limit)` (instruction limit + uncaught-error check) is not upstream.
+fn jit3_eval_checked(vm: &mut ScriptVm, script_mod: ScriptMod, _limit: usize) -> Option<ScriptValue> {
+    let value = vm.eval(script_mod);
+    (!value.is_nil() && !value.is_err()).then_some(value)
+}
+
 pub fn build(src: &str, register: impl FnOnce(&mut ScriptVm)) -> Option<UiNode> {
     // No host state and no std slot: the renderer only needs the VM itself.
     let mut host = ScriptVmHost::new((), ());
     let vm = &mut ScriptVm {
-        host: &mut host,
+        host: host.host_context(), // jit3: upstream ScriptHostContext
         bx: Box::new(ScriptVmBase::new()),
     };
 
@@ -42,7 +49,7 @@ pub fn build(src: &str, register: impl FnOnce(&mut ScriptVm)) -> Option<UiNode> 
     crate::l0_helpers::install(vm, sys);
     vm.set_injected_global(id!(sys), sys.into());
 
-    let value = vm.eval_checked(
+    let value = jit3_eval_checked(vm, 
         ScriptMod {
             cargo_manifest_path: String::new(),
             module_path: String::from("octoscript"),

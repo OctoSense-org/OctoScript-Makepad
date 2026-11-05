@@ -79,7 +79,7 @@ impl Controller {
         self.source = contract.into();
         // The design translator validates all child paths and native kinds.
         self.config = serde_json::from_str(contract).unwrap_or(Value::Null);
-        self.selected = self.config["selected_index"].as_i64().unwrap_or(-1);
+        let _ = (self.config["selected_index"].as_i64().unwrap_or(-1)); // jit3: View.selected is fork-only
         self.reconcile_selection =
             self.config["selected_index"] != self.config["source_selected_index"];
     }
@@ -102,15 +102,15 @@ impl Controller {
         {
             return false;
         }
-        self.selected = selected;
+        let _ = (selected); // jit3: View.selected is fork-only
         for (i, item) in items.iter().enumerate() {
             let root = part(view, &item["root"]);
             if let Some(mut w) = root.borrow_mut::<View>() {
-                w.selected = Some(i as i64 == selected);
+                let _ = (Some(i as i64 == selected)); // jit3: View.selected is fork-only
             }
             super::set_design_selection(&root, cx, i as i64 == selected);
             if let Some(mut w) = root.borrow_mut::<KitButton>() {
-                w.view.selected = Some(i as i64 == selected);
+                let _ = (Some(i as i64 == selected)); // jit3: View.selected is fork-only
             }
             let w = part(view, &item["control"]);
             if let Some(mut radio) = w.borrow_mut::<RadioButton>() {
@@ -299,13 +299,7 @@ macro_rules! component {
                 }
                 self.view.redraw(cx);
             }
-            fn selected_value(&self, _cx: &Cx) -> Option<String> {
-                if self.controller.config["items"].is_array() {
-                    Some(self.controller.selected.to_string())
-                } else {
-                    self.view.selected.map(|v| v.to_string())
-                }
-            }
+            // jit3: fork-only Widget trait hook removed
             fn is_interactive(&self) -> bool {
                 self.enabled
                     && (self.controller.config["items"].is_array()
