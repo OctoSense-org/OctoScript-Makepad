@@ -17,8 +17,8 @@ members = [
 
 # runtime.json is the source contract shared by every OctoSense application.
 [workspace.dependencies]
-makepad-widgets = { git = "https://github.com/OctoSense-org/makepad.git", rev = "7407e3c5a76252e70bd638319b2754aeb223e75f" }
-makepad-script = { git = "https://github.com/OctoSense-org/makepad.git", rev = "7407e3c5a76252e70bd638319b2754aeb223e75f" }
+makepad-widgets = { git = "https://github.com/OctoSense-org/makepad.git", rev = "c36bf46d0af95753e9331919c32b135d4e49f689" }
+makepad-script = { git = "https://github.com/OctoSense-org/makepad.git", rev = "c36bf46d0af95753e9331919c32b135d4e49f689" }
 # The VM-independent Octoscript node model, from the Octoscript repo itself.
 octoscript-ui-l0 = { git = "https://github.com/OctoSense-org/Octoscript.git", rev = "2e37d9e657a246f16718d9a475e167ccd2d5b5fa" }
 

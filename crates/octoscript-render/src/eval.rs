@@ -4,7 +4,6 @@
 
 use octoscript_node::{Attrs, NodeKind, UiNode};
 use makepad_script::apply::*;
-use makepad_script::array::ScriptArrayStorage;
 use makepad_script::makepad_live_id::*;
 use makepad_script::traits::*;
 use makepad_script::*;
@@ -33,11 +32,7 @@ pub fn build(src: &str, register: impl FnOnce(&mut ScriptVm)) -> Option<UiNode> 
 
     register(vm);
     let modules = vm.bx.heap.modules;
-    let injected_sys = vm
-        .bx
-        .injected_globals
-        .get(&id!(sys))
-        .and_then(|v| v.as_object());
+    let injected_sys = vm.injected_global(id!(sys)).and_then(|v| v.as_object());
     let sys = injected_sys
         .or_else(|| {
             vm.bx
@@ -300,12 +295,10 @@ fn children_of(
         return Some(Vec::new());
     };
     let arr = c.as_array()?;
-    match vm.bx.heap.array_storage(arr) {
-        ScriptArrayStorage::ScriptValue(v) if v.len() <= remaining => {
-            Some(v.iter().copied().collect())
-        }
-        _ => None,
-    }
+    // Through the heap's array view: the storage itself is the crate's own.
+    let view = vm.heap().arr_view(arr);
+    let len = view.len_all();
+    (len <= remaining).then(|| (0..len).filter_map(|i| view.index(i)).collect())
 }
 
 /// Register a native function on the VM and return it as a value ready to inject
@@ -316,8 +309,5 @@ pub fn add_global_fn<F>(vm: &mut ScriptVm, args: &[(LiveId, ScriptValue)], f: F)
 where
     F: Fn(&mut ScriptVm, ScriptValue) -> ScriptValue + 'static,
 {
-    let base = &mut *vm.bx;
-    let mut native = base.code.native.borrow_mut();
-    let obj = native.add_fn(&mut base.heap, args, move |vm, args| f(vm, args.into()));
-    obj.into()
+    vm.new_fn(args, move |vm, args| f(vm, args.into()))
 }

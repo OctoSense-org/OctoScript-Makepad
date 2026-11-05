@@ -89,11 +89,7 @@ pub fn to_string_vec(vm: &mut ScriptVm, value: ScriptValue) -> Option<Vec<String
             out.push(String::new());
             continue;
         }
-        let s = vm.bx.heap.temp_string_with(|heap, buf| {
-            heap.cast_to_string(item, buf);
-            buf.to_string()
-        });
-        out.push(s);
+        out.push(vm.cast_to_string(item));
     }
     Some(out)
 }
@@ -120,10 +116,7 @@ pub fn to_string_cast(vm: &mut ScriptVm, value: ScriptValue) -> String {
     if value.is_nil() {
         return String::new();
     }
-    vm.bx.heap.temp_string_with(|heap, buf| {
-        heap.cast_to_string(value, buf);
-        buf.to_string()
-    })
+    vm.cast_to_string(value)
 }
 
 /// Read a script sequence of sequences as rows of numbers:

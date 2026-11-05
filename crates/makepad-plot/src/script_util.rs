@@ -65,10 +65,7 @@ pub fn script_string_array(vm: &mut ScriptVm, value: ScriptValue) -> Option<Vec<
 
 /// Convert any script value to its string representation.
 pub fn script_to_string(vm: &mut ScriptVm, value: ScriptValue) -> String {
-    vm.bx.heap.temp_string_with(|heap, out| {
-        heap.cast_to_string(value, out);
-        out.to_string()
-    })
+    vm.cast_to_string(value)
 }
 
 /// Read a positional f64 argument.

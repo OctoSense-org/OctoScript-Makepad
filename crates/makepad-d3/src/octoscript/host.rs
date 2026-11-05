@@ -155,10 +155,7 @@ impl Widget for D3Octoscript {
         if method == live_id!(set_text) {
             let value = super::vm_data::arg(vm, args, 0);
             if !value.is_nil() {
-                let new_body = vm.bx.heap.temp_string_with(|heap, out| {
-                    heap.cast_to_string(value, out);
-                    out.to_string()
-                });
+                let new_body = vm.cast_to_string(value);
                 vm.with_cx_mut(|cx| {
                     self.set_text(cx, &new_body);
                 });
