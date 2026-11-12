@@ -40,7 +40,7 @@ script_mod! {
 }
 
 const OCTOSCRIPT_PREFIX: &str = "use mod.prelude.widgets.*\nView{height:Fit, ";
-const OCTOSCRIPT_EVAL_INSTRUCTION_LIMIT: usize = 200_000;
+const OCTOSCRIPT_EVAL_INSTRUCTION_LIMIT: u64 = 200_000;
 
 /// Sandboxed Octoscript-body host with `d3.*` registered (see module docs).
 #[derive(Script, ScriptHook, WidgetRef, WidgetRegister)]
